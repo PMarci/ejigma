@@ -3,7 +3,6 @@ package camel.enigma.model;
 import camel.enigma.exception.ScramblerSettingException;
 import camel.enigma.exception.ScramblerSettingLengthException;
 import camel.enigma.exception.ScramblerSettingWiringException;
-import camel.enigma.model.RotorType.Rotor;
 import org.junit.Test;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -27,6 +26,8 @@ public class RotorTypeTest {
     @Test(expected = ScramblerSettingLengthException.class)
     public void testIncorrectLengthConstructor() throws ScramblerSettingException {
         String incorrectLengthString = "AABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        RotorType rotor = RotorType.II;
+        System.out.println("asd");
         new Rotor(incorrectLengthString);
     }
 

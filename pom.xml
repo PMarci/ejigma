@@ -64,6 +64,17 @@
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-stream</artifactId>
+        </dependency>
+
+        <!--Other-->
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>5.0.0</version>
+        </dependency>
 
         <!--Tests-->
         <dependency>
@@ -124,7 +135,7 @@
                 </executions>
                 <configuration>
                     <finalName>${project.artifactId}</finalName>
-                    <mainClass>mposa.camel.enigma.App</mainClass>
+                    <mainClass>camel.enigma.App</mainClass>
                 </configuration>
             </plugin>
         </plugins>

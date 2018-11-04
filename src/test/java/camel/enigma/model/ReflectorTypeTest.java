@@ -18,7 +18,7 @@ public class ReflectorTypeTest {
     public void testCorrectConstructor() {
         String correctLengthWiringsString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         ReflectorType expected = ReflectorType.NOOP;
-        expected.setWirings(ReflectorType.Reflector.stringToWirings(correctLengthWiringsString));
+        expected.setWirings(Reflector.stringToWirings(correctLengthWiringsString));
 
         assertArrayEquals(expected.getWirings(), ReflectorType.NOOP.getWirings());
     }
@@ -26,12 +26,12 @@ public class ReflectorTypeTest {
     @Test(expected = ScramblerSettingLengthException.class)
     public void testIncorrectLengthConstructor() throws ScramblerSettingException {
         String incorrectLengthString = "AABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        new ReflectorType.Reflector(incorrectLengthString);
+        new Reflector(incorrectLengthString);
     }
 
     @Test(expected = ScramblerSettingWiringException.class)
     public void testIncorrectWiringConstructor() throws ScramblerSettingException {
         String incorrectWiringsString = "AACDEFGHIJKLMNOPQRSTUVWXYZ";
-        new ReflectorType.Reflector(incorrectWiringsString);
+        new Reflector(incorrectWiringsString);
     }
 }

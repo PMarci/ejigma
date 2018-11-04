@@ -8,21 +8,15 @@ public enum ReflectorType {
     B("YRUHQSLDPXNGOKMIEBFZCWVJAT"),
     C("FVPJIAOYEDRZXWGCTKUQSBNMHL"),
     // for testing
-    NOOP(Scrambler.ALPHABET_STRING);
-
-    static class Reflector extends Scrambler {
-
-        public Reflector(String wirings) throws ScramblerSettingException {
-            validateWiringString(wirings);
-            this.wirings = stringToWirings(wirings);
-        }
-    }
+    NOOP(Scrambler.ALPHABET_STRING),
+    ERROR("ABC");
 
     private Reflector reflector;
 
     ReflectorType(String wirings) {
         try {
             this.reflector = new Reflector(wirings);
+            this.reflector.setReflectorType(this);
         } catch (ScramblerSettingException ignored) {
         }
     }
