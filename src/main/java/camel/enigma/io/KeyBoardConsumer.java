@@ -57,6 +57,10 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
                 RawConsoleInput.resetConsoleMode();
                 break;
             }
+            // TODO debuggable solution
+            if (input == '\r' || input == '\n') {
+                input = 'A';
+            }
             Exchange exchange = endpoint.createExchange(input);
             getProcessor().process(exchange);
         }

@@ -5,8 +5,11 @@ import camel.enigma.exception.ScramblerSettingException;
 
 public enum RotorType {
 
+//     ABCDEFGHIJKLMNOPQRSTUVWXYZ
     I("EKMFLGDQVZNTOWYHXUSPAIBRCJ"),
+//      ABCDEFGHIJKLMNOPQRSTUVWXYZ
     II("AJDKSIRUXBLHWTMCQGZNPYFVOE"),
+//       ABCDEFGHIJKLMNOPQRSTUVWXYZ
     III("BDFHJLCPRTXVZNYEIWGAKMUSQO"),
     // for testing
     NOOP(Scrambler.ALPHABET_STRING),
