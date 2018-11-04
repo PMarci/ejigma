@@ -28,4 +28,8 @@ public enum ReflectorType {
     public void setWirings(Wiring[] wirings) {
         reflector.setWirings(wirings);
     }
+
+    public Reflector getReflector() {
+        return reflector;
+    }
 }

@@ -57,7 +57,7 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
                 RawConsoleInput.resetConsoleMode();
                 break;
             }
-            Exchange exchange = endpoint.createExchange(String.valueOf(input));
+            Exchange exchange = endpoint.createExchange(input);
             getProcessor().process(exchange);
         }
     }

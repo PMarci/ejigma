@@ -1,5 +1,7 @@
 package camel.enigma.route;
 
+import camel.enigma.model.Armature;
+import camel.enigma.util.ScrambleResult;
 import org.apache.camel.builder.RouteBuilder;
 import org.springframework.stereotype.Component;
 
@@ -13,8 +15,11 @@ public class EnigmaRouteBuilder extends RouteBuilder {
 //        ;
 
         from("keyboard")
-                .setBody(simple("Key hit: ${body}"))
-            .to("stream:out")
+//                .setBody(simple("Key hit: ${body}"))
+                .setBody(exchange -> new ScrambleResult(exchange.getIn().getBody(Character.class)))
+                .bean(Armature.class)
+                .setBody(exchange -> exchange.getIn().getBody(ScrambleResult.class).getResult())
+                .to("stream:out")
         ;
     }
 }

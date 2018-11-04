@@ -14,7 +14,8 @@ class Reflector extends Scrambler {
 
     @Override
     ScrambleResult scramble(ScrambleResult input) {
-        return null;
+        input.putResult(get(input.getResult()), reflectorType.name());
+        return input;
     }
 
     public ReflectorType getReflectorType() {

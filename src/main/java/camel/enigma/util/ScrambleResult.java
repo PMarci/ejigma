@@ -1,8 +1,14 @@
 package camel.enigma.util;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class ScrambleResult {
+
+    public ScrambleResult(char result) {
+        this.result = result;
+        history = new HashMap<>();
+    }
 
     private char result;
     private Map<String, Character> history;
