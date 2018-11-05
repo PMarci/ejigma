@@ -3,10 +3,16 @@ package camel.enigma.route;
 import camel.enigma.model.Armature;
 import camel.enigma.util.ScrambleResult;
 import org.apache.camel.builder.RouteBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class EnigmaRouteBuilder extends RouteBuilder {
+
+    // use with run configuration containing -Dspring-boot.run.arguments=--input.debug=true
+    @Value("${input.debug}")
+    private String debugMode;
+
     @Override
     public void configure() throws Exception {
 
@@ -14,7 +20,8 @@ public class EnigmaRouteBuilder extends RouteBuilder {
 //            .to("stream:out")
 //        ;
 
-        from("keyboard?debugMode=true")
+        // TODO maybe look into making this resolve using spring too
+        from("keyboard?debugMode=" + /*"{{input.debug}}" */ debugMode)
 //                .setBody(simple("Key hit: ${body}"))
                 .setBody(exchange -> new ScrambleResult(exchange.getIn().getBody(Character.class)))
                 .bean(Armature.class)

@@ -74,16 +74,10 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
 
     private void readFromStreamDebug() throws Exception {
         char input;
-        char input2;
         while (isRunAllowed()) {
             input = ((char) RawConsoleInput.read(true));
-            input2 = ((char) RawConsoleInput.read(true));
-            if (input == 0x3) {
-                log.info("Recieved SIGINT via Ctrl+C, stopping console listening...");
-                // TODO look at Unix version does
-                RawConsoleInput.resetConsoleMode();
-                break;
-            }
+            // skipping the enter keypress required by IDE
+            RawConsoleInput.read(true);
             Exchange exchange = endpoint.createExchange(input);
             getProcessor().process(exchange);
         }
