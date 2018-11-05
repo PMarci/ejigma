@@ -13,8 +13,8 @@ import java.util.stream.IntStream;
 @Component
 public class Armature {
 
-    private RotorType[] defaultRotorTypes = new RotorType[]{RotorType.I, RotorType.II, RotorType.III};
-    private ReflectorType defaultReflectorType = ReflectorType.A;
+    private RotorType[] defaultRotorTypes = new RotorType[]{RotorType.III, RotorType.II, RotorType.I};
+    private ReflectorType defaultReflectorType = ReflectorType.B;
     private Rotor[] rotors = initRotors(defaultRotorTypes);
     private Reflector reflector = initReflector(defaultReflectorType);
     private List<Scrambler> scramblerWiring = initWirings(rotors, reflector);
@@ -22,7 +22,11 @@ public class Armature {
     @Handler
     public ScrambleResult handle(@Body ScrambleResult scrambleResult) {
         ScrambleResult current = scrambleResult;
-        for (Scrambler scrambler : scramblerWiring) {
+        for (int i = 0; i < scramblerWiring.size(); i++) {
+            Scrambler scrambler = scramblerWiring.get(i);
+            if (i == 0) {
+                scrambler.click();
+            }
             current = scrambler.scramble(current);
         }
         return current;

@@ -14,7 +14,7 @@ public class EnigmaRouteBuilder extends RouteBuilder {
 //            .to("stream:out")
 //        ;
 
-        from("keyboard")
+        from("keyboard?debugMode=true")
 //                .setBody(simple("Key hit: ${body}"))
                 .setBody(exchange -> new ScrambleResult(exchange.getIn().getBody(Character.class)))
                 .bean(Armature.class)

@@ -11,10 +11,12 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
 
     private KeyBoardEndpoint endpoint;
     private ExecutorService executor;
+    private boolean debugMode;
 
-    public KeyBoardConsumer(KeyBoardEndpoint endpoint, Processor processor) {
+    public KeyBoardConsumer(KeyBoardEndpoint endpoint, Processor processor, boolean debugMode) {
         super(endpoint, processor);
         this.endpoint = endpoint;
+        this.debugMode = debugMode;
     }
 
     @Override
@@ -39,7 +41,11 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
     @Override
     public void run() {
         try {
-            readFromStream();
+            if (!debugMode) {
+                readFromStream();
+            } else {
+                readFromStreamDebug();
+            }
         } catch (InterruptedException ignored) {
             //ignoring
         } catch (Exception e) {
@@ -60,6 +66,23 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
             // TODO debuggable solution
             if (input == '\r' || input == '\n') {
                 input = 'A';
+            }
+            Exchange exchange = endpoint.createExchange(input);
+            getProcessor().process(exchange);
+        }
+    }
+
+    private void readFromStreamDebug() throws Exception {
+        char input;
+        char input2;
+        while (isRunAllowed()) {
+            input = ((char) RawConsoleInput.read(true));
+            input2 = ((char) RawConsoleInput.read(true));
+            if (input == 0x3) {
+                log.info("Recieved SIGINT via Ctrl+C, stopping console listening...");
+                // TODO look at Unix version does
+                RawConsoleInput.resetConsoleMode();
+                break;
             }
             Exchange exchange = endpoint.createExchange(input);
             getProcessor().process(exchange);

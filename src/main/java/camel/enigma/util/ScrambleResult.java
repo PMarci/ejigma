@@ -8,24 +8,27 @@ import java.util.regex.Pattern;
 public class ScrambleResult {
 
     private static final String STEP_SEPARATOR = "/";
-    private static final String HURR = "I/2";
     private static final String STEP_REGEX = "^([^/]+)(?:" + STEP_SEPARATOR + "(\\d+))?$";
     private static final Pattern STEP_PATTERN = Pattern.compile(STEP_REGEX);
 
-    public ScrambleResult(char result) {
-        this.result = result;
-        history = new LinkedHashMap<>();
-    }
-
     private char result;
     private Map<String, Character> history;
+
+    // TODO find a way to not rely on external state of result
+    private char previousOffset;
+
+    public ScrambleResult(char result) {
+        history = new LinkedHashMap<>();
+        putResult(result, "INPUT", 'A');
+    }
 
     public char getResult() {
         return result;
     }
 
-    public void putResult(char result, String stepId) {
+    public void putResult(char result, String stepId, char previousOffset) {
         this.result = result;
+        this.previousOffset = previousOffset;
         // TODO improve/normalize
         Matcher stepMatcher = STEP_PATTERN.matcher(stepId);
         String stationId = null;
@@ -55,5 +58,9 @@ public class ScrambleResult {
 
     public void setHistory(Map<String, Character> history) {
         this.history = history;
+    }
+
+    public char getPreviousOffset() {
+        return previousOffset;
     }
 }

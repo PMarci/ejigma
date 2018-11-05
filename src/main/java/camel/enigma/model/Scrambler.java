@@ -20,6 +20,8 @@ abstract class Scrambler implements Map<Character, Character> {
 
     abstract ScrambleResult scramble(ScrambleResult input);
 
+    abstract void click();
+
     static Wiring[] stringToWirings(String wirings) {
         Wiring[] result = new Wiring[26];
         char[] wiringsChars = wirings.toCharArray();

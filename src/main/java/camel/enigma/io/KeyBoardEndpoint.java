@@ -1,9 +1,7 @@
 package camel.enigma.io;
 
 import org.apache.camel.*;
-import org.apache.camel.component.direct.DirectProducer;
 import org.apache.camel.impl.DefaultEndpoint;
-import org.apache.camel.impl.DefaultProducer;
 import org.apache.camel.spi.UriEndpoint;
 import org.apache.camel.spi.UriParam;
 import org.slf4j.Logger;
@@ -19,8 +17,8 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
     private Charset charset;
     @UriParam
     private String encoding;
-    @UriParam(label = "consumer", defaultValue = "2000")
-    private long initialPromptDelay = 2000;
+    @UriParam(label = "consumer", defaultValue = "false")
+    private boolean debugMode = false;
 
     public KeyBoardEndpoint(String endpointUri, Component component) {
         super(endpointUri, component);
@@ -39,7 +37,7 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
 
     @Override
     public Consumer createConsumer(Processor processor) throws Exception {
-        return new KeyBoardConsumer(this, processor);
+        return new KeyBoardConsumer(this, processor, debugMode);
     }
 
     @Override
@@ -70,5 +68,13 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
 
     public void setCharset(Charset charset) {
         this.charset = charset;
+    }
+
+    public boolean isDebugMode() {
+        return debugMode;
+    }
+
+    public void setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode;
     }
 }
