@@ -4,6 +4,9 @@ import camel.enigma.exception.ScramblerSettingException;
 import camel.enigma.util.ScrambleResult;
 import camel.enigma.util.Util;
 
+import java.util.Arrays;
+import java.util.Optional;
+
 class Rotor extends Scrambler {
 
     private char ringSetting;
@@ -18,13 +21,37 @@ class Rotor extends Scrambler {
     @Override
     ScrambleResult scramble(ScrambleResult input) {
         // TODO figure out offset here properly
-        char current = input.getResult();
-        char key = Util.wrapOverflow((char) (current + Util.capitalCharToIndex(offset) - Util.capitalCharToIndex(input.getPreviousOffset())));
-        input.putResult(get(key), rotorType.name(), offset);
+        // sfatic
+        char inputPos = input.getResult();
+        char key = Util.wrapOverflow(inputPos + Util.offsetToIndex(offset));
+        char value = get(key);
+        char outputPos = Util.wrapOverflow(value - Util.offsetToIndex(offset));
+        input.putResult(outputPos, rotorType.name(), key, value, offset);
+        return input;
+    }
+// TODO uh-oh
+// TODO BiMap?
+    @Override
+    ScrambleResult reverseScramble(ScrambleResult input) {
+        // TODO figure out offset here properly
+        char inputPos = input.getResult();
+        char key = Util.wrapOverflow(inputPos + Util.offsetToIndex(offset));
+        // TODO real impl
+        Optional<Character> valueOpt = Arrays.stream(wirings).filter(wiring -> key == wiring.getTarget()).map(Wiring::getSource).findAny();
+        char value = 0;
+        if (valueOpt.isPresent()) {
+            value = valueOpt.get();
+        } else {
+            System.out.println("null");
+        }
+        char outputPos = Util.wrapOverflow(value - Util.offsetToIndex(offset));
+        input.putResult(outputPos, rotorType.name(), key, value, offset);
         return input;
     }
 
     // TODO non-historical considerations?
+    // TODO I could just as well offset the source like in below implementation,
+    // TODO and maybe even consider the static entrypoint as source
     @Override
     void click() {
         if (offset < 'Z') {

@@ -17,17 +17,25 @@ public class Armature {
     private ReflectorType defaultReflectorType = ReflectorType.B;
     private Rotor[] rotors = initRotors(defaultRotorTypes);
     private Reflector reflector = initReflector(defaultReflectorType);
-    private List<Scrambler> scramblerWiring = initWirings(rotors, reflector);
+    private List<ScramblerMounting> scramblerWiring = initWirings(rotors, reflector);
 
     @Handler
     public ScrambleResult handle(@Body ScrambleResult scrambleResult) {
         ScrambleResult current = scrambleResult;
         for (int i = 0; i < scramblerWiring.size(); i++) {
-            Scrambler scrambler = scramblerWiring.get(i);
+            ScramblerMounting scramblerMounting = scramblerWiring.get(i);
+            Scrambler scrambler = scramblerMounting.getScrambler();
             if (i == 0) {
                 scrambler.click();
             }
-            current = scrambler.scramble(current);
+            if (!scramblerMounting.isReverseWired()) {
+                current = scrambler.scramble(current);
+            } else {
+                current = scrambler.reverseScramble(current);
+            }
+            if (i == scramblerWiring.size() - 1) {
+                current.recordOutput();
+            }
         }
         return current;
     }
@@ -40,16 +48,16 @@ public class Armature {
         return reflectorType.getReflector();
     }
 
-    private List<Scrambler> initWirings(Rotor[] rotors, Reflector reflector) {
-        List<Scrambler> resultList = IntStream.range(0, rotors.length * 2 + 1).sequential()
+    private List<ScramblerMounting> initWirings(Rotor[] rotors, Reflector reflector) {
+        List<ScramblerMounting> resultList = IntStream.range(0, rotors.length * 2 + 1).sequential()
                 .mapToObj(value -> {
-                    Scrambler result;
+                    ScramblerMounting result;
                     if (value < rotors.length) {
-                        result = rotors[value];
+                        result = new ScramblerMounting(rotors[value]);
                     } else if (value == rotors.length) {
-                        result = reflector;
+                        result = new ScramblerMounting(reflector);
                     } else {
-                        result = rotors[rotors.length * 2 - value];
+                        result = new ScramblerMounting(rotors[rotors.length * 2 - value], true);
                     }
                     return result;
                 })

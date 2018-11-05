@@ -23,7 +23,9 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
     protected void doStart() throws Exception {
         super.doStart();
 
-        executor = endpoint.getCamelContext().getExecutorServiceManager().newSingleThreadExecutor(this, endpoint.getEndpointUri());
+        executor = endpoint.getCamelContext()
+                .getExecutorServiceManager()
+                .newSingleThreadExecutor(this, endpoint.getEndpointUri());
         executor.execute(this);
 
     }
@@ -41,7 +43,7 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
     @Override
     public void run() {
         try {
-            if (!debugMode) {
+            if (! debugMode) {
                 readFromStream();
             } else {
                 readFromStreamDebug();
@@ -57,18 +59,12 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
         char input;
         while (isRunAllowed()) {
             input = ((char) RawConsoleInput.read(true));
-            if (input == 0x3) {
-                log.info("Recieved SIGINT via Ctrl+C, stopping console listening...");
+            if (input == 3) {
+                log.info("\nReceived SIGINT via Ctrl+C, stopping console listening...");
                 // TODO look at Unix version does
-                RawConsoleInput.resetConsoleMode();
                 break;
             }
-            // TODO debuggable solution
-            if (input == '\r' || input == '\n') {
-                input = 'A';
-            }
-            Exchange exchange = endpoint.createExchange(input);
-            getProcessor().process(exchange);
+            processInput(input);
         }
     }
 
@@ -78,6 +74,15 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
             input = ((char) RawConsoleInput.read(true));
             // skipping the enter keypress required by IDE
             RawConsoleInput.read(true);
+            processInput(input);
+        }
+    }
+
+    private void processInput(char input) throws Exception {
+        if (97 < input && input < 123) {
+            input = Character.toUpperCase(input);
+        }
+        if (64 < input && input < 91) {
             Exchange exchange = endpoint.createExchange(input);
             getProcessor().process(exchange);
         }

@@ -20,7 +20,7 @@ public class Util {
                 });
     }
 
-    public static int capitalCharToIndex(char c) {
+    public static int offsetToIndex(char c) {
         return c - 65;
     }
 
@@ -34,6 +34,19 @@ public class Util {
         char result;
         if (64 < c && c < 91) {
             result = c;
+        } else if (90 < c) {
+            result = (char) (c - 90 + 64);
+        } else {
+            result = (char) (c - 64 + 90);
+        }
+
+        return result;
+    }
+
+    public static char wrapOverflow(int c) {
+        char result;
+        if (64 < c && c < 91) {
+            result = (char) c;
         } else if (90 < c) {
             result = (char) (c - 90 + 64);
         } else {

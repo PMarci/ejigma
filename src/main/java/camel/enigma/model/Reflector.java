@@ -15,8 +15,15 @@ class Reflector extends Scrambler {
     @Override
     ScrambleResult scramble(ScrambleResult input) {
         // TODO better default
-        input.putResult(get(input.getResult()), reflectorType.name(), 'A');
+        char key = input.getResult();
+        char value = get(key);
+        input.putResult(value, reflectorType.name(),key, value, '@');
         return input;
+    }
+
+    @Override
+    ScrambleResult reverseScramble(ScrambleResult input) {
+        return scramble(input);
     }
 
     @Override
