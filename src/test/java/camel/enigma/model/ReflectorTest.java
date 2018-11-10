@@ -12,28 +12,24 @@ import static org.junit.Assert.assertArrayEquals;
 // TODO figure out if needed
 @TestPropertySource("classpath:application.properties")
 @ActiveProfiles({"routeless", "test"})
-public class RotorTypeTest {
+public class ReflectorTest {
 
     @Test
     public void testCorrectConstructor() {
-        String correctLengthWiringsString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        RotorType expected = RotorType.NOOP;
-        expected.setWirings(Rotor.stringToWirings(correctLengthWiringsString));
-
-        assertArrayEquals(expected.getWirings(), RotorType.NOOP.getWirings());
+        ReflectorType expected = ReflectorType.NOOP;
+        // using getter for coverage
+        assertArrayEquals(expected.getReflector().getWirings(), ReflectorType.NOOP.getWirings());
     }
 
     @Test(expected = ScramblerSettingLengthException.class)
     public void testIncorrectLengthConstructor() throws ScramblerSettingException {
         String incorrectLengthString = "AABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        RotorType rotor = RotorType.II;
-        System.out.println("asd");
-        new Rotor(incorrectLengthString);
+        new Reflector(incorrectLengthString);
     }
 
     @Test(expected = ScramblerSettingWiringException.class)
     public void testIncorrectWiringConstructor() throws ScramblerSettingException {
         String incorrectWiringsString = "AACDEFGHIJKLMNOPQRSTUVWXYZ";
-        new Rotor(incorrectWiringsString);
+        new Reflector(incorrectWiringsString);
     }
 }

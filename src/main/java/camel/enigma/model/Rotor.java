@@ -4,84 +4,144 @@ import camel.enigma.exception.ScramblerSettingException;
 import camel.enigma.util.ScrambleResult;
 import camel.enigma.util.Util;
 
-import java.util.Arrays;
-import java.util.Optional;
+public class Rotor extends Scrambler {
 
-class Rotor extends Scrambler {
+    private static final char[] DEFAULT_NOTCH = new char[]{'Q'};
 
-    private char ringSetting;
-    private char offset = 'A';
+    private int ringSetting;
+    private char ringSettingAsChar;
+    private char[] notch;
+    private int offset;
+    private char offsetAsChar;
     private RotorType rotorType;
 
-    Rotor(String wirings) throws ScramblerSettingException {
-        validateWiringString(wirings);
-        this.wirings = stringToWirings(wirings);
+    private Rotor() throws ScramblerSettingException {
+        super();
+        offset = 0;
+        offsetAsChar = alphabet[offset];
+        notch = DEFAULT_NOTCH;
+    }
+
+    Rotor(RotorType rotorType) throws ScramblerSettingException {
+        this();
+        this.rotorType = rotorType;
+    }
+
+    public Rotor(String wiringString) throws ScramblerSettingException {
+        super(wiringString);
+        offset = 0;
+        offsetAsChar = alphabet[offset];
+        notch = DEFAULT_NOTCH;
+    }
+
+    public Rotor(String wiringString, char[] notch, RotorType rotorType) throws ScramblerSettingException {
+        this(wiringString);
+        this.notch = notch;
+        this.rotorType = rotorType;
+    }
+
+    public Rotor(String alphabetString, String wiringString) throws ScramblerSettingException {
+        super(alphabetString, wiringString);
+        offset = 0;
+        offsetAsChar = alphabet[offset];
+        notch = DEFAULT_NOTCH;
+    }
+
+    public Rotor(String alphabetString,
+                 String wiringString,
+                 char[] notch,
+                 RotorType rotorType) throws ScramblerSettingException {
+        this(alphabetString, wiringString);
+        this.notch = notch;
+        this.rotorType = rotorType;
     }
 
     @Override
     ScrambleResult scramble(ScrambleResult input) {
-        // TODO figure out offset here properly
-        // sfatic
         char inputPos = input.getResult();
-        char key = Util.wrapOverflow(inputPos + Util.offsetToIndex(offset));
+        char key = addOffset(inputPos);
         char value = get(key);
-        char outputPos = Util.wrapOverflow(value - Util.offsetToIndex(offset));
-        input.putResult(outputPos, rotorType.name(), key, value, offset);
-        return input;
-    }
-// TODO uh-oh
-// TODO BiMap?
-    @Override
-    ScrambleResult reverseScramble(ScrambleResult input) {
-        // TODO figure out offset here properly
-        char inputPos = input.getResult();
-        char key = Util.wrapOverflow(inputPos + Util.offsetToIndex(offset));
-        // TODO real impl
-        Optional<Character> valueOpt = Arrays.stream(wirings).filter(wiring -> key == wiring.getTarget()).map(Wiring::getSource).findAny();
-        char value = 0;
-        if (valueOpt.isPresent()) {
-            value = valueOpt.get();
-        } else {
-            System.out.println("null");
-        }
-        char outputPos = Util.wrapOverflow(value - Util.offsetToIndex(offset));
-        input.putResult(outputPos, rotorType.name(), key, value, offset);
+        char outputPos = subtractOffset(value);
+        input.putResult(outputPos, rotorType.name(), key, value, offset, offsetAsChar);
         return input;
     }
 
-    // TODO non-historical considerations?
-    // TODO I could just as well offset the source like in below implementation,
-    // TODO and maybe even consider the static entrypoint as source
+    private char addOffset(char inputPos) {
+        return addOffset(alphabet, inputPos, offset);
+    }
+
+    public static char addOffset(char[] alphabet, char inputPos, int offset) {
+        int indexOfInput = Util.indexOf(alphabet, inputPos);
+        int offsetKeyIndex = (indexOfInput + offset) % alphabet.length;
+        return alphabet[offsetKeyIndex];
+    }
+
+    private char subtractOffset(char inputPos) {
+        return subtractOffset(alphabet, inputPos, offset);
+    }
+
+    public static char subtractOffset(char[] alphabet, char inputPos, int offset) {
+        int indexOfInput = Util.indexOf(alphabet, inputPos);
+        int offsetKeyIndex = (indexOfInput - offset + alphabet.length) % alphabet.length;
+        return alphabet[offsetKeyIndex];
+    }
+
     @Override
-    void click() {
-        if (offset < 'Z') {
-            offset++;
-        } else if (offset == 'Z') {
-            offset = 'A';
+    ScrambleResult reverseScramble(ScrambleResult input) {
+        char inputPos = input.getResult();
+        char key = addOffset(inputPos);
+        // TODO real impl
+        char wiringSource = 0;
+        for (Wiring wiring : wirings) {
+            if (key == wiring.getTarget()) {
+                wiringSource = wiring.getSource();
+                break;
+            }
         }
+        char outputPos = subtractOffset(wiringSource);
+        input.putResult(outputPos, rotorType.name(), key, wiringSource, offset, offsetAsChar);
+        return input;
+    }
+
+    boolean click() {
+        boolean notchEngaged = isNotchEngaged();
+        offset = (offset == alphabet.length - 1) ? 0 : offset + 1;
+        offsetAsChar = alphabet[offset];
+        return notchEngaged;
+    }
+
+    public boolean isNotchEngaged() {
+        boolean result = false;
+        if (notch != null) {
+            result = Util.containsChar(notch, offsetAsChar);
+        }
+        return result;
     }
 
     // TODO develop better internal rotor state
-    // this is actually incrementing the ring setting
-//    void click() {
-//        for (int i = 0, wiringsLength = wirings.length; i < wiringsLength; i++) {
-//            Wiring wiring = wirings[i];
-//            Wiring nextWiring;
-//            if (i == wiringsLength - 1) {
-//                nextWiring = wirings[0];
-//            } else {
-//                nextWiring = wirings[i + 1];
-//            }
-//                wiring.setTarget(nextWiring.getTarget());
-//        }
-//    }
+    void setRing(int ringSetting) {
+        for (int i = 0, wiringsLength = wirings.length; i < wiringsLength; i++) {
+            Wiring wiring = wirings[i];
+            int offsetPos = (i + ringSetting) % wiringsLength;
+            Wiring offsetWiring = wirings[offsetPos];
+            wiring.setTarget(offsetWiring.getTarget());
+        }
+    }
 
-    public char getRingSetting() {
+    public int getRingSetting() {
         return ringSetting;
     }
 
-    public void setRingSetting(char ringSetting) {
+    public void setRingSetting(int ringSetting) {
         this.ringSetting = ringSetting;
+    }
+
+    public char getRingSettingAsChar() {
+        return ringSettingAsChar;
+    }
+
+    public void setRingSettingAsChar(char ringSettingAsChar) {
+        this.ringSettingAsChar = ringSettingAsChar;
     }
 
     public RotorType getRotorType() {
@@ -92,11 +152,34 @@ class Rotor extends Scrambler {
         this.rotorType = rotorType;
     }
 
-    public char getOffset() {
-        return offset;
+    public char getOffsetAsChar() {
+        return offsetAsChar;
+    }
+
+    public void setOffsetAsChar(char offsetAsChar) {
+        this.offsetAsChar = offsetAsChar;
+    }
+
+    public char[] getNotch() {
+        return notch;
+    }
+
+    public void setNotch(char[] notch) {
+        this.notch = notch;
     }
 
     public void setOffset(char offset) {
-        this.offset = offset;
+        this.offsetAsChar = offset;
+        int index = Util.indexOf(alphabet, offset);
+        if (index != -1) {
+            this.offset = index;
+        } else {
+            throw new IllegalArgumentException("invalid offset!");
+        }
+    }
+
+    @Override
+    public String toString() {
+        return super.toString();
     }
 }

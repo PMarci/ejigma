@@ -1,12 +1,12 @@
 package camel.enigma.model;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
@@ -16,23 +16,18 @@ import static org.junit.Assert.*;
 @ActiveProfiles({"routeless", "test"})
 public class ScramblerTest {
 
-    @Test
-    public void testWiringsToString() {
-        String reverseAlphabet = new StringBuilder(Scrambler.ALPHABET_STRING).reverse().toString();
-        Wiring[] reverseWiring = IntStream.range(0, Scrambler.ALPHABET.length).sequential()
-            .mapToObj(i -> new AbstractMap.SimpleEntry<>(Scrambler.ALPHABET[Scrambler.ALPHABET.length - i - 1], Scrambler.ALPHABET[i]))
-            .map(entry -> new Wiring(entry.getKey(), entry.getValue()))
-            .toArray(Wiring[]::new);
+    private Rotor errorRotor;
 
-        assertEquals(reverseAlphabet, Scrambler.wiringsToString(reverseWiring));
+    @Before
+    public void setUp() throws Exception {
+        String incorrectWiringsString = "A@CDEFGHIJKLMNOPQRSTUVWXYZ";
+        errorRotor = new Rotor(incorrectWiringsString);
     }
 
     // TODO maybe split up
     @Test
-    public void testImplementedMethods() throws Exception {
+    public void testImplementedMethods() {
         RotorType rotorTypeI = RotorType.I;
-        String incorrectWiringsString = "A@CDEFGHIJKLMNOPQRSTUVWXYZ";
-        Rotor errorRotor = new Rotor(incorrectWiringsString);
 
         assertEquals(26, errorRotor.size());
         assertFalse(errorRotor.containsKey('@'));
@@ -51,12 +46,20 @@ public class ScramblerTest {
         for (Wiring wiring : errorRotor.getWirings()) {
             assertNull(wiring);
         }
+
+        Rotor typeI = RotorType.I.getRotor();
+        Set<Character> defaultAlphabetSet = IntStream.range(0, Rotor.DEFAULT_ALPHABET.length).mapToObj(value -> Rotor.DEFAULT_ALPHABET[value]).collect(Collectors.toSet());
+        List<Character> typeIExpectedValues = typeI.getWiringString().chars().mapToObj(value -> (char) value).collect(Collectors.toList());
+        Collection<Character> typeIValues = typeI.values();
+        Set<Map.Entry<Character, Character>> typeIExpectedEntries = IntStream.range(0, Rotor.DEFAULT_ALPHABET.length).mapToObj(value -> new AbstractMap.SimpleEntry<>(typeI.alphabet[value], typeIExpectedValues.get(value))).collect(Collectors.toSet());
+
+        assertEquals(defaultAlphabetSet, typeI.keySet());
+        assertEquals(typeIExpectedValues, typeIValues);
+        assertEquals(typeIExpectedEntries, typeI.entrySet());
     }
 
     @Test
-    public void testPutAll() throws Exception {
-        String incorrectWiringsString = "A@CDEFGHIJKLMNOPQRSTUVWXYZ";
-        Rotor errorRotor = new Rotor(incorrectWiringsString);
+    public void testPutAll() {
         Map<Character, Character> wiringMap = new HashMap<>();
         wiringMap.put('B', '@');
         wiringMap.put('C', '&');
@@ -68,11 +71,27 @@ public class ScramblerTest {
         assertEquals((Character) '$', errorRotor.get('D'));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testPutAllSizeRestriction() throws Exception {
+    @Test
+    public void testOverlyComplicatedPutAll() throws Exception {
+        Rotor twoWireRotor = new Rotor("AB", "BA");
+        twoWireRotor.clear();
 
-        String incorrectWiringsString = "A@CDEFGHIJKLMNOPQRSTUVWXYZ";
-        Rotor errorRotor = new Rotor(incorrectWiringsString);
+        Map<Character, Character> wiringMap = new HashMap<>();
+        char source1 = 'B';
+        char source2 = 'C';
+        char target1 = '@';
+        char target2 = '&';
+        wiringMap.put(source1, target1);
+        wiringMap.put(source2, target2);
+
+        twoWireRotor.putAll(wiringMap);
+
+        assertEquals(((Character) target1), twoWireRotor.get(source1));
+        assertEquals(((Character) target2), twoWireRotor.get(source2));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testPutAllSizeRestriction() {
         Map<Character, Character> wiringMap = new HashMap<>();
         wiringMap.put('B', '@');
         wiringMap.put('C', '&');

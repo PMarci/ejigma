@@ -11,25 +11,40 @@ public enum ReflectorType {
 //     ABCDEFGHIJKLMNOPQRSTUVWXYZ
     C("FVPJIAOYEDRZXWGCTKUQSBNMHL"),
     // for testing
-    NOOP(Scrambler.ALPHABET_STRING),
-    ERROR("ABC");
+    NOOP(),
+    ERROR1("ABC"),
+    ERROR2("ABC", "ABCD"),
+    NOERROR2("ABC", "ABC");
 
     private Reflector reflector;
 
-    ReflectorType(String wirings) {
+    ReflectorType() {
         try {
-            this.reflector = new Reflector(wirings);
-            this.reflector.setReflectorType(this);
+            this.reflector = new Reflector(this);
         } catch (ScramblerSettingException ignored) {
+            // needed to handle constructor exception
         }
     }
 
-    public Wiring[] getWirings() {
-        return reflector.getWirings();
+    ReflectorType(String wiringString) {
+        try {
+            this.reflector = new Reflector(wiringString, this);
+        } catch (ScramblerSettingException ignored) {
+            // needed to handle constructor exception
+        }
     }
 
-    public void setWirings(Wiring[] wirings) {
-        reflector.setWirings(wirings);
+    ReflectorType(String alphabetString, String wiringString) {
+        try {
+            this.reflector = new Reflector(alphabetString, wiringString, this);
+        } catch (ScramblerSettingException ignored) {
+            // needed to handle constructor exception
+        }
+    }
+
+
+    public Wiring[] getWirings() {
+        return reflector.getWirings();
     }
 
     public Reflector getReflector() {

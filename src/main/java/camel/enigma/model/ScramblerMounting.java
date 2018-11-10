@@ -1,5 +1,7 @@
 package camel.enigma.model;
 
+import camel.enigma.util.ScrambleResult;
+
 public class ScramblerMounting {
 
     private Scrambler scrambler;
@@ -8,6 +10,10 @@ public class ScramblerMounting {
     public ScramblerMounting(Scrambler scrambler, boolean reverseWired) {
         this.scrambler = scrambler;
         this.reverseWired = reverseWired;
+    }
+
+    public ScrambleResult scramble(ScrambleResult input) {
+        return !reverseWired ? scrambler.scramble(input) : scrambler.reverseScramble(input);
     }
 
     public ScramblerMounting(Scrambler scrambler) {

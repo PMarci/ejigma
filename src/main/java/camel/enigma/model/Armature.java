@@ -1,5 +1,6 @@
 package camel.enigma.model;
 
+import camel.enigma.exception.ArmatureInitException;
 import camel.enigma.util.ScrambleResult;
 import org.apache.camel.Body;
 import org.apache.camel.Handler;
@@ -13,26 +14,53 @@ import java.util.stream.IntStream;
 @Component
 public class Armature {
 
-    private RotorType[] defaultRotorTypes = new RotorType[]{RotorType.III, RotorType.II, RotorType.I};
-    private ReflectorType defaultReflectorType = ReflectorType.B;
-    private Rotor[] rotors = initRotors(defaultRotorTypes);
-    private Reflector reflector = initReflector(defaultReflectorType);
-    private List<ScramblerMounting> scramblerWiring = initWirings(rotors, reflector);
+    // R to L
+    private static final RotorType[] DEFAULT_ROTOR_TYPES = new RotorType[]{RotorType.III, RotorType.II, RotorType.I};
+    private static final ReflectorType DEFAULT_REFLECTOR_TYPE = ReflectorType.B;
+    private Rotor[] rotors;
+    private Reflector reflector;
+    private List<ScramblerMounting> scramblerWiring;
+
+    public Armature() throws ArmatureInitException {
+        this(DEFAULT_ROTOR_TYPES, DEFAULT_REFLECTOR_TYPE);
+    }
+
+    public Armature(RotorType[] rotorTypes, ReflectorType reflectorType) throws ArmatureInitException {
+        int rotorWiringNo = validateRotors(rotorTypes);
+        rotors = initRotors(rotorTypes);
+        validateReflector(reflectorType, rotorWiringNo);
+        reflector = initReflector(reflectorType);
+        scramblerWiring = initWirings(rotors, reflector);
+    }
+
+    private int validateRotors(RotorType[] rotorTypes) throws ArmatureInitException {
+        int result = 0;
+        for (RotorType rotorType : rotorTypes) {
+            int current = rotorType.getRotor().getWirings().length;
+            if (result != 0) {
+                if (current != result) {
+                    throw new ArmatureInitException("rotor wiring no mismatch");
+                }
+            } else {
+                result = current;
+            }
+        }
+        return result;
+    }
+
+    private void validateReflector(ReflectorType reflectorType, int rotorWiringNo) throws ArmatureInitException {
+        if (reflectorType.getReflector().getWirings().length != rotorWiringNo) {
+            throw new ArmatureInitException("reflector wiring no mismatch");
+        }
+    }
 
     @Handler
     public ScrambleResult handle(@Body ScrambleResult scrambleResult) {
         ScrambleResult current = scrambleResult;
+        click();
         for (int i = 0; i < scramblerWiring.size(); i++) {
             ScramblerMounting scramblerMounting = scramblerWiring.get(i);
-            Scrambler scrambler = scramblerMounting.getScrambler();
-            if (i == 0) {
-                scrambler.click();
-            }
-            if (!scramblerMounting.isReverseWired()) {
-                current = scrambler.scramble(current);
-            } else {
-                current = scrambler.reverseScramble(current);
-            }
+            current = scramblerMounting.scramble(current);
             if (i == scramblerWiring.size() - 1) {
                 current.recordOutput();
             }
@@ -49,7 +77,7 @@ public class Armature {
     }
 
     private List<ScramblerMounting> initWirings(Rotor[] rotors, Reflector reflector) {
-        List<ScramblerMounting> resultList = IntStream.range(0, rotors.length * 2 + 1).sequential()
+        return IntStream.range(0, rotors.length * 2 + 1).sequential()
                 .mapToObj(value -> {
                     ScramblerMounting result;
                     if (value < rotors.length) {
@@ -62,7 +90,14 @@ public class Armature {
                     return result;
                 })
                 .collect(Collectors.toList());
+    }
 
-        return resultList;
+    private void click() {
+        boolean previousNotchEngaged = true;
+        for (Rotor rotor : rotors) {
+            if (previousNotchEngaged || rotor.isNotchEngaged()) {
+                previousNotchEngaged = rotor.click();
+            }
+        }
     }
 }

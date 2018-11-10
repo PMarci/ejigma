@@ -7,47 +7,66 @@ import camel.enigma.util.ScrambleResult;
 import camel.enigma.util.Util;
 
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-abstract class Scrambler implements Map<Character, Character> {
+public abstract class Scrambler implements Map<Character, Character> {
 
-    static final String ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    static final char[] ALPHABET = ALPHABET_STRING.toCharArray();
+    static final String DEFAULT_ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
+    private final String alphabetString;
+    final char[] alphabet;
 
+    private String wiringString;
     Wiring[] wirings;
+
+    public Scrambler() throws ScramblerSettingException {
+        this(DEFAULT_ALPHABET_STRING, DEFAULT_ALPHABET_STRING);
+    }
+
+    public Scrambler(String wiringString) throws ScramblerSettingException {
+        this.alphabetString = DEFAULT_ALPHABET_STRING;
+        this.alphabet = DEFAULT_ALPHABET;
+        validateWiringString(wiringString);
+        this.wiringString = wiringString;
+        this.wirings = stringToDefaultWirings(wiringString);
+    }
+
+    public Scrambler(String alphabetString, String wiringString) throws ScramblerSettingException {
+        this.alphabetString = alphabetString;
+        this.alphabet = this.alphabetString.toCharArray();
+        validateWiringString(wiringString);
+        this.wiringString = wiringString;
+        this.wirings = stringToWirings(wiringString);
+    }
 
     abstract ScrambleResult scramble(ScrambleResult input);
 
     abstract ScrambleResult reverseScramble(ScrambleResult input);
 
-    abstract void click();
-
-    static Wiring[] stringToWirings(String wirings) {
-        Wiring[] result = new Wiring[26];
+    static Wiring[] stringToDefaultWirings(String wirings) {
+        Wiring[] result = new Wiring[DEFAULT_ALPHABET.length];
         char[] wiringsChars = wirings.toCharArray();
         for (int i = 0, length = wiringsChars.length; i < length; i++) {
-            result[i] = new Wiring(Scrambler.ALPHABET[i], wiringsChars[i]);
+            result[i] = new Wiring(Scrambler.DEFAULT_ALPHABET[i], wiringsChars[i]);
         }
         return result;
     }
 
-    static String wiringsToString(Wiring[] wirings) {
-        return Arrays.stream(wirings).sequential()
-                .map(Wiring::getSource)
-                .collect(Collector.of(
-                        StringBuilder::new,
-                        StringBuilder::append,
-                        StringBuilder::append,
-                        StringBuilder::toString));
+    private Wiring[] stringToWirings(String wirings) {
+        Wiring[] result = new Wiring[alphabet.length];
+        char[] wiringsChars = wirings.toCharArray();
+        for (int i = 0, length = wiringsChars.length; i < length; i++) {
+            result[i] = new Wiring(alphabet[i], wiringsChars[i]);
+        }
+        return result;
     }
 
-    void validateWiringString(String string) throws ScramblerSettingException {
-        if (string.length() != 26) {
-            throw new ScramblerSettingLengthException("Wirings only accept 26 char strings!");
+    private void validateWiringString(String string) throws ScramblerSettingException {
+        if (string.length() != alphabet.length) {
+            throw new ScramblerSettingLengthException(String.format("Wirings only accept %d char strings!", alphabet.length));
         }
-        for (char c : Scrambler.ALPHABET) {
+        for (char c : alphabet) {
             int freq = countOccurrences(string, c);
             if (freq > 1) {
                 throw new ScramblerSettingWiringException("Scrambler wirings can only map each letter once!");
@@ -63,7 +82,7 @@ abstract class Scrambler implements Map<Character, Character> {
         this.wirings = wirings;
     }
 
-    protected int countOccurrences(String s, char inputChar) {
+    private int countOccurrences(String s, char inputChar) {
         int result = 0;
         for (char c : s.toCharArray()) {
             if (c == inputChar) {
@@ -196,15 +215,18 @@ abstract class Scrambler implements Map<Character, Character> {
         return Arrays.stream(wirings).sequential()
                 .filter(Objects::nonNull)
                 .map(Wiring::getTarget)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
     }
 
     @Override
     public Set<Entry<Character, Character>> entrySet() {
-
         return Arrays.stream(wirings).sequential()
                 .filter(Objects::nonNull)
                 .map(wiring -> new AbstractMap.SimpleEntry<>(wiring.getSource(), wiring.getTarget()))
                 .collect(Collectors.toSet());
+    }
+
+    public String getWiringString() {
+        return wiringString;
     }
 }

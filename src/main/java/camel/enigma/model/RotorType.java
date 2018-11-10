@@ -5,38 +5,51 @@ import camel.enigma.exception.ScramblerSettingException;
 
 public enum RotorType {
 
-//     ABCDEFGHIJKLMNOPQRSTUVWXYZ
-    I("EKMFLGDQVZNTOWYHXUSPAIBRCJ"),
-//      ABCDEFGHIJKLMNOPQRSTUVWXYZ
-    II("AJDKSIRUXBLHWTMCQGZNPYFVOE"),
-//       ABCDEFGHIJKLMNOPQRSTUVWXYZ
-    III("BDFHJLCPRTXVZNYEIWGAKMUSQO"),
+    //     ABCDEFGHIJKLMNOPQRSTUVWXYZ
+    I("EKMFLGDQVZNTOWYHXUSPAIBRCJ", new char[]{'Q'}),
+    //      ABCDEFGHIJKLMNOPQRSTUVWXYZ
+    II("AJDKSIRUXBLHWTMCQGZNPYFVOE", new char[]{'E'}),
+    //       ABCDEFGHIJKLMNOPQRSTUVWXYZ
+    III("BDFHJLCPRTXVZNYEIWGAKMUSQO", new char[]{'V'}),
+    IV("ESOVPZJAYQUIRHXLNFTGKDCMWB", new char[]{'J'}),
+    V("VZBRGITYUPSDNHLXAWMJQOFECK", new char[]{'Z'}),
+    VI("JPGVOUMFYQBENHZRDKASXLICTW", new char[]{'M', 'Z'}),
+    VII("NZJHGRCXMYSWBOUFAIVLPEKQDT", new char[]{'M', 'Z'}),
+    VIII("FKQHTLXOCBJSPDZRAMEWNIUYGV", new char[]{'M', 'Z'}),
     // for testing
-    NOOP(Scrambler.ALPHABET_STRING),
-    ERROR("ABC");
+    NOOP(),
+    ERROR1("ABCD", new char[]{'A'}),
+    ERROR2("ABC", "ABCD", new char[]{'A'}),
+    NOERROR("ABC", "ABC", new char[]{'A'});
 
     private Rotor rotor;
-    private char[] notch;
 
-    RotorType(String wirings) {
+    RotorType() {
         try {
-            this.rotor = new Rotor(wirings);
-            this.rotor.setRotorType(this);
-            // TODO what can be done here?
+            this.rotor = new Rotor(this);
         } catch (ScramblerSettingException ignored) {
+            // needed to handle constructor exception
+        }
+    }
+
+    RotorType(String wiringString, char[] notch) {
+        try {
+            this.rotor = new Rotor(wiringString, notch, this);
+        } catch (ScramblerSettingException ignored) {
+            // needed to handle constructor exception
+        }
+    }
+
+    RotorType(String alphabetString, String wiringString, char[] notch) {
+        try {
+            this.rotor = new Rotor(alphabetString, wiringString, notch, this);
+        } catch (ScramblerSettingException ignored) {
+            // needed to handle constructor exception
         }
     }
 
     public Rotor getRotor() {
         return rotor;
-    }
-
-    public char[] getNotch() {
-        return notch;
-    }
-
-    public void setNotch(char[] notch) {
-        this.notch = notch;
     }
 
     public Character get(Character key) {
@@ -45,9 +58,5 @@ public enum RotorType {
 
     public Wiring[] getWirings() {
         return rotor.getWirings();
-    }
-
-    public void setWirings(Wiring[] wirings) {
-        rotor.setWirings(wirings);
     }
 }
