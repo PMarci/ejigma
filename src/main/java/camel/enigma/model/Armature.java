@@ -1,6 +1,7 @@
 package camel.enigma.model;
 
 import camel.enigma.exception.ArmatureInitException;
+import camel.enigma.exception.ScramblerSettingException;
 import camel.enigma.util.ScrambleResult;
 import org.apache.camel.Body;
 import org.apache.camel.Handler;
@@ -23,14 +24,15 @@ public class Armature {
     private Reflector reflector;
     private List<ScramblerMounting> scramblerWiring;
 
-    public Armature() throws ArmatureInitException {
+    public Armature() throws ArmatureInitException, ScramblerSettingException {
         this(DEFAULT_ENTRY_WHEEL_TYPE, DEFAULT_ROTOR_TYPES, DEFAULT_REFLECTOR_TYPE);
-        rotors[0].setOffset('B');
-        rotors[1].setOffset('B');
-        rotors[2].setOffset('B');
+//        rotors[0].setOffset('B');
+//        rotors[1].setOffset('B');
+//        rotors[2].setOffset('B');
     }
 
-    public Armature(EntryWheelType entryWheelType, RotorType[] rotorTypes, ReflectorType reflectorType) throws ArmatureInitException {
+    public Armature(EntryWheelType entryWheelType, RotorType[] rotorTypes, ReflectorType reflectorType)
+        throws ArmatureInitException, ScramblerSettingException {
         int alphabetLength = validateEntryWheel(entryWheelType);
         entryWheel = initEntryWheel(entryWheelType);
         validateRotors(rotorTypes, alphabetLength);
@@ -74,16 +76,24 @@ public class Armature {
         }
     }
 
-    private EntryWheel initEntryWheel(EntryWheelType entryWheelType) {
-        return entryWheelType.getEntryWheel();
+    private EntryWheel initEntryWheel(EntryWheelType entryWheelType) throws ScramblerSettingException {
+        return entryWheelType.freshScrambler();
     }
 
     private Rotor[] initRotors(RotorType[] rotorTypes) {
-        return Arrays.stream(rotorTypes).sequential().map(RotorType::getRotor).toArray(Rotor[]::new);
+        return Arrays.stream(rotorTypes).sequential().map(rotorType -> {
+            try {
+                return rotorType.freshScrambler();
+            } catch (ScramblerSettingException e) {
+                // TODO fix
+                e.printStackTrace();
+                return null;
+            }
+        }).toArray(Rotor[]::new);
     }
 
-    private Reflector initReflector(ReflectorType reflectorType) {
-        return reflectorType.getReflector();
+    private Reflector initReflector(ReflectorType reflectorType) throws ScramblerSettingException {
+        return reflectorType.freshScrambler();
     }
 
     private List<ScramblerMounting> initWirings(EntryWheel entryWheel, Rotor[] rotors, Reflector reflector) {

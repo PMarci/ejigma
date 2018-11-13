@@ -5,16 +5,11 @@ import camel.enigma.util.Util;
 
 public class Rotor extends ScramblerWheel {
 
-    private static final char[] DEFAULT_NOTCH = new char[] { 'Q' };
+    static final char[] DEFAULT_NOTCH = new char[] { 'Q' };
 
     private int ringSetting;
     private char ringSettingAsChar;
     private char[] notch;
-
-    Rotor(ScramblerType scramblerType) throws ScramblerSettingException {
-        super(DEFAULT_ALPHABET_STRING, DEFAULT_ALPHABET_STRING, true, scramblerType);
-        notch = DEFAULT_NOTCH;
-    }
 
     // TODO remove tests and const if useless
     Rotor(String wiringString) throws ScramblerSettingException {
@@ -23,10 +18,6 @@ public class Rotor extends ScramblerWheel {
 
     Rotor(String wiringString, char[] notch, ScramblerType scramblerType) throws ScramblerSettingException{
         this(DEFAULT_ALPHABET_STRING, wiringString, notch, false, scramblerType);
-    }
-
-    Rotor(String alphabetString, String wiringString, char[] notch, ScramblerType scramblerType) throws ScramblerSettingException{
-        this(alphabetString, wiringString, notch, false, scramblerType);
     }
 
     private Rotor(

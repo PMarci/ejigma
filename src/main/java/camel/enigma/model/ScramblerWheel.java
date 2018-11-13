@@ -20,6 +20,16 @@ public abstract class ScramblerWheel extends Scrambler {
 
     protected abstract boolean isNotchEngaged();
 
+    private ScrambleResult scrambleInput(ScrambleResult input, int[] links) {
+        int inputPos = input.getResult();
+        int wrappedOffsetPos = (inputPos + offset) % alphabet.length;
+        char wiringInput = alphabet[wrappedOffsetPos];
+        int forwardLink = links[wrappedOffsetPos];
+        char wiringOutput = alphabet[forwardLink];
+        int outputPos = (forwardLink - offset + alphabet.length) % alphabet.length;
+        return input.putResult(outputPos, wiringInput, wiringOutput, wiringOutput, type.getName(), offset, offsetAsChar);
+    }
+
     boolean click() {
         boolean result = false;
         if (!staticc) {
@@ -30,45 +40,6 @@ public abstract class ScramblerWheel extends Scrambler {
         return result;
     }
 
-    @Override
-    ScrambleResult scramble(ScrambleResult input) {
-        int inputPos = input.getResult();
-        int wrappedOffsetPos = (inputPos + offset) % alphabet.length;
-        char wiringInput = alphabet[wrappedOffsetPos];
-        int forwardLink = forwardLinks[wrappedOffsetPos];
-        char wiringOutput = alphabet[forwardLink];
-        int outputPos = (forwardLink - offset + alphabet.length) % alphabet.length;
-        return input.putResult(outputPos, wiringInput, wiringOutput, wiringOutput, type.getName(), offset, offsetAsChar);
-    }
-
-    @Override
-    ScrambleResult reverseScramble(ScrambleResult input) {
-        int inputPos = input.getResult();
-        int wrappedOffsetPos = (inputPos + offset) % alphabet.length;
-        char wiringInput = alphabet[wrappedOffsetPos];
-        int reverseLink = reverseLinks[wrappedOffsetPos];
-        char wiringOutput = alphabet[reverseLink];
-        int outputPos = (reverseLink - offset + alphabet.length) % alphabet.length;
-        return input.putResult(outputPos, wiringInput, wiringOutput, wiringOutput, type.getName(), offset, offsetAsChar);
-    }
-
-    @Override
-    void setWiring(String alphabetString, String wiringString) {
-        this.forwardLinks = new int[alphabetString.length()];
-        this.reverseLinks = new int[alphabetString.length()];
-        char[] alphabetArray = alphabetString.toCharArray();
-        char[] wiringArray = wiringString.toCharArray();
-        for (int i = 0, alphabetArrayLength = alphabetArray.length; i < alphabetArrayLength; i++) {
-            char target = wiringArray[i];
-            char source = alphabetArray[i];
-            int outputAddress = alphabetString.indexOf(target);
-            int inputAddress = wiringString.indexOf(source);
-            this.forwardLinks[i] = outputAddress;
-            this.reverseLinks[i] = inputAddress;
-        }
-
-    }
-
     public void setOffset(char offset) {
         this.offsetAsChar = offset;
         int index = Util.indexOf(alphabet, offset);
@@ -77,5 +48,32 @@ public abstract class ScramblerWheel extends Scrambler {
         } else {
             throw new IllegalArgumentException("invalid offset!");
         }
+    }
+
+    @Override
+    ScrambleResult scramble(ScrambleResult input) {
+        return scrambleInput(input, forwardLinks);
+    }
+
+    @Override
+    ScrambleResult reverseScramble(ScrambleResult input) {
+        return scrambleInput(input, reverseLinks);
+    }
+
+    @Override
+    void setWiring(String alphabetString, String wiringString) {
+        this.forwardLinks = new int[alphabetString.length()];
+        this.reverseLinks = new int[alphabetString.length()];
+        char[] alphabetArray = alphabetString.toCharArray();
+        char[] wiringArray = wiringString.toCharArray();
+        for (int i = 0, alphabetLength = alphabetArray.length; i < alphabetLength; i++) {
+            char target = wiringArray[i];
+            char source = alphabetArray[i];
+            int outputAddress = alphabetString.indexOf(target);
+            int inputAddress = wiringString.indexOf(source);
+            this.forwardLinks[i] = outputAddress;
+            this.reverseLinks[i] = inputAddress;
+        }
+
     }
 }

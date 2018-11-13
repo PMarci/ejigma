@@ -3,7 +3,8 @@ package camel.enigma.model;
 
 import camel.enigma.exception.ScramblerSettingException;
 
-public enum RotorType implements ScramblerType {
+// TODO what to keep
+public enum RotorType implements ScramblerType<RotorType, Rotor> {
 
     //     ABCDEFGHIJKLMNOPQRSTUVWXYZ
     I("EKMFLGDQVZNTOWYHXUSPAIBRCJ", new char[]{'Q'}),
@@ -23,29 +24,53 @@ public enum RotorType implements ScramblerType {
     NOERROR("ABC", "ABC", new char[]{'A'});
 
     private Rotor rotor;
+    private final String alphabetString;
+    private final String wiringString;
+    private final char[] notch;
 
     RotorType() {
+        this.alphabetString = Scrambler.DEFAULT_ALPHABET_STRING;
+        this.wiringString = Scrambler.DEFAULT_ALPHABET_STRING;
+        this.notch = Rotor.DEFAULT_NOTCH;
         try {
-            this.rotor = new Rotor(this);
+            fresh();
         } catch (ScramblerSettingException ignored) {
             // needed to handle constructor exception
         }
     }
 
     RotorType(String wiringString, char[] notch) {
+        this.alphabetString = Scrambler.DEFAULT_ALPHABET_STRING;
+        this.wiringString = wiringString;
+        this.notch = notch;
         try {
-            this.rotor = new Rotor(wiringString, notch, this);
+            fresh();
         } catch (ScramblerSettingException ignored) {
             // needed to handle constructor exception
         }
     }
 
     RotorType(String alphabetString, String wiringString, char[] notch) {
+        this.alphabetString = alphabetString;
+        this.wiringString = wiringString;
+        this.notch = notch;
         try {
-            this.rotor = new Rotor(alphabetString, wiringString, notch, this);
+            fresh();
         } catch (ScramblerSettingException ignored) {
             // needed to handle constructor exception
         }
+    }
+
+    @Override
+    public RotorType fresh() throws ScramblerSettingException {
+        this.rotor = new Rotor(wiringString, notch, this);
+        return this;
+    }
+
+    @Override
+    public Rotor freshScrambler() throws ScramblerSettingException {
+        this.rotor = new Rotor(wiringString, notch, this);
+        return rotor;
     }
 
     public Rotor getRotor() {
