@@ -13,6 +13,8 @@ import static org.junit.Assert.assertEquals;
 @ActiveProfiles({ "routeless", "test" })
 public class ArmatureTest {
 
+    private final String thirtyAs = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+    private final String wikiResult30 = "BDZGOWCXLTKSBTMCDLPBMUQOFXYHCX";
     private Armature wikiArmature;
 
     @Before
@@ -23,19 +25,18 @@ public class ArmatureTest {
     @Test
     public void testHandle() {
 
-        String inputString = "AAAAA";
+        String inputString = thirtyAs.substring(0, 5);
         String output = encryptString(inputString, wikiArmature);
 
-        assertEquals("BDZGO", output);
+        assertEquals(wikiResult30.substring(0, 5), output);
     }
 
     @Test
     public void testHandleABitLonger() {
 
-        String inputString = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-        String output = encryptString(inputString, wikiArmature);
+        String output = encryptString(thirtyAs, wikiArmature);
 
-        assertEquals("BDZGOWCXLTKSBTMCDLPBMUQOFXYHCX", output);
+        assertEquals(wikiResult30, output);
     }
 
     @Test
@@ -48,18 +49,15 @@ public class ArmatureTest {
 
         String output = encryptString(inputString, wikiArmature);
 
-        String expected = "BDZGOWCXLTKSBTMCDLPBMUQOFXYHCX";
-        assertEquals(expected, output.substring(16250, 16280));
+        assertEquals(wikiResult30, output.substring(16250, 16280));
     }
 
     @Test
     public void testReciprocity() {
-        StringBuilder sb = new StringBuilder();
 
-        String expxected = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-        String encrypted = "BDZGOWCXLTKSBTMCDLPBMUQOFXYHCX";
-        String output = encryptString(encrypted, wikiArmature);
-        assertEquals(expxected, output);
+        String output = encryptString(wikiResult30, wikiArmature);
+
+        assertEquals(thirtyAs, output);
     }
 
     private static String encryptString(String inputString, Armature armature) {

@@ -2,8 +2,7 @@ package camel.enigma.model;
 
 import camel.enigma.exception.ScramblerSettingException;
 
-// TODO what to keep
-public enum ReflectorType implements ScramblerType<ReflectorType, Reflector> {
+public enum ReflectorType implements ScramblerType<Reflector> {
 
     //     ABCDEFGHIJKLMNOPQRSTUVWXYZ
     A("EJMZALYXVBWFCRQUONTSPIKHGD"),
@@ -25,7 +24,7 @@ public enum ReflectorType implements ScramblerType<ReflectorType, Reflector> {
         this.alphabetString = Scrambler.DEFAULT_ALPHABET_STRING;
         this.wiringString = Scrambler.DEFAULT_ALPHABET_STRING;
         try {
-            fresh();
+            freshScrambler();
         } catch (ScramblerSettingException ignored) {
             // needed to handle constructor exception
         }
@@ -35,7 +34,7 @@ public enum ReflectorType implements ScramblerType<ReflectorType, Reflector> {
         this.alphabetString = Scrambler.DEFAULT_ALPHABET_STRING;
         this.wiringString = wiringString;
         try {
-            fresh();
+            freshScrambler();
         } catch (ScramblerSettingException ignored) {
             // needed to handle constructor exception
         }
@@ -45,16 +44,10 @@ public enum ReflectorType implements ScramblerType<ReflectorType, Reflector> {
         this.alphabetString = alphabetString;
         this.wiringString = wiringString;
         try {
-            fresh();
+            freshScrambler();
         } catch (ScramblerSettingException ignored) {
             // needed to handle constructor exception
         }
-    }
-
-    @Override
-    public ReflectorType fresh() throws ScramblerSettingException {
-        freshReflector();
-        return this;
     }
 
     @Override

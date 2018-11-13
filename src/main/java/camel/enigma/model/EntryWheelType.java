@@ -2,8 +2,7 @@ package camel.enigma.model;
 
 import camel.enigma.exception.ScramblerSettingException;
 
-// TODO what to keep
-public enum EntryWheelType implements ScramblerType<EntryWheelType, EntryWheel> {
+public enum EntryWheelType implements ScramblerType<EntryWheel> {
     ENIGMA_I(Scrambler.DEFAULT_ALPHABET_STRING);
 
     private EntryWheel entryWheel;
@@ -12,16 +11,10 @@ public enum EntryWheelType implements ScramblerType<EntryWheelType, EntryWheel> 
     EntryWheelType(String wiringString) {
         try {
             this.wiringString = wiringString;
-            fresh();
+            freshScrambler();
         } catch (ScramblerSettingException ignored) {
             // needed to handle constructor exception
         }
-    }
-
-    @Override
-    public EntryWheelType fresh() throws ScramblerSettingException {
-        freshEntryWheel();
-        return this;
     }
 
     @Override

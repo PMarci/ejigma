@@ -20,7 +20,7 @@ public class Rotor extends ScramblerWheel {
         this(DEFAULT_ALPHABET_STRING, wiringString, notch, false, scramblerType);
     }
 
-    private Rotor(
+    Rotor(
         String alphabetString,
         String wiringString,
         char[] notch,
