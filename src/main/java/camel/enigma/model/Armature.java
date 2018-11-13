@@ -56,9 +56,9 @@ public class Armature {
         return current;
     }
 
-    private int validateEntryWheel(EntryWheelType entryWheelType) {
+    private int validateEntryWheel(EntryWheelType entryWheelType) throws ScramblerSettingException {
         // TODO do other stuff
-        return entryWheelType.getEntryWheel().alphabet.length;
+        return entryWheelType.freshScrambler().alphabet.length;
     }
 
     private void validateRotors(RotorType[] rotorTypes, int alphabetLength) throws ArmatureInitException {

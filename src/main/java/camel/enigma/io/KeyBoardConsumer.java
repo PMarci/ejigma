@@ -64,8 +64,8 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
         while (isRunAllowed()) {
             input = ((char) RawConsoleInput.read(true));
             if (input == 3) {
-                // TODO look at what the Unix version does
                 RawConsoleInput.resetConsoleMode();
+                System.out.printf("%n");
                 log.info("\nReceived SIGINT via Ctrl+C, stopping console listening...");
                 break;
             }

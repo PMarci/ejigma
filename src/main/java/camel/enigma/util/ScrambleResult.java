@@ -2,6 +2,7 @@ package camel.enigma.util;
 
 import camel.enigma.io.KeyBoardEndpoint;
 import camel.enigma.model.Rotor;
+import camel.enigma.model.Scrambler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,25 @@ public class ScrambleResult {
     public ScrambleResult(Character resultAsChar) {
         history = new ArrayList<>();
         putResult(0, resultAsChar, resultAsChar, resultAsChar, INPUT_STRING, 0, 'A');
+        putDefaultCharInputToIntResult();
+    }
+
+    public void putDefaultCharInputToIntResult() {
+        putDefaultCharInputToIntResult(this);
+    }
+
+    public void putCharInputToIntResult(String alphabetString) {
+        putCharInputToIntResult(alphabetString, this);
+    }
+
+    public static ScrambleResult putDefaultCharInputToIntResult(ScrambleResult input) {
+        return putCharInputToIntResult(Scrambler.DEFAULT_ALPHABET_STRING, input);
+    }
+
+    public static ScrambleResult putCharInputToIntResult(String alphabetString, ScrambleResult input) {
+        int wheelPos = alphabetString.indexOf(input.getResultAsChar());
+        input.setResult(wheelPos);
+        return input;
     }
 
     public char getResultAsChar() {

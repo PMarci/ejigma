@@ -8,14 +8,14 @@ import camel.enigma.util.ScrambleResult;
 
 import static java.util.Objects.requireNonNull;
 
-abstract class Scrambler {
+public abstract class Scrambler {
 
-    static final String DEFAULT_ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    public static final String DEFAULT_ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
     final ScramblerType type;
     final String alphabetString;
 
-    private String wiringString;
+    String wiringString;
 
     final char[] alphabet;
     int[] forwardLinks;
@@ -28,14 +28,15 @@ abstract class Scrambler {
         this.alphabet = this.alphabetString.toCharArray();
         validateWiringString(wiringString);
         this.wiringString = wiringString;
-        initWiring();
     }
 
-    private void initWiring() {
+    void initWiring() {
         setWiring(alphabetString, wiringString);
     }
 
     abstract void setWiring(String alphabetString, String wiringString);
+
+    protected abstract ScrambleResult scrambleInput(ScrambleResult input, int[] links);
 
     abstract ScrambleResult scramble(ScrambleResult input);
 
@@ -52,7 +53,7 @@ abstract class Scrambler {
         }
     }
 
-    private void validateWiringString(String wiringString) throws ScramblerSettingException {
+    void validateWiringString(String wiringString) throws ScramblerSettingException {
         if (wiringString.length() != alphabet.length) {
             throw new ScramblerSettingLengthException(String.format("Wirings only accept %d char strings!", alphabet.length));
         }

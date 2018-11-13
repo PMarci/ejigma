@@ -13,6 +13,7 @@ public abstract class ScramblerWheel extends Scrambler {
     ScramblerWheel(String alphabetString, String wiringString, boolean staticc, ScramblerType scramblerType)
         throws ScramblerSettingException {
         super(alphabetString, wiringString, scramblerType);
+        initWiring();
         offset = 0;
         offsetAsChar = alphabet[offset];
         this.staticc = staticc;
@@ -20,13 +21,14 @@ public abstract class ScramblerWheel extends Scrambler {
 
     protected abstract boolean isNotchEngaged();
 
-    private ScrambleResult scrambleInput(ScrambleResult input, int[] links) {
+    @Override
+    protected ScrambleResult scrambleInput(ScrambleResult input, int[] links) {
         int inputPos = input.getResult();
         int wrappedOffsetPos = (inputPos + offset) % alphabet.length;
         char wiringInput = alphabet[wrappedOffsetPos];
-        int forwardLink = links[wrappedOffsetPos];
-        char wiringOutput = alphabet[forwardLink];
-        int outputPos = (forwardLink - offset + alphabet.length) % alphabet.length;
+        int link = links[wrappedOffsetPos];
+        char wiringOutput = alphabet[link];
+        int outputPos = (link - offset + alphabet.length) % alphabet.length;
         return input.putResult(outputPos, wiringInput, wiringOutput, wiringOutput, type.getName(), offset, offsetAsChar);
     }
 

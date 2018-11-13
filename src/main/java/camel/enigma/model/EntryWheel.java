@@ -15,13 +15,8 @@ public class EntryWheel extends ScramblerWheel {
 
     @Override
     ScrambleResult scramble(ScrambleResult input) {
-        initWheelPosition(input);
+        input.putCharInputToIntResult(alphabetString);
         return super.scramble(input);
-    }
-
-    private void initWheelPosition(ScrambleResult input) {
-        int wheelPos = alphabetString.indexOf(input.getResultAsChar());
-        input.setResult(wheelPos);
     }
 
     @Override

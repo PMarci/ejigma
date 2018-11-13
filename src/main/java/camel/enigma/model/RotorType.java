@@ -63,14 +63,18 @@ public enum RotorType implements ScramblerType<RotorType, Rotor> {
 
     @Override
     public RotorType fresh() throws ScramblerSettingException {
-        this.rotor = new Rotor(wiringString, notch, this);
+        freshRotor();
         return this;
     }
 
     @Override
     public Rotor freshScrambler() throws ScramblerSettingException {
-        this.rotor = new Rotor(wiringString, notch, this);
+        freshRotor();
         return rotor;
+    }
+
+    private void freshRotor() throws ScramblerSettingException {
+        this.rotor = new Rotor(wiringString, notch, this);
     }
 
     public Rotor getRotor() {

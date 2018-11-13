@@ -53,14 +53,18 @@ public enum ReflectorType implements ScramblerType<ReflectorType, Reflector> {
 
     @Override
     public ReflectorType fresh() throws ScramblerSettingException {
-        this.reflector = new Reflector(alphabetString, wiringString, this);
+        freshReflector();
         return this;
     }
 
     @Override
     public Reflector freshScrambler() throws ScramblerSettingException {
-        this.reflector = new Reflector(alphabetString, wiringString, this);
+        freshReflector();
         return reflector;
+    }
+
+    private void freshReflector() throws ScramblerSettingException {
+        this.reflector = new Reflector(alphabetString, wiringString, this);
     }
 
     public Reflector getReflector() {
