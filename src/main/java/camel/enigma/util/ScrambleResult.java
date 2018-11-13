@@ -53,13 +53,13 @@ public class ScrambleResult {
     }
 
     public ScrambleResult putResult(
-        int result,
-        char wiringInput,
-        char wiringOutput,
-        char resultAsChar,
-        String stepId,
-        int offset,
-        char offsetAsChar) {
+            int result,
+            char wiringInput,
+            char wiringOutput,
+            char resultAsChar,
+            String stepId,
+            int offset,
+            char offsetAsChar) {
 
         this.result = result;
         this.resultAsChar = resultAsChar;
@@ -69,11 +69,11 @@ public class ScrambleResult {
     }
 
     public ScrambleResult putResult(
-        int result,
-        char wiringInput,
-        char wiringOutput,
-        char resultAsChar,
-        String stepId) {
+            int result,
+            char wiringInput,
+            char wiringOutput,
+            char resultAsChar,
+            String stepId) {
 
         this.result = result;
         this.resultAsChar = resultAsChar;
@@ -81,7 +81,11 @@ public class ScrambleResult {
         return this;
     }
 
-    private void addHistoryEntry(char wiringInput, char wiringOutput, String stepId, Integer offset, Character offsetAsChar) {
+    private void addHistoryEntry(char wiringInput,
+                                 char wiringOutput,
+                                 String stepId,
+                                 Integer offset,
+                                 Character offsetAsChar) {
         HistoryEntry newEntry = generateHistoryEntry(wiringInput, wiringOutput, stepId);
         newEntry.setOffset(offset);
         newEntry.setOffsetAsChar(offsetAsChar);
@@ -103,7 +107,7 @@ public class ScrambleResult {
         }
         int passNo = (passNoString != null) ? Integer.valueOf(passNoString) : 0;
         boolean stepVisited = history.stream().sequential()
-            .anyMatch(historyEntry -> historyEntry.getStationId().equals(stepId));
+                .anyMatch(historyEntry -> historyEntry.getStationId().equals(stepId));
         HistoryEntry newEntry;
         if (!stepVisited) {
             newEntry = new HistoryEntry(wiringInput, wiringOutput, stepId);
@@ -122,9 +126,9 @@ public class ScrambleResult {
         // TODO figure out association with keyboard/output
         Integer lastOffset = last.getOffset();
         HistoryEntry newEntry = new HistoryEntry(
-            lastValue,
-            Rotor.subtractOffset(KeyBoardEndpoint.DEFAULT_ALPHABET, lastValue, lastOffset),
-            OUTPUT_STRING);
+                lastValue,
+                Rotor.subtractOffset(KeyBoardEndpoint.DEFAULT_ALPHABET, lastValue, lastOffset),
+                OUTPUT_STRING);
         if (lastOffset != null) {
             newEntry.setOffset(lastOffset);
         }
@@ -138,9 +142,9 @@ public class ScrambleResult {
         StringBuilder sb = new StringBuilder();
         int historySize = history.size();
         int lastOutputIndex = (historySize > 0) ?
-            Util.indexOf(Scrambler.DEFAULT_ALPHABET, history.get(historySize - 1).getWiringOutput()) :
-            0;
-        for (int i = 0; i < historySize || i < HistoryEntry.height; i++) {
+                              Util.indexOf(Scrambler.DEFAULT_ALPHABET, history.get(historySize - 1).getWiringOutput()) :
+                              0;
+        for (int i = 0; i < historySize || i < HistoryEntry.HEIGHT; i++) {
             HistoryEntry historyEntry;
             String historyEntryString = "";
             if (i < historySize) {
@@ -151,10 +155,8 @@ public class ScrambleResult {
             }
             List<String> letterLines = HistoryEntry.letters[lastOutputIndex];
             String line = (i < letterLines.size()) ? letterLines.get(i) : "";
-            sb.append(HistoryEntry.pad(historyEntryString, HistoryEntry.secondPadding));
-            if (line != null) {
-                sb.append(line);
-            }
+            sb.append(HistoryEntry.pad(historyEntryString, HistoryEntry.SECOND_PADDING));
+            sb.append(line);
             sb.append('\n');
         }
         return sb.toString();
@@ -188,10 +190,10 @@ public class ScrambleResult {
 
         private static final List[] letters = initLetters();
 
-        private static final int height = 15;
+        private static final int HEIGHT = 15;
 
-        private static final int padding = 20;
-        private static final int secondPadding = 45;
+        private static final int PADDING = 20;
+        private static final int SECOND_PADDING = 45;
         private char wiringInput;
 
         private char wiringOutput;
@@ -219,15 +221,15 @@ public class ScrambleResult {
                 }
             }
             String wiringPart =
-                ((terminal == -1) ? ":::::> " : wiringInput) +
-                    ((terminal == 0) ? " :::> " : "") +
-                    ((terminal == 1) ? " :::::>" : wiringOutput);
+                    ((terminal == -1) ? ":::::> " : wiringInput) +
+                            ((terminal == 0) ? " :::> " : "") +
+                            ((terminal == 1) ? " :::::>" : wiringOutput);
             String mainPart = stationId + pad(stationId) + " : " + wiringPart;
             return ((getOffsetAsChar() != null) ? mainPart + ", offset = " + offsetAsChar : mainPart);
         }
 
         private static String pad(String s) {
-            return pad(s, padding);
+            return pad(s, PADDING);
         }
 
         private static String pad(String s, int padding) {
