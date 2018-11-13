@@ -6,6 +6,8 @@ import org.apache.camel.builder.RouteBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import static org.apache.camel.builder.PredicateBuilder.not;
+
 @Component
 public class EnigmaRouteBuilder extends RouteBuilder {
 
@@ -29,8 +31,11 @@ public class EnigmaRouteBuilder extends RouteBuilder {
                 .choice()
                     .when(exchangeProperty("detailMode"))
                         .setBody(exchange -> exchange.getIn().getBody(ScrambleResult.class).printHistory())
-                    .otherwise()
+                    .endChoice()
+                    .when(not(exchangeProperty("resetOffsets")))
                         .setBody(exchange -> exchange.getIn().getBody(ScrambleResult.class).getResultAsChar())
+                    .otherwise()
+                        .stop()
                 .end()
                 .to("stream:out")
         ;

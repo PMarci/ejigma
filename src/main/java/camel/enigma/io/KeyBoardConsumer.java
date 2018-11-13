@@ -27,8 +27,8 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
         super.doStart();
 
         executor = endpoint.getCamelContext()
-            .getExecutorServiceManager()
-            .newSingleThreadExecutor(this, endpoint.getEndpointUri());
+                .getExecutorServiceManager()
+                .newSingleThreadExecutor(this, endpoint.getEndpointUri());
         executor.execute(this);
 
     }
@@ -69,15 +69,25 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
             lastInput = input;
             input = ((char) RawConsoleInput.read(true));
             if (input == 3) {
-                RawConsoleInput.resetConsoleMode();
                 System.out.printf("%n");
-                log.info("\nReceived SIGINT via Ctrl+C, stopping console listening...");
-                break;
+                do {
+                    log.info("\nReceived SIGINT via Ctrl+C, stop console listening?y/n");
+                    input = ((char) RawConsoleInput.read(true));
+                } while (input != 'y' && input != 'Y' && input != 'n' && input != 'N');
+                if (input == 'y' || input == 'Y') {
+                    RawConsoleInput.resetConsoleMode();
+                    log.info("\nExiting read loop...");
+                    break;
+                } else {
+                    log.info("\nResuming...");
+                }
             } else if (input == 2) {
+                System.out.printf("%n");
                 log.info("\nReceived Ctrl+B, toggling detail mode...");
                 detailMode = !detailMode;
                 RawConsoleInput.resetConsoleMode();
             } else if (input == 18) {
+                System.out.printf("%n");
                 log.info("\nReceived Ctrl+R, resetting offsets...");
                 input = lastInput;
                 resetOffsets = true;

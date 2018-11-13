@@ -63,7 +63,7 @@ public class ArmatureTest {
     private static String encryptString(String inputString, Armature armature) {
         return inputString.codePoints().sequential()
             .mapToObj(i -> new ScrambleResult(((char) i)))
-            .mapToInt(scrambleResult -> armature.handle(scrambleResult).getResultAsChar())
+            .mapToInt(scrambleResult -> armature.handle(scrambleResult, false).getResultAsChar())
             .collect(
                 StringBuilder::new,
                 StringBuilder::appendCodePoint,
