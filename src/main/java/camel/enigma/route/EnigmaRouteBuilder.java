@@ -22,10 +22,9 @@ public class EnigmaRouteBuilder extends RouteBuilder {
 
         // TODO maybe look into making this resolve using spring too
         from("keyboard?debugMode=" + /*"{{input.debug}}" */ debugMode)
-//                .setBody(simple("Key hit: ${body}"))
                 .setBody(exchange -> new ScrambleResult(exchange.getIn().getBody(Character.class)))
                 .bean(Armature.class)
-                .setBody(exchange -> exchange.getIn().getBody(ScrambleResult.class).getResult())
+                .setBody(exchange -> exchange.getIn().getBody(ScrambleResult.class).getResultAsChar())
                 .to("stream:out")
         ;
     }

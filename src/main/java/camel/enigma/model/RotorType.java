@@ -3,7 +3,7 @@ package camel.enigma.model;
 
 import camel.enigma.exception.ScramblerSettingException;
 
-public enum RotorType {
+public enum RotorType implements ScramblerType {
 
     //     ABCDEFGHIJKLMNOPQRSTUVWXYZ
     I("EKMFLGDQVZNTOWYHXUSPAIBRCJ", new char[]{'Q'}),
@@ -52,11 +52,8 @@ public enum RotorType {
         return rotor;
     }
 
-    public Character get(Character key) {
-        return rotor.get(key);
-    }
-
-    public Wiring[] getWirings() {
-        return rotor.getWirings();
+    @Override
+    public String getName() {
+        return this.name();
     }
 }

@@ -16,8 +16,8 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
 
     private static final Logger LOG = LoggerFactory.getLogger(KeyBoardEndpoint.class);
 
-    static final String DEFAULT_ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    protected static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
+    private static final String DEFAULT_ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    public static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
 
     private final char[] alphabet;
     private Charset charset;

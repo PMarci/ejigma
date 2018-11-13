@@ -3,44 +3,27 @@ package camel.enigma.model;
 import camel.enigma.exception.ScramblerSettingException;
 import camel.enigma.util.ScrambleResult;
 
-class Reflector extends Scrambler {
+class Reflector extends ScramblerWheel {
 
-    private ReflectorType reflectorType;
-
-    public Reflector() throws ScramblerSettingException {
-        super();
+    Reflector() throws ScramblerSettingException {
+        super(DEFAULT_ALPHABET_STRING, DEFAULT_ALPHABET_STRING, true, RotorType.NOOP);
     }
 
-    public Reflector(ReflectorType reflectorType) throws ScramblerSettingException {
-        super();
-        this.reflectorType = reflectorType;
+    // TODO remove tests and const if useless
+    Reflector(String wiringString) throws ScramblerSettingException {
+        this(DEFAULT_ALPHABET_STRING, wiringString, true, RotorType.NOOP);
     }
 
-    public Reflector(String wiringString) throws ScramblerSettingException {
-        super(wiringString);
+    Reflector(String wiringString, ScramblerType scramblerType) throws ScramblerSettingException {
+        this(DEFAULT_ALPHABET_STRING, wiringString, true, scramblerType);
     }
 
-    public Reflector(String wiringString, ReflectorType reflectorType) throws ScramblerSettingException {
-        super(wiringString);
-        this.reflectorType = reflectorType;
+    Reflector(String alphabetString, String wiringString, ScramblerType scramblerType) throws ScramblerSettingException {
+        this(alphabetString, wiringString, true, scramblerType);
     }
 
-    public Reflector(String alphabetString, String wiringString) throws ScramblerSettingException {
-        super(alphabetString, wiringString);
-    }
-
-    public Reflector(String alphabetString, String wiringString, ReflectorType reflectorType) throws ScramblerSettingException {
-        super(alphabetString, wiringString);
-        this.reflectorType = reflectorType;
-    }
-
-    @Override
-    ScrambleResult scramble(ScrambleResult input) {
-        char key = input.getResult();
-        char value = get(key);
-        // TODO better default
-        input.putResult(value, reflectorType.name(),key, value,0, '@');
-        return input;
+    private Reflector(String alphabetString, String wiringString, boolean staticc, ScramblerType scramblerType) throws ScramblerSettingException {
+        super(alphabetString, wiringString, staticc, scramblerType);
     }
 
     @Override
@@ -48,11 +31,8 @@ class Reflector extends Scrambler {
         return scramble(input);
     }
 
-    public ReflectorType getReflectorType() {
-        return reflectorType;
-    }
-
-    public void setReflectorType(ReflectorType reflectorType) {
-        this.reflectorType = reflectorType;
+    @Override
+    public boolean isNotchEngaged() {
+        return false;
     }
 }

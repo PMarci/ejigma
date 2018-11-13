@@ -2,7 +2,7 @@ package camel.enigma.model;
 
 import camel.enigma.exception.ScramblerSettingException;
 
-public enum ReflectorType {
+public enum ReflectorType implements ScramblerType{
 
 //     ABCDEFGHIJKLMNOPQRSTUVWXYZ
     A("EJMZALYXVBWFCRQUONTSPIKHGD"),
@@ -20,7 +20,7 @@ public enum ReflectorType {
 
     ReflectorType() {
         try {
-            this.reflector = new Reflector(this);
+            this.reflector = new Reflector();
         } catch (ScramblerSettingException ignored) {
             // needed to handle constructor exception
         }
@@ -42,12 +42,12 @@ public enum ReflectorType {
         }
     }
 
-
-    public Wiring[] getWirings() {
-        return reflector.getWirings();
-    }
-
     public Reflector getReflector() {
         return reflector;
+    }
+
+    @Override
+    public String getName() {
+        return this.name();
     }
 }
