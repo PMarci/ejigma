@@ -60,10 +60,6 @@ public enum ReflectorType implements ScramblerType<Reflector> {
         this.reflector = new Reflector(alphabetString, wiringString, this);
     }
 
-    public Reflector getReflector() {
-        return reflector;
-    }
-
     @Override
     public String getName() {
         return this.name();

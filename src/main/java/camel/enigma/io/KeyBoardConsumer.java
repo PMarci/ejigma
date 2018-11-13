@@ -27,8 +27,8 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
         super.doStart();
 
         executor = endpoint.getCamelContext()
-                .getExecutorServiceManager()
-                .newSingleThreadExecutor(this, endpoint.getEndpointUri());
+            .getExecutorServiceManager()
+            .newSingleThreadExecutor(this, endpoint.getEndpointUri());
         executor.execute(this);
 
     }
@@ -60,16 +60,30 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
     }
 
     private void readFromStream() throws Exception {
-        char input;
+        char lastInput;
+        char input = 0;
+        boolean detailMode = true;
+        boolean resetOffsets;
         while (isRunAllowed()) {
+            resetOffsets = false;
+            lastInput = input;
             input = ((char) RawConsoleInput.read(true));
             if (input == 3) {
                 RawConsoleInput.resetConsoleMode();
                 System.out.printf("%n");
                 log.info("\nReceived SIGINT via Ctrl+C, stopping console listening...");
                 break;
+            } else if (input == 2) {
+                log.info("\nReceived Ctrl+B, toggling detail mode...");
+                detailMode = !detailMode;
+                RawConsoleInput.resetConsoleMode();
+            } else if (input == 18) {
+                log.info("\nReceived Ctrl+R, resetting offsets...");
+                input = lastInput;
+                resetOffsets = true;
+                RawConsoleInput.resetConsoleMode();
             }
-            processInput(input);
+            processInput(input, detailMode, resetOffsets);
         }
     }
 
@@ -79,11 +93,11 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
             input = ((char) RawConsoleInput.read(true));
             // skipping the enter keypress required by IDE
             RawConsoleInput.read(true);
-            processInput(input);
+            processInput(input, true, false);
         }
     }
 
-    private void processInput(char input) throws Exception {
+    private void processInput(char input, boolean detailMode, boolean resetOffsets) throws Exception {
         if (!Util.containsChar(alphabet, input)) {
             char upperCase = Character.toUpperCase(input);
             if (Util.containsChar(alphabet, upperCase)) {
@@ -92,6 +106,8 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
         }
         if (Util.containsChar(alphabet, input)) {
             Exchange exchange = endpoint.createExchange(input);
+            exchange.setProperty("detailMode", detailMode);
+            exchange.setProperty("resetOffsets", resetOffsets);
             getProcessor().process(exchange);
         }
     }

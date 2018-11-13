@@ -20,12 +20,20 @@ public class EnigmaRouteBuilder extends RouteBuilder {
 //            .to("stream:out")
 //        ;
 
+        //@formatter:off
+
         // TODO maybe look into making this resolve using spring too
         from("keyboard?debugMode=" + /*"{{input.debug}}" */ debugMode)
                 .setBody(exchange -> new ScrambleResult(exchange.getIn().getBody(Character.class)))
                 .bean(Armature.class)
-                .setBody(exchange -> exchange.getIn().getBody(ScrambleResult.class).getResultAsChar())
+                .choice()
+                    .when(exchangeProperty("detailMode"))
+                        .setBody(exchange -> exchange.getIn().getBody(ScrambleResult.class).printHistory())
+                    .otherwise()
+                        .setBody(exchange -> exchange.getIn().getBody(ScrambleResult.class).getResultAsChar())
+                .end()
                 .to("stream:out")
         ;
+        //@formatter:on
     }
 }

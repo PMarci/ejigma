@@ -32,9 +32,9 @@ public class Rotor extends ScramblerWheel {
     }
 
     // TODO replace
-    public static char subtractOffset(char[] alphabet, char inputPos, int offset) {
+    public static char subtractOffset(char[] alphabet, char inputPos, Integer offset) {
         int indexOfInput = Util.indexOf(alphabet, inputPos);
-        int offsetKeyIndex = (indexOfInput - offset + alphabet.length) % alphabet.length;
+        int offsetKeyIndex = (indexOfInput - ((offset != null) ? offset : 0) + alphabet.length) % alphabet.length;
         return alphabet[offsetKeyIndex];
     }
 

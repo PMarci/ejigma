@@ -72,7 +72,7 @@ public class PlugBoard extends Scrambler {
         char wiringInput = alphabet[inputPos];
         int link = links[inputPos];
         char wiringOutput = alphabet[link];
-        return input.putResult(link, wiringInput, wiringOutput, wiringOutput, type.getName(), 0, 'A');
+        return input.putResult(link, wiringInput, wiringOutput, wiringOutput, type.getName());
     }
 
 

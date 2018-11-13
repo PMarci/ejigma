@@ -11,7 +11,7 @@ import static java.util.Objects.requireNonNull;
 public abstract class Scrambler {
 
     public static final String DEFAULT_ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
+    public static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
     final ScramblerType type;
     final String alphabetString;
 

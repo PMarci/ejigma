@@ -4,6 +4,7 @@ import camel.enigma.exception.ArmatureInitException;
 import camel.enigma.exception.ScramblerSettingException;
 import camel.enigma.util.ScrambleResult;
 import org.apache.camel.Body;
+import org.apache.camel.ExchangeProperty;
 import org.apache.camel.Handler;
 import org.springframework.stereotype.Component;
 
@@ -43,9 +44,22 @@ public class Armature {
     }
 
     @Handler
-    public ScrambleResult handle(@Body ScrambleResult scrambleResult) {
+    public ScrambleResult handle(@Body ScrambleResult scrambleResult, @ExchangeProperty("resetOffsets") boolean resetOffsets) {
+
         ScrambleResult current = scrambleResult;
-        click();
+        if (resetOffsets) {
+            rotors[0].setOffset('A');
+            rotors[1].setOffset('A');
+            rotors[2].setOffset('A');
+        } else {
+            click();
+        }
+        current = encrypt(current);
+
+        return current;
+    }
+
+    private ScrambleResult encrypt(ScrambleResult current) {
         for (int i = 0; i < scramblerWiring.size(); i++) {
             ScramblerMounting scramblerMounting = scramblerWiring.get(i);
             current = scramblerMounting.scramble(current);
@@ -61,17 +75,17 @@ public class Armature {
         return entryWheelType.freshScrambler().alphabet.length;
     }
 
-    private void validateRotors(RotorType[] rotorTypes, int alphabetLength) throws ArmatureInitException {
+    private void validateRotors(RotorType[] rotorTypes, int alphabetLength) throws ArmatureInitException, ScramblerSettingException {
         for (RotorType rotorType : rotorTypes) {
-            int current = rotorType.getRotor().alphabet.length;
+            int current = rotorType.freshScrambler().alphabet.length;
             if (current != alphabetLength) {
                 throw new ArmatureInitException("rotor wiring no mismatch");
             }
         }
     }
 
-    private void validateReflector(ReflectorType reflectorType, int rotorWiringNo) throws ArmatureInitException {
-        if (reflectorType.getReflector().alphabet.length != rotorWiringNo) {
+    private void validateReflector(ReflectorType reflectorType, int rotorWiringNo) throws ArmatureInitException, ScramblerSettingException {
+        if (reflectorType.freshScrambler().alphabet.length != rotorWiringNo) {
             throw new ArmatureInitException("reflector wiring no mismatch");
         }
     }

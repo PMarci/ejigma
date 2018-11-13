@@ -19,6 +19,16 @@ class Reflector extends ScramblerWheel {
     }
 
     @Override
+    protected ScrambleResult scrambleInput(ScrambleResult input, int[] links) {
+        int inputPos = input.getResult();
+        char wiringInput = alphabet[inputPos];
+        int link = links[inputPos];
+        char wiringOutput = alphabet[link];
+        return input.putResult(link, wiringInput, wiringOutput, wiringOutput, type.getName());
+    }
+
+
+    @Override
     ScrambleResult reverseScramble(ScrambleResult input) {
         return scramble(input);
     }

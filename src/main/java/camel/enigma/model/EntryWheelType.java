@@ -31,8 +31,4 @@ public enum EntryWheelType implements ScramblerType<EntryWheel> {
     public String getName() {
         return this.name();
     }
-
-    public EntryWheel getEntryWheel() {
-        return entryWheel;
-    }
 }

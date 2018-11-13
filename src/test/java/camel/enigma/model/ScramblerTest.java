@@ -1,8 +1,12 @@
 package camel.enigma.model;
 
+import camel.enigma.util.ScrambleResult;
 import org.junit.Before;
+import org.junit.Test;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+
+import java.util.List;
 
 // TODO figure out if needed
 @TestPropertySource("classpath:application.properties")
@@ -84,14 +88,10 @@ public class ScramblerTest {
 //        assertEquals(((Character) target2), twoWireRotor.get(source2));
 //    }
 //
-//    @Test(expected = IllegalArgumentException.class)
-//    public void testPutAllSizeRestriction() {
-//        Map<Character, Character> wiringMap = new HashMap<>();
-//        wiringMap.put('B', '@');
-//        wiringMap.put('C', '&');
-//        wiringMap.put('D', '$');
-//        wiringMap.put('^', '$');
-//
-//        errorRotor.putAll(wiringMap);
-//    }
+    @Test
+    public void testPutAllSizeRestriction() {
+        System.out.println();
+        List<String> lines = ScrambleResult.HistoryEntry.loadLetter(2);
+        lines.forEach(System.out::println);
+    }
 }
