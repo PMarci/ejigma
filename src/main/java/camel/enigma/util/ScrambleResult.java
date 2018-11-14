@@ -232,7 +232,7 @@ public class ScrambleResult {
             return pad(s, PADDING);
         }
 
-        private static String pad(String s, int padding) {
+        public static String pad(String s, int padding) {
             StringBuilder sb = new StringBuilder();
             int space = (padding > s.length()) ? padding - s.length() : 0;
             for (int i = 0; i < space; i++) {
@@ -242,8 +242,8 @@ public class ScrambleResult {
         }
 
         private static List[] initLetters() {
-            List[] result = new ArrayList[26];
-            for (int i = 0; i < 26; i++) {
+            List[] result = new ArrayList[28];
+            for (int i = 0; i < 28; i++) {
                 result[i] = loadLetter(i);
             }
             return result;
@@ -260,9 +260,9 @@ public class ScrambleResult {
                 while (i < content.size()) {
                     String line = content.get(i);
                     i++;
-                    if (delimiters == index && line.charAt(0) != '_') {
+                    if (delimiters == index && 0 < line.length() && line.charAt(0) != '_') {
                         result.add(line);
-                    } else if (line.charAt(0) == '_') {
+                    } else if (0 < line.length() && line.charAt(0) == '_') {
                         delimiters++;
                     }
                 }
