@@ -1,12 +1,12 @@
-      ..      .    ${Ansi.RED}     ..
-   x88f` `..x88. .>${Ansi.RED}    888B.
- :8888   xf`*8888% ${Ansi.RED}   48888E
-:8888f .888  `"`   ${Ansi.RED}   '8888'
-88888' X8888. >"8x ${Ansi.RED}    Y88F
-88888  ?88888< 888>${Ansi.RED}    '88
-88888   "88888 "8% ${Ansi.RED}     8F
-88888 '  `8888>    ${Ansi.RED}     4
-`8888> %  X88!     ${Ansi.RED}     .
- `888X  `~""`   :  ${Ansi.RED}    u8N.
-   "88k.      .~   ${Ansi.RED}   "*88%
-     `""*==~~`     ${Ansi.RED}     ""
+      ..      .    ${Ansi.RED}     ..     ${Ansi.DEFAULT}
+   x88f` `..x88. .>${Ansi.RED}    888B.   ${Ansi.DEFAULT}
+ :8888   xf`*8888% ${Ansi.RED}   48888E   ${Ansi.DEFAULT}
+:8888f .888  `"`   ${Ansi.RED}   '8888'   ${Ansi.DEFAULT}
+88888' X8888. >"8x ${Ansi.RED}    Y88F    ${Ansi.DEFAULT}
+88888  ?88888< 888>${Ansi.RED}    '88     ${Ansi.DEFAULT}
+88888   "88888 "8% ${Ansi.RED}     8F     ${Ansi.DEFAULT}
+88888 '  `8888>    ${Ansi.RED}     4      ${Ansi.DEFAULT}
+`8888> %  X88!     ${Ansi.RED}     .      ${Ansi.DEFAULT}
+ `888X  `~""`   :  ${Ansi.RED}    u8N.    ${Ansi.DEFAULT}
+   "88k.      .~   ${Ansi.RED}   "*88%    ${Ansi.DEFAULT}
+     `""*==~~`     ${Ansi.RED}     ""     ${Ansi.DEFAULT}
