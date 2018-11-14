@@ -74,12 +74,13 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
                     log.info("\nReceived SIGINT via Ctrl+C, stop console listening?y/n");
                     input = ((char) RawConsoleInput.read(true));
                 } while (input != 'y' && input != 'Y' && input != 'n' && input != 'N');
+                RawConsoleInput.resetConsoleMode();
                 if (input == 'y' || input == 'Y') {
-                    RawConsoleInput.resetConsoleMode();
                     log.info("\nExiting read loop...");
                     break;
                 } else {
                     log.info("\nResuming...");
+                    continue;
                 }
             } else if (input == 2) {
                 System.out.printf("%n");
