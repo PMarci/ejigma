@@ -24,8 +24,9 @@ public class ScramblerTest {
 
     @Test
     public void testPutAllSizeRestriction() {
-        List<String> lines = ScrambleResult.HistoryEntry.loadLetter(4);
+        System.out.println();
         String linesString;
+        List<String> lines = ScrambleResult.HistoryEntry.loadLetter(4);
         List<String> lines2 = ScrambleResult.HistoryEntry.loadLetter(26);
         int linesSize = lines.size();
         int linesSize2 = lines2.size();
