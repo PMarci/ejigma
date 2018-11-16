@@ -110,11 +110,11 @@ public class ScrambleResult {
                 .anyMatch(historyEntry -> historyEntry.getStationId().equals(stepId));
         HistoryEntry newEntry;
         if (!stepVisited) {
-            newEntry = new HistoryEntry(wiringInput, wiringOutput, stepId);
+            newEntry = new HistoryEntry(wiringInput, wiringOutput, result, stepId);
         } else if (passNo == 0) {
-            newEntry = new HistoryEntry(wiringInput, wiringOutput, stepId + STEP_SEPARATOR + 2);
+            newEntry = new HistoryEntry(wiringInput, wiringOutput, result, stepId + STEP_SEPARATOR + 2);
         } else {
-            newEntry = new HistoryEntry(wiringInput, wiringOutput, stationId + STEP_SEPARATOR + ++passNo);
+            newEntry = new HistoryEntry(wiringInput, wiringOutput, result, stationId + STEP_SEPARATOR + ++passNo);
         }
         return newEntry;
     }
@@ -128,6 +128,7 @@ public class ScrambleResult {
         HistoryEntry newEntry = new HistoryEntry(
                 lastValue,
                 Rotor.subtractOffset(KeyBoardEndpoint.DEFAULT_ALPHABET, lastValue, lastOffset),
+                result,
                 OUTPUT_STRING);
         if (lastOffset != null) {
             newEntry.setOffset(lastOffset);
@@ -197,14 +198,16 @@ public class ScrambleResult {
         private char wiringInput;
 
         private char wiringOutput;
+        private int result;
         private String stationId;
 
         private Integer offset;
         private Character offsetAsChar;
 
-        HistoryEntry(char wiringInput, char wiringOutput, String stationId) {
+        HistoryEntry(char wiringInput, char wiringOutput, int result, String stationId) {
             this.wiringInput = wiringInput;
             this.wiringOutput = wiringOutput;
+            this.result = result;
             this.stationId = stationId;
         }
 
@@ -221,7 +224,7 @@ public class ScrambleResult {
                 }
             }
             String wiringPart =
-                    ((terminal == -1) ? ":::::> " : wiringInput) +
+                    ((terminal == -1) ? "  :::::> " : "╚► " + wiringInput) + " ═╗\n" + "╔════[" + Scrambler.DEFAULT_ALPHABET[result] + "]═════╝" +
                             ((terminal == 0) ? " :::> " : "") +
                             ((terminal == 1) ? " :::::>" : wiringOutput);
             String mainPart = stationId + pad(stationId) + " : " + wiringPart;
@@ -310,6 +313,14 @@ public class ScrambleResult {
 
         public void setOffset(Integer offset) {
             this.offset = offset;
+        }
+
+        public int getResult() {
+            return result;
+        }
+
+        public void setResult(int result) {
+            this.result = result;
         }
     }
 }
