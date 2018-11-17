@@ -146,7 +146,7 @@ public class ScrambleResult {
             0;
         List<String> letterLines = HistoryEntry.letters[lastOutputIndex];
         Iterator<String> letterLineIterator = letterLines.iterator();
-        for (int i = 0; i < historySize || i < HistoryEntry.HEIGHT; i++) {
+        for (int i = 0; fitsInHeight(historySize, i); i++) {
             HistoryEntry historyEntry;
             String historyEntryBlock;
             String letterLine1 = null;
@@ -159,12 +159,18 @@ public class ScrambleResult {
                 if (letterLineIterator.hasNext()) {
                     letterLine2 = letterLineIterator.next();
                 }
-                historyEntryBlock = historyEntry.toSandvichString(letterLine1, letterLine2);
+                historyEntryBlock = historyEntry.toSandwichString(letterLine1, letterLine2);
                 sb.append(historyEntryBlock);
             }
-            sb.append('\n');
+            if (fitsInHeight(historySize, i + 1)) {
+                sb.append('\n');
+            }
         }
         return sb.toString();
+    }
+
+    private boolean fitsInHeight(int historySize, int i) {
+        return i < historySize || i < HistoryEntry.HEIGHT / 2;
     }
 
     public void setResultAsChar(char resultAsChar) {
@@ -236,7 +242,7 @@ public class ScrambleResult {
             return ((getOffsetAsChar() != null) ? mainPart + ", offset = " + offsetAsChar : mainPart);
         }
 
-        public String toSandvichString(String letterLine1, String letterLine2) {
+        public String toSandwichString(String letterLine1, String letterLine2) {
             StringBuilder stringBuilder = new StringBuilder();
             int terminal;
             if (stationId.equals(INPUT_STRING)) {
@@ -252,7 +258,7 @@ public class ScrambleResult {
             String wiringFirstPart = (terminal == -1) ? " " + wiringInput + " :::::> " : "╚► " + wiringInput;
             String wiringSecondPart = (terminal == 0) ? " :::> " : "";
             String wiringThirdPart = (terminal == 1) ? " :::::> " + wiringOutput : String.valueOf(wiringOutput) + " ═╗";
-            String returnBranch = getPadding("") + "   ╔════[" + Scrambler.DEFAULT_ALPHABET[result] + "]═════╝";
+            String returnLink = getPadding("") + "   ╔════[" + Scrambler.DEFAULT_ALPHABET[result] + "]═════╝";
             stringBuilder.append(wiringFirstPart).append(wiringSecondPart).append(wiringThirdPart);
             int firstLineLength = stringBuilder.length();
             if (letterLine1 != null) {
@@ -261,7 +267,7 @@ public class ScrambleResult {
             }
             if (terminal != 1) {
                 stringBuilder.append('\n');
-                stringBuilder.append(returnBranch);
+                stringBuilder.append(returnLink);
             }
             if (getOffsetAsChar() != null) {
                 stringBuilder.append(", offset = ").append(offsetAsChar);

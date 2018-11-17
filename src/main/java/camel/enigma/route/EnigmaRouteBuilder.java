@@ -37,7 +37,7 @@ public class EnigmaRouteBuilder extends RouteBuilder {
                     .otherwise()
                         .stop()
                 .end()
-                .to("stream:out")
+                .to("stream:out?encoding=UTF-8")
         ;
         //@formatter:on
     }
