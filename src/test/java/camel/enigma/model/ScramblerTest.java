@@ -31,7 +31,7 @@ public class ScramblerTest {
         int linesSize = lines.size();
         int linesSize2 = lines2.size();
         for (int i = 0; i < linesSize || i < linesSize2; i++) {
-            StringBuilder line = new StringBuilder(linesString = (i < linesSize) ? lines.get(i) : "").append(ScrambleResult.HistoryEntry.pad(linesString, 22)).append((i < linesSize2) ? lines2.get(i) : "");
+            StringBuilder line = new StringBuilder(linesString = (i < linesSize) ? lines.get(i) : "").append(ScrambleResult.HistoryEntry.getPadding(linesString, 22)).append((i < linesSize2) ? lines2.get(i) : "");
             System.out.println(line);
         }
     }
