@@ -1,5 +1,8 @@
 package camel.enigma.io;
 
+import camel.enigma.util.Properties;
+import camel.enigma.util.ScrambleResult;
+import camel.enigma.util.Util;
 import org.apache.camel.*;
 import org.apache.camel.impl.DefaultEndpoint;
 import org.apache.camel.spi.UriEndpoint;
@@ -17,7 +20,7 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
     private static final Logger LOG = LoggerFactory.getLogger(KeyBoardEndpoint.class);
 
     private static final String DEFAULT_ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    public static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
+    private static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
 
     private final char[] alphabet;
     private Charset charset;
@@ -27,13 +30,28 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
     @UriParam(label = "consumer", defaultValue = "false")
     private boolean debugMode = false;
 
-    public KeyBoardEndpoint(String endpointUri, Component component) {
+    KeyBoardEndpoint(String endpointUri, Component component) {
         super(endpointUri, component);
         alphabet = DEFAULT_ALPHABET;
     }
 
-    protected Exchange createExchange(Object body) {
+    Exchange createExchange(Character input) {
         Exchange exchange = createExchange();
+        ScrambleResult body = null;
+        if (input == 18) {
+            exchange.setProperty(Properties.RESET_OFFSETS, true);
+        } else if (input == 2) {
+            exchange.setProperty(Properties.DETAIL_MODE_TOGGLE, true);
+        } else if (!Util.containsChar(alphabet, input)) {
+            char upperCase = Character.toUpperCase(input);
+            if (Util.containsChar(alphabet, upperCase)) {
+                input = upperCase;
+            }
+        }
+        if (Util.containsChar(alphabet, input)) {
+            body = new ScrambleResult(input);
+        }
+
         exchange.getIn().setBody(body);
         return exchange;
     }
@@ -45,7 +63,7 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
 
     @Override
     public Consumer createConsumer(Processor processor) throws Exception {
-        return new KeyBoardConsumer(this, processor, debugMode, alphabet);
+        return new KeyBoardConsumer(this, processor, debugMode);
     }
 
     @Override

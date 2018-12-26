@@ -5,22 +5,22 @@ import camel.enigma.exception.ScramblerSettingException;
 
 public enum RotorType implements ScramblerType<Rotor> {
 
-    //     ABCDEFGHIJKLMNOPQRSTUVWXYZ
-    I("EKMFLGDQVZNTOWYHXUSPAIBRCJ", new char[] { 'Q' }),
-    //      ABCDEFGHIJKLMNOPQRSTUVWXYZ
-    II("AJDKSIRUXBLHWTMCQGZNPYFVOE", new char[] { 'E' }),
-    //       ABCDEFGHIJKLMNOPQRSTUVWXYZ
-    III("BDFHJLCPRTXVZNYEIWGAKMUSQO", new char[] { 'V' }),
-    IV("ESOVPZJAYQUIRHXLNFTGKDCMWB", new char[] { 'J' }),
-    V("VZBRGITYUPSDNHLXAWMJQOFECK", new char[] { 'Z' }),
-    VI("JPGVOUMFYQBENHZRDKASXLICTW", new char[] { 'M', 'Z' }),
-    VII("NZJHGRCXMYSWBOUFAIVLPEKQDT", new char[] { 'M', 'Z' }),
-    VIII("FKQHTLXOCBJSPDZRAMEWNIUYGV", new char[] { 'M', 'Z' }),
+    // ABCDEFGHIJKLMNOPQRSTUVWXYZ
+    I("EKMFLGDQVZNTOWYHXUSPAIBRCJ", new char[]{'Q'}),
+    //  ABCDEFGHIJKLMNOPQRSTUVWXYZ
+    II("AJDKSIRUXBLHWTMCQGZNPYFVOE", new char[]{'E'}),
+    //   ABCDEFGHIJKLMNOPQRSTUVWXYZ
+    III("BDFHJLCPRTXVZNYEIWGAKMUSQO", new char[]{'V'}),
+    IV("ESOVPZJAYQUIRHXLNFTGKDCMWB", new char[]{'J'}),
+    V("VZBRGITYUPSDNHLXAWMJQOFECK", new char[]{'Z'}),
+    VI("JPGVOUMFYQBENHZRDKASXLICTW", new char[]{'M', 'Z'}),
+    VII("NZJHGRCXMYSWBOUFAIVLPEKQDT", new char[]{'M', 'Z'}),
+    VIII("FKQHTLXOCBJSPDZRAMEWNIUYGV", new char[]{'M', 'Z'}),
     // for testing
     NOOP(),
-    ERROR1("ABCD", new char[] { 'A' }),
-    ERROR2("ABC", "ABCD", new char[] { 'A' }),
-    NOERROR("ABC", "ABC", new char[] { 'A' });
+    ERROR1("ABCD", new char[]{'A'}),
+    ERROR2("ABC", "ABCD", new char[]{'A'}),
+    NOERROR("ABC", "ABC", new char[]{'A'});
 
     private Rotor rotor;
     private final String alphabetString;

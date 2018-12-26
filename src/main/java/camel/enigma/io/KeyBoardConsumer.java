@@ -1,11 +1,15 @@
 package camel.enigma.io;
 
-import camel.enigma.util.RawConsoleInput;
-import camel.enigma.util.Util;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.impl.DefaultConsumer;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.NonBlockingReader;
 
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 
 public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
@@ -13,13 +17,50 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
     private KeyBoardEndpoint endpoint;
     private ExecutorService executor;
     private boolean debugMode;
-    private final char[] alphabet;
+    private Terminal terminal;
+    private NonBlockingReader reader;
 
-    public KeyBoardConsumer(KeyBoardEndpoint endpoint, Processor processor, boolean debugMode, char[] alphabet) {
+    KeyBoardConsumer(KeyBoardEndpoint endpoint, Processor processor, boolean debugMode) {
         super(endpoint, processor);
         this.endpoint = endpoint;
         this.debugMode = debugMode;
-        this.alphabet = alphabet;
+        try {
+            initTerm();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void initTerm() throws IOException {
+        terminal = TerminalBuilder.builder()
+                .system(true)
+                .encoding(StandardCharsets.UTF_8)
+                .nativeSignals(true)
+                .signalHandler(signal -> {
+                    if (signal == Terminal.Signal.INT) {
+                        terminal.pause();
+                        try {
+                            exitPrompt();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                })
+                .jansi(true)
+                .build();
+        terminal.enterRawMode();
+        reader = terminal.reader();
+    }
+
+    private void initSecondTerm() throws IOException {
+        terminal = TerminalBuilder.builder()
+                .system(true)
+                .encoding(StandardCharsets.UTF_8)
+                .signalHandler(Terminal.SignalHandler.SIG_IGN)
+                .jansi(true)
+                .build();
+        terminal.enterRawMode();
+        reader = terminal.reader();
     }
 
     @Override
@@ -51,7 +92,7 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
             } else {
                 readFromStreamDebug();
             }
-        } catch (InterruptedException ignored) {
+        } catch (InterruptedException | InterruptedIOException ignored) {
             //ignoring
             Thread.currentThread().interrupt();
         } catch (Exception e) {
@@ -60,70 +101,69 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
     }
 
     private void readFromStream() throws Exception {
-        char lastInput;
-        char input = 0;
-        boolean detailMode = true;
-        boolean resetOffsets;
+        char input;
         while (isRunAllowed()) {
-            resetOffsets = false;
-            lastInput = input;
-            input = ((char) RawConsoleInput.read(true));
-            if (input == 3) {
-                System.out.printf("%n");
-                do {
-                    log.info("\nReceived SIGINT via Ctrl+C, stop console listening?y/n");
-                    input = ((char) RawConsoleInput.read(true));
-                } while (input != 'y' && input != 'Y' && input != 'n' && input != 'N');
-                RawConsoleInput.resetConsoleMode();
-                if (input == 'y' || input == 'Y') {
-                    log.info("\nExiting read loop...");
-                    break;
-                } else {
-                    log.info("\nResuming...");
-                    continue;
-                }
-            } else if (input == 2) {
-                System.out.printf("%n");
-                log.info("\nReceived Ctrl+B, toggling detail mode...");
-                detailMode = !detailMode;
-                RawConsoleInput.resetConsoleMode();
-            } else if (input == 18) {
-                System.out.printf("%n");
-                log.info("\nReceived Ctrl+R, resetting offsets...");
-                input = lastInput;
-                resetOffsets = true;
-                RawConsoleInput.resetConsoleMode();
+            input = ((char) reader.read());
+            processInput(input);
+        }
+    }
+
+    private void exitPrompt() throws IOException {
+        System.out.printf("%n");
+        char input = 'x';
+        try {
+            doStop();
+            terminal.close();
+            initSecondTerm();
+            // this interrupts the reader
+            reader.read(1);
+        } catch (InterruptedIOException ignored) {
+            // ignore
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        do {
+            log.info("\nReceived SIGINT via Ctrl+C, exit application? [y/n]");
+                input = ((char) reader.read());
+        } while (input != 'y' && input != 'Y' && input != 'n' && input != 'N');
+        if (input == 'y' || input == 'Y') {
+            log.info("\nExiting...");
+            try {
+                terminal.close();
+                doStop();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            processInput(input, detailMode, resetOffsets);
+            System.exit(0);
+        } else {
+            log.info("\nResuming...");
+            try {
+                // the key to making a prompt like this work seems to be
+                // interrupting the waiting readers thread in the main loop
+                terminal.close();
+                initTerm();
+                doStart();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
     private void readFromStreamDebug() throws Exception {
         char input;
         while (isRunAllowed()) {
-            input = ((char) RawConsoleInput.read(true));
-            // skipping the enter keypress required by IDE
-            RawConsoleInput.read(true);
-            processInput(input, true, false);
-        }
-    }
-
-    private void processInput(char input, boolean detailMode, boolean resetOffsets) throws Exception {
-        if (!Util.containsChar(alphabet, input)) {
-            char upperCase = Character.toUpperCase(input);
-            if (Util.containsChar(alphabet, upperCase)) {
-                input = upperCase;
+            input = ((char) reader.read());
+            if (input == 'c') {
+                terminal.raise(Terminal.Signal.INT);
             }
-        }
-        if (Util.containsChar(alphabet, input)) {
-            Exchange exchange = endpoint.createExchange(input);
-            exchange.setProperty("detailMode", detailMode);
-            exchange.setProperty("resetOffsets", resetOffsets);
-            getProcessor().process(exchange);
+            // skipping the enter keypress required by IDE
+            reader.read();
+            processInput(input);
         }
     }
 
-    public char[] getAlphabet() {
-        return alphabet;
+    private void processInput(char input) throws Exception {
+        Exchange exchange = endpoint.createExchange(input);
+        getProcessor().process(exchange);
     }
 }

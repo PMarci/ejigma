@@ -4,11 +4,11 @@ import camel.enigma.exception.ScramblerSettingException;
 
 public enum ReflectorType implements ScramblerType<Reflector> {
 
-    //     ABCDEFGHIJKLMNOPQRSTUVWXYZ
+    // ABCDEFGHIJKLMNOPQRSTUVWXYZ
     A("EJMZALYXVBWFCRQUONTSPIKHGD"),
-    //     ABCDEFGHIJKLMNOPQRSTUVWXYZ
+    // ABCDEFGHIJKLMNOPQRSTUVWXYZ
     B("YRUHQSLDPXNGOKMIEBFZCWVJAT"),
-    //     ABCDEFGHIJKLMNOPQRSTUVWXYZ
+    // ABCDEFGHIJKLMNOPQRSTUVWXYZ
     C("FVPJIAOYEDRZXWGCTKUQSBNMHL"),
     // for testing
     NOOP(),

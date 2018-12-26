@@ -1,20 +1,27 @@
 package camel.enigma.util;
 
-import camel.enigma.io.KeyBoardEndpoint;
 import camel.enigma.model.Rotor;
 import camel.enigma.model.Scrambler;
+import org.fusesource.jansi.Ansi;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static org.fusesource.jansi.Ansi.ansi;
 
 public class ScrambleResult {
+
+    private static boolean blink;
 
     private static final String INPUT_STRING = "INPUT";
     private static final String OUTPUT_STRING = "OUTPUT";
@@ -128,7 +135,7 @@ public class ScrambleResult {
         Integer lastOffset = last.getOffset();
         HistoryEntry newEntry = new HistoryEntry(
             lastValue,
-            Rotor.subtractOffset(KeyBoardEndpoint.DEFAULT_ALPHABET, lastValue, lastOffset),
+            Rotor.subtractOffset(Scrambler.DEFAULT_ALPHABET, lastValue, lastOffset),
             result,
             OUTPUT_STRING);
         // TODO unneeded if we can assume static entry wheel and output always after it
@@ -154,16 +161,25 @@ public class ScrambleResult {
             if (i < historySize) {
                 historyEntry = history.get(i);
                 if (letterLineIterator.hasNext()) {
-                    letterLine1 = letterLineIterator.next();
+                    letterLine1 = ansi().fg(Ansi.Color.RED).render(letterLineIterator.next()).reset().toString();
                 }
                 if (letterLineIterator.hasNext()) {
-                    letterLine2 = letterLineIterator.next();
+                    letterLine2 = ansi().fg(Ansi.Color.RED).render(letterLineIterator.next()).reset().toString();
                 }
                 historyEntryBlock = historyEntry.toSandwichString(letterLine1, letterLine2);
                 sb.append(historyEntryBlock);
             }
             if (fitsInHeight(historySize, i + 1)) {
                 sb.append('\n');
+                // TODO REVERT
+            } else {
+                sb.append('\n');
+                if (blink) {
+                    sb.append(ansi().bg(Ansi.Color.WHITE).fg(Ansi.Color.BLACK).render("SUP").reset());
+                } else {
+                    sb.append(ansi().bg(Ansi.Color.BLACK).fg(Ansi.Color.WHITE).render("SUP").reset());
+                }
+                blink = !blink;
             }
         }
         return sb.toString();
@@ -327,10 +343,15 @@ public class ScrambleResult {
 
             int delimiters = 0;
             int i = 0;
-            Path file = Paths.get("src/main/resources/", "letters.txt");
+            List<String> content = Collections.emptyList();
+            try (InputStream lettersStream = ScrambleResult.class.getResourceAsStream("letters.txt")) {
+                content = new BufferedReader(new InputStreamReader(lettersStream, StandardCharsets.UTF_8))
+                        .lines()
+                        .collect(Collectors.toList());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             List<String> result = new ArrayList<>();
-            try {
-                List<String> content = Files.readAllLines(file);
                 while (i < content.size()) {
                     String line = content.get(i);
                     i++;
@@ -340,9 +361,6 @@ public class ScrambleResult {
                         delimiters++;
                     }
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             return result;
         }
 
