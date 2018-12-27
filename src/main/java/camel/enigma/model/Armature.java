@@ -53,6 +53,15 @@ public class Armature {
         }
     }
 
+    public String getOffsetString() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0, rotorsLength = rotors.length; i < rotorsLength; i++) {
+            Rotor rotor = rotors[i];
+            sb.append(rotor.offsetAsChar);
+        }
+        return sb.toString();
+    }
+
     private ScrambleResult encrypt(ScrambleResult current) {
         for (int i = 0; i < scramblerWiring.size(); i++) {
             ScramblerMounting scramblerMounting = scramblerWiring.get(i);

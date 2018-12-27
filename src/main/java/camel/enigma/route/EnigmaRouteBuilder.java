@@ -21,6 +21,9 @@ public class EnigmaRouteBuilder extends RouteBuilder {
     @BeanInject
     private Armature armature;
 
+    @BeanInject
+    private LightBoard lightBoard;
+
     @Override
     public void configure() throws Exception {
 
@@ -45,7 +48,7 @@ public class EnigmaRouteBuilder extends RouteBuilder {
                     .otherwise()
                         .setBody(exchange -> exchange.getIn().getBody(ScrambleResult.class).getResultAsChar())
                 .end()
-                .bean(LightBoard.class)
+                .bean(lightBoard)
         ;
 
         from("direct:scramblerChain").routeId("scramblerChain")

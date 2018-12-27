@@ -1,5 +1,6 @@
 package camel.enigma.util;
 
+import camel.enigma.io.LightBoard;
 import camel.enigma.model.Armature;
 import org.apache.camel.ExchangeProperty;
 import org.apache.camel.Handler;
@@ -18,6 +19,9 @@ public class SettingManager {
     @Autowired
     private Armature armature;
 
+    @Autowired
+    private LightBoard lightBoard;
+
     private static boolean detailMode;
 
     @Handler
@@ -29,11 +33,14 @@ public class SettingManager {
             System.out.print(ansi().cursor(1,1).eraseScreen());
             logger.info("\nReceived Ctrl+B, toggling detail mode...");
             toggleDetailMode();
+            lightBoard.clearBuffer();
         }
         if (resetOffsets != null && resetOffsets) {
             System.out.printf("%n");
             logger.info("\nReceived Ctrl+R, resetting offsets...");
             armature.resetOffsets();
+            lightBoard.clearBuffer();
+            lightBoard.updateStatus(lightBoard.createStatusStrings());
         }
     }
 

@@ -3,7 +3,6 @@ package camel.enigma.model;
 import camel.enigma.util.ScrambleResult;
 import org.apache.camel.util.IOHelper;
 import org.fusesource.jansi.Ansi;
-import org.fusesource.jansi.AnsiConsole;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,21 +27,20 @@ import static org.fusesource.jansi.Ansi.ansi;
 @ActiveProfiles({"routeless", "test"})
 public class ScramblerTest {
 
-    private Rotor errorRotor;
+//    private Rotor errorRotor;
 
     @Value("${spring.output.ansi.enabled}")
     String springAnsiEnabled;
 
     @Before
     public void setUp() throws Exception {
-        String incorrectWiringsString = "A@CDEFGHIJKLMNOPQRSTUVWXYZ";
-        errorRotor = new Rotor(incorrectWiringsString);
-        AnsiConsole.systemInstall();
+//        String incorrectWiringsString = "A@CDEFGHIJKLMNOPQRSTUVWXYZ";
+//        errorRotor = new Rotor(incorrectWiringsString);
     }
     // TODO fix
 
     @Test
-    public void testPutAllSizeRestriction() throws IOException {
+    public void testPrinting() throws IOException {
         Charset charset = StandardCharsets.UTF_8;
         Writer writer = new OutputStreamWriter(System.out, charset);
         BufferedWriter bw = IOHelper.buffered(writer);
@@ -57,18 +55,18 @@ public class ScramblerTest {
         for (int i = 0; i < linesSize || i < linesSize2; i++) {
             String line = (linesString = (i < linesSize) ? lines.get(i) : "") +
                     ScrambleResult.HistoryEntry.getPadding(linesString, 22) +
-                    ((i < linesSize2) ? lines2.get(i) : "");
-            bw.write(ansi().fg(Ansi.Color.RED).render(line).toString());
+                    ((i < linesSize2) ? ansi().fg(Ansi.Color.RED).render(lines2.get(i)).reset().toString() : "");
+            bw.write(line);
             bw.write(System.lineSeparator());
             bw.flush();
         }
-        bw.write("╔═══╦═══╗");
+        bw.write("╔══╦══╗");
         bw.write(System.lineSeparator());
         bw.flush();
-        bw.write("╠═══║═══╣");
+        bw.write("╠═" + ansi().fgBright(Ansi.Color.BLACK).render("═").reset() + "║" + ansi().fgBright(Ansi.Color.BLACK).render("═").reset() + "═╣");
         bw.write(System.lineSeparator());
         bw.flush();
-        bw.write("╚═══╩═══╝");
+        bw.write("╚══╩══╝");
         bw.write(System.lineSeparator());
         bw.flush();
     }
