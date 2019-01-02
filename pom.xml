@@ -75,11 +75,6 @@
             <artifactId>jna</artifactId>
             <version>5.0.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.fusesource.jansi</groupId>
-            <artifactId>jansi</artifactId>
-            <version>1.17.1</version>
-        </dependency>
         <!--jdk 9+ fix-->
         <dependency>
             <groupId>javax.xml.bind</groupId>

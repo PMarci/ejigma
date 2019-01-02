@@ -1,7 +1,9 @@
 package camel.enigma.util;
 
+import camel.enigma.io.KeyBoardEndpoint;
 import camel.enigma.io.LightBoard;
 import camel.enigma.model.Armature;
+import org.apache.camel.CamelContext;
 import org.apache.camel.ExchangeProperty;
 import org.apache.camel.Handler;
 import org.slf4j.Logger;
@@ -20,7 +22,7 @@ public class SettingManager {
     private Armature armature;
 
     @Autowired
-    private LightBoard lightBoard;
+    private CamelContext camelContext;
 
     private static boolean detailMode;
 
@@ -33,15 +35,19 @@ public class SettingManager {
             System.out.print(ansi().cursor(1,1).eraseScreen());
             logger.info("\nReceived Ctrl+B, toggling detail mode...");
             toggleDetailMode();
-            lightBoard.clearBuffer();
+            getLightBoard().clearBuffer();
         }
         if (resetOffsets != null && resetOffsets) {
             System.out.printf("%n");
             logger.info("\nReceived Ctrl+R, resetting offsets...");
             armature.resetOffsets();
-            lightBoard.clearBuffer();
-            lightBoard.updateStatus(lightBoard.createStatusStrings());
+            getLightBoard().clearBuffer();
+//            lightBoard.updateStatus(lightBoard.createStatusStrings());
         }
+    }
+
+    private LightBoard getLightBoard() {
+        return camelContext.getEndpoint("keyboard", KeyBoardEndpoint.class).getLightBoard();
     }
 
     private static void toggleDetailMode() {

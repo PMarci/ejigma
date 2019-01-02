@@ -1,6 +1,5 @@
 package camel.enigma.route;
 
-import camel.enigma.io.LightBoard;
 import camel.enigma.model.Armature;
 import camel.enigma.util.ScrambleResult;
 import camel.enigma.util.SettingManager;
@@ -20,9 +19,6 @@ public class EnigmaRouteBuilder extends RouteBuilder {
 
     @BeanInject
     private Armature armature;
-
-    @BeanInject
-    private LightBoard lightBoard;
 
     @Override
     public void configure() throws Exception {
@@ -48,11 +44,11 @@ public class EnigmaRouteBuilder extends RouteBuilder {
                     .otherwise()
                         .setBody(exchange -> exchange.getIn().getBody(ScrambleResult.class).getResultAsChar())
                 .end()
-                .bean(lightBoard)
+                .to("keyboard").id("lightBoard")
         ;
 
         from("direct:scramblerChain").routeId("scramblerChain")
-                .bean(armature)
+                .bean(armature).id("armature")
         ;
         //@formatter:on
     }

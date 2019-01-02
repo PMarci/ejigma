@@ -1,46 +1,46 @@
 package camel.enigma.io;
 
 import camel.enigma.model.Scrambler;
-import camel.enigma.util.Properties;
 import camel.enigma.util.ScrambleResult;
 import camel.enigma.util.Util;
 import org.apache.camel.*;
 import org.apache.camel.impl.DefaultEndpoint;
 import org.apache.camel.spi.UriEndpoint;
 import org.apache.camel.spi.UriParam;
+import org.jline.terminal.Terminal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.Set;
 
-@UriEndpoint(firstVersion = "1.3.0", scheme = "keyboard", title = "KeyBoardEndpoint", syntax = "keyboard", consumerClass = KeyBoardConsumer.class, consumerOnly = true, label = "system")
+@UriEndpoint(firstVersion = "1.3.0", scheme = "keyboard", title = "KeyBoardEndpoint", syntax = "keyboard", consumerClass = KeyBoard.class, label = "system")
 public class KeyBoardEndpoint extends DefaultEndpoint {
 
     private static final Logger LOG = LoggerFactory.getLogger(KeyBoardEndpoint.class);
 
     private final char[] alphabet;
     private Charset charset;
+    private final Terminal terminal;
 
     @UriParam
     private String encoding;
     @UriParam(label = "consumer", defaultValue = "false")
     private boolean debugMode = false;
-    private KeyBoardConsumer keyBoardConsumer;
+    private KeyBoard keyBoard;
+    private LightBoard lightBoard;
 
-    KeyBoardEndpoint(String endpointUri, Component component) {
+    KeyBoardEndpoint(String endpointUri, Component component, Terminal terminal) {
         super(endpointUri, component);
         alphabet = Scrambler.DEFAULT_ALPHABET;
+        this.terminal = terminal;
     }
 
     Exchange createExchange(Character input) {
         Exchange exchange = createExchange();
         ScrambleResult body = null;
-        if (input == 2) {
-            exchange.setProperty(Properties.DETAIL_MODE_TOGGLE, true);
-        } else if (!Util.containsChar(alphabet, input)) {
+        if (!Util.containsChar(alphabet, input)) {
             char upperCase = Character.toUpperCase(input);
             if (Util.containsChar(alphabet, upperCase)) {
                 input = upperCase;
@@ -49,33 +49,21 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
         if (Util.containsChar(alphabet, input)) {
             body = new ScrambleResult(input);
         }
-
         exchange.getIn().setBody(body);
         return exchange;
     }
 
     @Override
     public Producer createProducer() throws Exception {
-        return null;
+        lightBoard = new LightBoard(this, terminal);
+        return lightBoard;
     }
 
     @Override
     public Consumer createConsumer(Processor processor) throws Exception {
         // todo real solution
-        Set<LightBoard> boards = getCamelContext().getRegistry().findByType(LightBoard.class);
-        LightBoard lightBoard = boards.iterator().next();
-        keyBoardConsumer = new KeyBoardConsumer(this, processor, debugMode, lightBoard);
-        return keyBoardConsumer;
-    }
-
-    public void restartConsumer() {
-        if (keyBoardConsumer != null) {
-            try {
-                keyBoardConsumer.doStart();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        keyBoard = new KeyBoard(this, processor, debugMode, terminal);
+        return keyBoard;
     }
 
     @Override
@@ -139,5 +127,17 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
         int result = Objects.hash(super.hashCode(), charset, debugMode);
         result = 31 * result + Arrays.hashCode(alphabet);
         return result;
+    }
+
+    public Terminal getTerminal() {
+        return terminal;
+    }
+
+    public KeyBoard getKeyBoard() {
+        return keyBoard;
+    }
+
+    public LightBoard getLightBoard() {
+        return lightBoard;
     }
 }

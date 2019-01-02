@@ -4,34 +4,32 @@ import camel.enigma.model.Armature;
 import camel.enigma.util.SettingManager;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
-import org.apache.camel.Handler;
 import org.apache.camel.InvalidPayloadException;
+import org.apache.camel.impl.DefaultProducer;
 import org.fusesource.jansi.Ansi;
-import org.fusesource.jansi.AnsiConsole;
 import org.jline.reader.Buffer;
 import org.jline.reader.impl.BufferImpl;
 import org.jline.terminal.Cursor;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
-import org.jline.utils.*;
+import org.jline.utils.AttributedString;
+import org.jline.utils.AttributedStringBuilder;
+import org.jline.utils.InfoCmp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static org.fusesource.jansi.Ansi.ansi;
 
-@Component
-public class LightBoard {
+public class LightBoard extends DefaultProducer {
 
     private static final Logger logger = LoggerFactory.getLogger(LightBoard.class);
 
@@ -41,35 +39,32 @@ public class LightBoard {
     @Autowired
     private CamelContext camelContext;
 
+    private KeyBoardEndpoint endpoint;
     private Terminal terminal;
-    private Status status;
+    //    private Status status;
     private Size size;
     private final Buffer buf;
-    private Display display;
+    //    private Display display;
     private int lineNo;
     private int oldLineNo;
     private int len;
     private Cursor pos;
 
-    public LightBoard() {
-        AnsiConsole.systemInstall();
-//        stringBuilder = new StringBuilder();
-        try {
-            initTerm();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public LightBoard(KeyBoardEndpoint endpoint, Terminal terminal) {
+        super(endpoint);
+        this.endpoint = endpoint;
+        this.terminal = terminal;
         buf = new BufferImpl();
         clearBuffer();
     }
 
-    @Handler
-    public void handle(Exchange exchange) {
+    @Override
+    public void process(Exchange exchange) {
         try {
             //    private StringBuilder stringBuilder;
             AttributedStringBuilder attrStringBuilder = new AttributedStringBuilder();
-        size = new Size(terminal.getWidth(), terminal.getHeight());
-        display = new Display(terminal, false);
+//        size = new Size(terminal.getWidth(), terminal.getHeight());
+//        display = new Display(terminal, false);
 //            size.setColumns(terminal.getWidth());
 //            size.setRows(terminal.getHeight());
             String s = exchange.getIn().getMandatoryBody(String.class);
@@ -77,28 +72,32 @@ public class LightBoard {
                 terminal.puts(InfoCmp.Capability.cursor_home);
                 terminal.puts(InfoCmp.Capability.clear_screen);
                 terminal.writer().write(s);
+                terminal.flush();
             } else {
                 buf.write(s);
                 AttributedString lines = attrStringBuilder.append(buf.toString()).toAttributedString();
-                int terminalWidth = terminal.getWidth();
-                oldLineNo = lineNo;
-                int sbLength = /*stringBuilder.length();*/buf.length();
-                lineNo = (sbLength - 1) / terminalWidth;
-                len = (sbLength - 1) % terminalWidth + 1;
-                advanceLine(lineNo, oldLineNo);
+//                int terminalWidth = terminal.getWidth();
+//                oldLineNo = lineNo;
+//                int sbLength = /*staringBuilder.length();*/buf.length();
+//                lineNo = (sbLength - 1) / terminalWidth;
+//                len = (sbLength - 1) % terminalWidth + 1;
+//                advanceLine(lineNo, oldLineNo);
                 terminal.puts(InfoCmp.Capability.carriage_return);
                 terminal.puts(InfoCmp.Capability.clr_eol);
-                for (int i = 0; i < lineNo; i++) {
-                    terminal.puts(InfoCmp.Capability.cursor_up);
-                    terminal.puts(InfoCmp.Capability.clr_eol);
-                }
-//                terminal.writer().write(buf.);
+//                for (int i = 0; i < lineNo; i++) {
+//                    terminal.puts(InfoCmp.Capability.cursor_up);
+//                    terminal.puts(InfoCmp.Capability.clr_eol);
+//                }
+//                System.out.println(buf.toString());
+                terminal.writer().write(buf.toString());
+                terminal.flush();
 
-                display.resize(size.getRows(), size.getColumns());
-                updateCursorPos();
-                display.update(Collections.singletonList(lines), size.cursorPos(lineNo, pos.getX()));
-                List<AttributedString> statusStrings = createStatusStrings();
-                updateStatus(statusStrings);
+//                display.resize(size.getRows(), size.getColumns());
+//                updateCursorPos();
+//                System.out.println(pos.toString());
+//                display.update(Collections.singletonList(lines), 0/*size.cursorPos(lineNo, pos.getX())*/);
+//                List<AttributedString> statusStrings = createStatusStrings();
+//                updateStatus(statusStrings);
             }
         } catch (InvalidPayloadException e) {
             logger.error("Invalid payload!", e);
@@ -107,21 +106,21 @@ public class LightBoard {
 
     public List<AttributedString> createStatusStrings() {
         List<AttributedString> statusStrings = armature.getOffsetString().chars()
-                .mapToObj(value -> AttributedString.fromAnsi(
-                        ansi()
-                                .bgBright(Ansi.Color.BLACK)
-                                .fg(Ansi.Color.WHITE)
-                                .render(String.valueOf(((char) value)))
-                                .reset()
-                                .toString()))
-                .collect(Collectors.toList());
+            .mapToObj(value -> AttributedString.fromAnsi(
+                ansi()
+                    .bgBright(Ansi.Color.BLACK)
+                    .fg(Ansi.Color.WHITE)
+                    .render(String.valueOf(((char) value)))
+                    .reset()
+                    .toString()))
+            .collect(Collectors.toList());
         terminal.flush();
         asList("lineNo: " + lineNo,
-               ", oldLineNo: " + oldLineNo,
-               ", prevPos: " + pos.toString(),
+            ", oldLineNo: " + oldLineNo,
+//               ", prevPos: " + pos.toString(),
 //               ", newLine: " + (oldLineNo < lineNo))
-                ", len: " + len)
-                .forEach(s1 -> statusStrings.add(AttributedString.fromAnsi(s1)));
+            ", len: " + len)
+            .forEach(s1 -> statusStrings.add(AttributedString.fromAnsi(s1)));
         return statusStrings;
     }
 
@@ -129,38 +128,38 @@ public class LightBoard {
         pos = terminal.getCursorPosition(null);
     }
 
-    private void advanceLine(int lineNo, int oldlineNo) {
-        int diff = lineNo - oldlineNo;
-        advanceForDiff(diff);
-    }
+//    private void advanceLine(int lineNo, int oldlineNo) {
+//        int diff = lineNo - oldlineNo;
+//        advanceForDiff(diff);
+//    }
 
-    private void advanceForDiff(int diff) {
-        // no idea why this works this way
-        if (diff > 0) {
-            terminal.puts(InfoCmp.Capability.scroll_forward);
-            for (int i = 0; i < diff; i++) {
-                terminal.puts(InfoCmp.Capability.scroll_forward);
-                terminal.puts(InfoCmp.Capability.cursor_up);
-            }
-            if (diff >= 2) {
-                terminal.puts(InfoCmp.Capability.cursor_up);
-            }
-        }
-    }
+//    private void advanceForDiff(int diff) {
+//        // no idea why this works this way
+//        if (diff > 0) {
+//            terminal.puts(InfoCmp.Capability.scroll_forward);
+//            for (int i = 0; i < diff; i++) {
+//                terminal.puts(InfoCmp.Capability.scroll_forward);
+//                terminal.puts(InfoCmp.Capability.cursor_up);
+//            }
+//            if (diff >= 2) {
+//                terminal.puts(InfoCmp.Capability.cursor_up);
+//            }
+//        }
+//    }
 
-    public void updateStatus(List<AttributedString> statusStrings) {
-        status.resize();
-        terminal.puts(InfoCmp.Capability.scroll_forward);
-        status.update(Collections.singletonList(AttributedString.join(new AttributedString(" "), statusStrings)));
-        terminal.puts(InfoCmp.Capability.cursor_up);
-        terminal.puts(InfoCmp.Capability.column_address, pos.getX());
-    }
-
-    void updateStatus(String statusString) {
-        status.resize();
-        status.update(Collections.singletonList(AttributedString.fromAnsi(statusString)));
-        terminal.puts(InfoCmp.Capability.column_address, pos.getX());
-    }
+//    public void updateStatus(List<AttributedString> statusStrings) {
+//        status.resize();
+//        terminal.puts(InfoCmp.Capability.scroll_forward);
+//        status.update(Collections.singletonList(AttributedString.join(new AttributedString(" "), statusStrings)));
+//        terminal.puts(InfoCmp.Capability.cursor_up);
+//        terminal.puts(InfoCmp.Capability.column_address, 0/*pos.getX()*/);
+//    }
+//
+//    private void updateStatus(String statusString) {
+//        status.resize();
+//        status.update(Collections.singletonList(AttributedString.fromAnsi(statusString)));
+//        terminal.puts(InfoCmp.Capability.column_address, 0/*pos.getX()*/);
+//    }
 
     public void clearBuffer() {
 //        stringBuilder = new StringBuilder();
@@ -169,38 +168,38 @@ public class LightBoard {
         oldLineNo = 0;
     }
 
-    private void initTerm() throws IOException {
-        terminal = TerminalBuilder.builder()
-                .system(true)
-                .encoding(StandardCharsets.UTF_8)
-                .nativeSignals(true)
-                .signalHandler(signal -> {
-                    if (signal == Terminal.Signal.INT) {
-                        terminal.pause();
-                        try {
-                            exitPrompt();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                })
-                .jansi(true)
-                .build();
-        terminal.enterRawMode();
-        this.status = Status.getStatus(terminal);
-        status.resize();
-    }
+//    private void initTerm() throws IOException {
+//        terminal = TerminalBuilder.builder()
+//            .system(true)
+//            .encoding(StandardCharsets.UTF_8)
+//            .nativeSignals(true)
+//            .signalHandler(signal -> {
+//                if (signal == Terminal.Signal.INT) {
+//                    terminal.pause();
+//                    try {
+//                        exitPrompt();
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            })
+//            .jansi(true)
+//            .build();
+//        terminal.enterRawMode();
+////        this.status = Status.getStatus(terminal);
+////        status.resize();
+//    }
 
     private void initSecondTerm() throws IOException {
         terminal = TerminalBuilder.builder()
-                .system(true)
-                .encoding(StandardCharsets.UTF_8)
-                .signalHandler(Terminal.SignalHandler.SIG_IGN)
-                .jansi(true)
-                .build();
+            .system(true)
+            .encoding(StandardCharsets.UTF_8)
+            .signalHandler(Terminal.SignalHandler.SIG_IGN)
+            .jansi(true)
+            .build();
         terminal.enterRawMode();
-        this.status = Status.getStatus(terminal);
-        status.resize();
+//        this.status = Status.getStatus(terminal);
+//        status.resize();
     }
 
     public Terminal getTerminal() {
@@ -221,7 +220,8 @@ public class LightBoard {
             e.printStackTrace();
         }
         do {
-            updateStatus("Received SIGINT via Ctrl+C, exit application? [y/n]");
+//            updateStatus("Received SIGINT via Ctrl+C, exit application? [y/n]");
+            logger.info("Received SIGINT via Ctrl+C, exit application? [y/n]");
             input = ((char) terminal.reader().read());
         } while (input != 'y' && input != 'Y' && input != 'n' && input != 'N');
         if (input == 'y' || input == 'Y') {
@@ -234,14 +234,15 @@ public class LightBoard {
             }
             System.exit(0);
         } else {
-            updateStatus("Resuming...");
+            logger.info("Resuming...");
+//            updateStatus("Resuming...");
             try {
                 // the key to making a prompt like this work seems to be
                 // interrupting the waiting readers thread in the main loop
                 terminal.close();
-                initTerm();
+//                initTerm();
                 // todo real solution
-                camelContext.getEndpoint("keyboard", KeyBoardEndpoint.class).restartConsumer();
+//                endpoint.restartConsumer();
             } catch (Exception e) {
                 e.printStackTrace();
             }

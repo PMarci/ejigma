@@ -21,9 +21,7 @@ import java.util.stream.IntStream;
 import static org.jline.keymap.KeyMap.ctrl;
 import static org.jline.keymap.KeyMap.key;
 
-public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
-
-    private LightBoard lightBoard;
+public class KeyBoard extends DefaultConsumer implements Runnable {
 
     private KeyBoardEndpoint endpoint;
     private ExecutorService executor;
@@ -33,12 +31,13 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
     private BindingReader bindingReader;
     private final KeyMap<Op> keyMap;
 
-    KeyBoardConsumer(KeyBoardEndpoint endpoint, Processor processor, boolean debugMode, LightBoard lightBoard) {
+    KeyBoard(KeyBoardEndpoint endpoint, Processor processor, boolean debugMode, Terminal terminal) {
         super(endpoint, processor);
         this.endpoint = endpoint;
         this.debugMode = debugMode;
-        this.lightBoard = lightBoard;
-        initTerm();
+        this.terminal = terminal;
+        this.reader = terminal.reader();
+        this.bindingReader = new BindingReader(reader);
         keyMap = new KeyMap<>();
         Set<String> upperCaseChars = IntStream.range(0, Scrambler.DEFAULT_ALPHABET.length)
                 .mapToObj(value -> String.valueOf(Scrambler.DEFAULT_ALPHABET[value]))
@@ -54,16 +53,9 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
         bind(keyMap, Op.RIGHT, key(terminal, InfoCmp.Capability.key_right));
     }
 
-    private void initTerm() {
-        terminal = lightBoard.getTerminal();
-        reader = terminal.reader();
-        bindingReader = new BindingReader(reader);
-    }
-
     @Override
     protected void doStart() throws Exception {
         super.doStart();
-        initTerm();
         executor = endpoint.getCamelContext()
                 .getExecutorServiceManager()
                 .newSingleThreadExecutor(this, endpoint.getEndpointUri());
@@ -113,7 +105,7 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
         char inputChar;
         // TODO implement LineReader
         while (isRunAllowed()) {
-            input = bindingReader.readBinding(keyMap, null, false);
+            input = bindingReader.readBinding(keyMap, null, true);
             if (input != null) {
                 switch (input) {
                     case ENTER_CHAR:
@@ -127,16 +119,16 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
                         processDetailModeToggle();
                         break;
                     case UP:
-//                        System.out.println("UP");
+                        System.out.println("UP");
                         break;
                     case DOWN:
-//                        System.out.println("DOWN");
+                        System.out.println("DOWN");
                         break;
                     case LEFT:
-//                        System.out.println("LEFT");
+                        System.out.println("LEFT");
                         break;
                     case RIGHT:
-//                        System.out.println("RIGHT");
+                        System.out.println("RIGHT");
                         break;
                 }
             }
