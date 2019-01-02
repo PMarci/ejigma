@@ -1,85 +1,69 @@
 package camel.enigma.io;
 
 import camel.enigma.model.Scrambler;
+import camel.enigma.util.Properties;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.impl.DefaultConsumer;
 import org.jline.keymap.BindingReader;
 import org.jline.keymap.KeyMap;
-import org.jline.reader.Binding;
-import org.jline.reader.Reference;
 import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.InfoCmp;
 import org.jline.utils.NonBlockingReader;
 
-import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.jline.keymap.KeyMap.ctrl;
+import static org.jline.keymap.KeyMap.key;
+
 public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
+
+    private LightBoard lightBoard;
 
     private KeyBoardEndpoint endpoint;
     private ExecutorService executor;
     private boolean debugMode;
     private Terminal terminal;
     private NonBlockingReader reader;
+    private BindingReader bindingReader;
+    private final KeyMap<Op> keyMap;
 
-    KeyBoardConsumer(KeyBoardEndpoint endpoint, Processor processor, boolean debugMode) {
+    KeyBoardConsumer(KeyBoardEndpoint endpoint, Processor processor, boolean debugMode, LightBoard lightBoard) {
         super(endpoint, processor);
         this.endpoint = endpoint;
         this.debugMode = debugMode;
-        try {
-            initTerm();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.lightBoard = lightBoard;
+        initTerm();
+        keyMap = new KeyMap<>();
+        Set<String> upperCaseChars = IntStream.range(0, Scrambler.DEFAULT_ALPHABET.length)
+                .mapToObj(value -> String.valueOf(Scrambler.DEFAULT_ALPHABET[value]))
+                .collect(Collectors.toSet());
+        Set<String> alphabetChars = new HashSet<>(upperCaseChars);
+        upperCaseChars.forEach(s -> alphabetChars.add(s.toLowerCase()));
+        bind(keyMap, Op.ENTER_CHAR, alphabetChars);
+        bind(keyMap, Op.RESET_OFFSETS, ctrl('R'));
+        bind(keyMap, Op.DETAIL_MODE_TOGGLE, ctrl('B'));
+        bind(keyMap, Op.UP, key(terminal, InfoCmp.Capability.key_up));
+        bind(keyMap, Op.DOWN, key(terminal, InfoCmp.Capability.key_down));
+        bind(keyMap, Op.LEFT, key(terminal, InfoCmp.Capability.key_left));
+        bind(keyMap, Op.RIGHT, key(terminal, InfoCmp.Capability.key_right));
     }
 
-    private void initTerm() throws IOException {
-        terminal = TerminalBuilder.builder()
-                .system(true)
-                .encoding(StandardCharsets.UTF_8)
-                .nativeSignals(true)
-                .signalHandler(signal -> {
-                    if (signal == Terminal.Signal.INT) {
-                        terminal.pause();
-                        try {
-                            exitPrompt();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                })
-                .jansi(true)
-                .build();
-        terminal.enterRawMode();
+    private void initTerm() {
+        terminal = lightBoard.getTerminal();
         reader = terminal.reader();
-        LightBoard.setTerminal(terminal);
-//        LightBoard.advanceForDiff(2);
-    }
-
-    private void initSecondTerm() throws IOException {
-        terminal = TerminalBuilder.builder()
-                .system(true)
-                .encoding(StandardCharsets.UTF_8)
-                .signalHandler(Terminal.SignalHandler.SIG_IGN)
-                .jansi(true)
-                .build();
-        terminal.enterRawMode();
-        reader = terminal.reader();
-        LightBoard.setTerminal(terminal);
-//        LineReader lineReader = LineReaderBuilder.builder().terminal(terminal).build();
-//        lineReader.setKeyMap()
-//        lineReader.readLine()
+        bindingReader = new BindingReader(reader);
     }
 
     @Override
     protected void doStart() throws Exception {
         super.doStart();
-
+        initTerm();
         executor = endpoint.getCamelContext()
                 .getExecutorServiceManager()
                 .newSingleThreadExecutor(this, endpoint.getEndpointUri());
@@ -113,65 +97,58 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
         }
     }
 
+    private enum Op {
+        ENTER_CHAR,
+        RESET_OFFSETS,
+        DETAIL_MODE_TOGGLE,
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT
+    }
+
+
     private void readFromStream() throws Exception {
-        char input;
-        BindingReader bindingReader = new BindingReader(reader);
+        Op input;
+        char inputChar;
         // TODO implement LineReader
-        KeyMap<Binding> keyMap = new KeyMap<>();
-        bind(keyMap, "enter-char", IntStream.range(0, Scrambler.DEFAULT_ALPHABET.length)
-                .mapToObj(value -> String.valueOf(Scrambler.DEFAULT_ALPHABET[value]))
-                .collect(Collectors.toList()));
         while (isRunAllowed()) {
-            input = ((char) reader.read());
-//            input = ((char) bindingReader.readCharacter());
-            processInput(input);
+            input = bindingReader.readBinding(keyMap, null, false);
+            if (input != null) {
+                switch (input) {
+                    case ENTER_CHAR:
+                        inputChar = bindingReader.getLastBinding().charAt(0);
+                        processInput(inputChar);
+                        break;
+                    case RESET_OFFSETS:
+                        processResetOffsets();
+                        break;
+                    case DETAIL_MODE_TOGGLE:
+                        processDetailModeToggle();
+                        break;
+                    case UP:
+//                        System.out.println("UP");
+                        break;
+                    case DOWN:
+//                        System.out.println("DOWN");
+                        break;
+                    case LEFT:
+//                        System.out.println("LEFT");
+                        break;
+                    case RIGHT:
+//                        System.out.println("RIGHT");
+                        break;
+                }
+            }
         }
     }
 
-    private void bind(KeyMap<Binding> map, String widget, Iterable<? extends CharSequence> keySeqs) {
-        map.bind(new Reference(widget), keySeqs);
+    private void bind(KeyMap<Op> map, Op op, Iterable<? extends CharSequence> keySeqs) {
+        map.bind(op, keySeqs);
     }
 
-    private void exitPrompt() throws IOException {
-        System.out.printf("%n");
-        char input;
-        try {
-            doStop();
-            terminal.close();
-            initSecondTerm();
-            // this interrupts the reader
-            reader.read(1);
-        } catch (InterruptedIOException ignored) {
-            // ignore
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        do {
-            log.info("Received SIGINT via Ctrl+C, exit application? [y/n]");
-            input = ((char) reader.read());
-        } while (input != 'y' && input != 'Y' && input != 'n' && input != 'N');
-        if (input == 'y' || input == 'Y') {
-            log.info("\nExiting...");
-            try {
-                terminal.close();
-                doStop();
-                this.getEndpoint().getCamelContext().stop();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            System.exit(0);
-        } else {
-            log.info("\nResuming...");
-            try {
-                // the key to making a prompt like this work seems to be
-                // interrupting the waiting readers thread in the main loop
-                terminal.close();
-                initTerm();
-                doStart();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+    private void bind(KeyMap<Op> map, Op op, CharSequence... keySeqs) {
+        map.bind(op, keySeqs);
     }
 
     private void readFromStreamDebug() throws Exception {
@@ -189,6 +166,18 @@ public class KeyBoardConsumer extends DefaultConsumer implements Runnable {
 
     private void processInput(char input) throws Exception {
         Exchange exchange = endpoint.createExchange(input);
+        getProcessor().process(exchange);
+    }
+
+    private void processResetOffsets() throws Exception {
+        Exchange exchange = endpoint.createExchange();
+        exchange.setProperty(Properties.RESET_OFFSETS, true);
+        getProcessor().process(exchange);
+    }
+
+    private void processDetailModeToggle() throws Exception {
+        Exchange exchange = endpoint.createExchange();
+        exchange.setProperty(Properties.DETAIL_MODE_TOGGLE, true);
         getProcessor().process(exchange);
     }
 }

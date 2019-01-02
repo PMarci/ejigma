@@ -1,5 +1,6 @@
 package camel.enigma.io;
 
+import camel.enigma.model.Scrambler;
 import camel.enigma.util.Properties;
 import camel.enigma.util.ScrambleResult;
 import camel.enigma.util.Util;
@@ -13,14 +14,12 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Set;
 
 @UriEndpoint(firstVersion = "1.3.0", scheme = "keyboard", title = "KeyBoardEndpoint", syntax = "keyboard", consumerClass = KeyBoardConsumer.class, consumerOnly = true, label = "system")
 public class KeyBoardEndpoint extends DefaultEndpoint {
 
     private static final Logger LOG = LoggerFactory.getLogger(KeyBoardEndpoint.class);
-
-    private static final String DEFAULT_ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    private static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
 
     private final char[] alphabet;
     private Charset charset;
@@ -29,18 +28,17 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
     private String encoding;
     @UriParam(label = "consumer", defaultValue = "false")
     private boolean debugMode = false;
+    private KeyBoardConsumer keyBoardConsumer;
 
     KeyBoardEndpoint(String endpointUri, Component component) {
         super(endpointUri, component);
-        alphabet = DEFAULT_ALPHABET;
+        alphabet = Scrambler.DEFAULT_ALPHABET;
     }
 
     Exchange createExchange(Character input) {
         Exchange exchange = createExchange();
         ScrambleResult body = null;
-        if (input == 18) {
-            exchange.setProperty(Properties.RESET_OFFSETS, true);
-        } else if (input == 2) {
+        if (input == 2) {
             exchange.setProperty(Properties.DETAIL_MODE_TOGGLE, true);
         } else if (!Util.containsChar(alphabet, input)) {
             char upperCase = Character.toUpperCase(input);
@@ -63,7 +61,21 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
 
     @Override
     public Consumer createConsumer(Processor processor) throws Exception {
-        return new KeyBoardConsumer(this, processor, debugMode);
+        // todo real solution
+        Set<LightBoard> boards = getCamelContext().getRegistry().findByType(LightBoard.class);
+        LightBoard lightBoard = boards.iterator().next();
+        keyBoardConsumer = new KeyBoardConsumer(this, processor, debugMode, lightBoard);
+        return keyBoardConsumer;
+    }
+
+    public void restartConsumer() {
+        if (keyBoardConsumer != null) {
+            try {
+                keyBoardConsumer.doStart();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
