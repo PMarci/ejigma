@@ -19,7 +19,7 @@ public class TerminalProvider {
 //        System.out.println("sup");
 //    }
 
-    @Bean
+    @Bean(name = "theTerminal", destroyMethod = "")
     public static Terminal initTerminal() throws IOException {
         Terminal terminal;
         terminal = TerminalBuilder.builder()

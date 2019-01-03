@@ -15,6 +15,7 @@ import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStringBuilder;
+import org.jline.utils.Display;
 import org.jline.utils.InfoCmp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,7 +46,7 @@ public class LightBoard extends DefaultProducer {
     //    private Status status;
     private Size size;
     private final Buffer buf;
-    //    private Display display;
+    private Display display;
     private int lineNo;
     private int oldLineNo;
     private int len;
@@ -64,41 +66,49 @@ public class LightBoard extends DefaultProducer {
             //    private StringBuilder stringBuilder;
             AttributedStringBuilder attrStringBuilder = new AttributedStringBuilder();
 //        size = new Size(terminal.getWidth(), terminal.getHeight());
-//        display = new Display(terminal, false);
+            display = new Display(terminal, false);
 //            size.setColumns(terminal.getWidth());
 //            size.setRows(terminal.getHeight());
             String s = exchange.getIn().getMandatoryBody(String.class);
+            String toDisplay;
             if (SettingManager.isDetailMode()) {
                 terminal.puts(InfoCmp.Capability.cursor_home);
                 terminal.puts(InfoCmp.Capability.clear_screen);
-                terminal.writer().write(s);
-                terminal.flush();
+//                terminal.writer().write(s);
+//                terminal.flush();
+                toDisplay = s;
             } else {
                 buf.write(s);
-                AttributedString lines = attrStringBuilder.append(buf.toString()).toAttributedString();
+                toDisplay = buf.toString();
 //                int terminalWidth = terminal.getWidth();
 //                oldLineNo = lineNo;
 //                int sbLength = /*staringBuilder.length();*/buf.length();
 //                lineNo = (sbLength - 1) / terminalWidth;
 //                len = (sbLength - 1) % terminalWidth + 1;
 //                advanceLine(lineNo, oldLineNo);
-                terminal.puts(InfoCmp.Capability.carriage_return);
-                terminal.puts(InfoCmp.Capability.clr_eol);
+//                terminal.puts(InfoCmp.Capability.carriage_return);
+//                terminal.puts(InfoCmp.Capability.clr_eol);
 //                for (int i = 0; i < lineNo; i++) {
 //                    terminal.puts(InfoCmp.Capability.cursor_up);
 //                    terminal.puts(InfoCmp.Capability.clr_eol);
 //                }
 //                System.out.println(buf.toString());
-                terminal.writer().write(buf.toString());
-                terminal.flush();
+//                terminal.writer().write(buf.toString());
+//                terminal.flush();
 
 //                display.resize(size.getRows(), size.getColumns());
 //                updateCursorPos();
 //                System.out.println(pos.toString());
-//                display.update(Collections.singletonList(lines), 0/*size.cursorPos(lineNo, pos.getX())*/);
 //                List<AttributedString> statusStrings = createStatusStrings();
 //                updateStatus(statusStrings);
             }
+                AttributedString lines = attrStringBuilder.append(toDisplay).toAttributedString();
+                display.resize(terminal.getHeight(), terminal.getWidth());
+                // TODO cursor not reset one letter after newline in cmd
+                // TODO lands in the middle of detail mode
+                // TODO actually return lines for detail mode (look into breaking up buffer)
+                // TODO also that issue about overriding the readline method
+                display.update(Collections.singletonList(lines), terminal.getSize().cursorPos(0, 0)/*size.cursorPos(lineNo, pos.getX())*/);
         } catch (InvalidPayloadException e) {
             logger.error("Invalid payload!", e);
         }

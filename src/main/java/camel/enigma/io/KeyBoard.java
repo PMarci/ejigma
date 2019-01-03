@@ -28,7 +28,7 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
     private boolean debugMode;
     private Terminal terminal;
     private NonBlockingReader reader;
-    private BindingReader bindingReader;
+    private final BindingReader bindingReader;
     private final KeyMap<Op> keyMap;
 
     KeyBoard(KeyBoardEndpoint endpoint, Processor processor, boolean debugMode, Terminal terminal) {
@@ -36,6 +36,7 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         this.endpoint = endpoint;
         this.debugMode = debugMode;
         this.terminal = terminal;
+        terminal.handle(Terminal.Signal.INT, signal -> processQuit());
         this.reader = terminal.reader();
         this.bindingReader = new BindingReader(reader);
         keyMap = new KeyMap<>();
@@ -47,6 +48,7 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         bind(keyMap, Op.ENTER_CHAR, alphabetChars);
         bind(keyMap, Op.RESET_OFFSETS, ctrl('R'));
         bind(keyMap, Op.DETAIL_MODE_TOGGLE, ctrl('B'));
+//        bind(keyMap, Op.QUIT, ctrl('C'));
         bind(keyMap, Op.UP, key(terminal, InfoCmp.Capability.key_up));
         bind(keyMap, Op.DOWN, key(terminal, InfoCmp.Capability.key_down));
         bind(keyMap, Op.LEFT, key(terminal, InfoCmp.Capability.key_left));
@@ -58,13 +60,15 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         super.doStart();
         executor = endpoint.getCamelContext()
                 .getExecutorServiceManager()
-                .newSingleThreadExecutor(this, endpoint.getEndpointUri());
+                .newSingleThreadExecutor(this, "keyBoardThread");
         executor.execute(this);
 
     }
 
     @Override
     protected void doStop() throws Exception {
+        terminal.close();
+
         if (executor != null) {
             endpoint.getCamelContext().getExecutorServiceManager().shutdownNow(executor);
             executor = null;
@@ -90,6 +94,7 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
     }
 
     private enum Op {
+        //        QUIT,
         ENTER_CHAR,
         RESET_OFFSETS,
         DETAIL_MODE_TOGGLE,
@@ -105,7 +110,7 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         char inputChar;
         // TODO implement LineReader
         while (isRunAllowed()) {
-            input = bindingReader.readBinding(keyMap, null, true);
+            input = bindingReader.readBinding(keyMap, null, false);
             if (input != null) {
                 switch (input) {
                     case ENTER_CHAR:
@@ -130,6 +135,10 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
                     case RIGHT:
                         System.out.println("RIGHT");
                         break;
+//                    case QUIT:
+//                        terminal.close();
+//                        getEndpoint().getCamelContext().stop();
+//                        break;
                 }
             }
         }
@@ -171,5 +180,14 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         Exchange exchange = endpoint.createExchange();
         exchange.setProperty(Properties.DETAIL_MODE_TOGGLE, true);
         getProcessor().process(exchange);
+    }
+
+    private void processQuit() {
+        try {
+            stop();
+            System.out.println("bang");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
