@@ -10,6 +10,8 @@ import org.apache.camel.builder.RouteBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+
 @Component
 public class EnigmaRouteBuilder extends RouteBuilder {
 
@@ -42,7 +44,9 @@ public class EnigmaRouteBuilder extends RouteBuilder {
                     .when(exchange -> SettingManager.isDetailMode())
                         .setBody(exchange -> exchange.getIn().getBody(ScrambleResult.class).printHistory())
                     .otherwise()
-                        .setBody(exchange -> exchange.getIn().getBody(ScrambleResult.class).getResultAsChar())
+                        .setBody(exchange -> Collections.singletonList(
+                            String.valueOf(
+                                exchange.getIn().getBody(ScrambleResult.class).getResultAsChar())))
                 .end()
                 .to("keyboard").id("lightBoard")
         ;

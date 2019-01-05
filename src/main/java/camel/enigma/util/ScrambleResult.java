@@ -145,8 +145,9 @@ public class ScrambleResult {
         history.add(newEntry);
     }
 
-    public String printHistory() {
-        StringBuilder sb = new StringBuilder();
+    public List<String> printHistory() {
+        List<String> result = new ArrayList<>();
+//        StringBuilder sb = new StringBuilder();
         int historySize = history.size();
         int lastOutputIndex = (historySize > 0) ?
             Util.indexOf(Scrambler.DEFAULT_ALPHABET, history.get(historySize - 1).getWiringOutput()) :
@@ -155,7 +156,7 @@ public class ScrambleResult {
         Iterator<String> letterLineIterator = letterLines.iterator();
         for (int i = 0; fitsInHeight(historySize, i); i++) {
             HistoryEntry historyEntry;
-            String historyEntryBlock;
+            List<String> historyEntryBlock;
             String letterLine1 = null;
             String letterLine2 = null;
             if (i < historySize) {
@@ -167,22 +168,23 @@ public class ScrambleResult {
                     letterLine2 = ansi().fg(Ansi.Color.RED).render(letterLineIterator.next()).reset().toString();
                 }
                 historyEntryBlock = historyEntry.toSandwichString(letterLine1, letterLine2);
-                sb.append(historyEntryBlock);
+//                sb.append(historyEntryBlock);
+                result.addAll(historyEntryBlock);
             }
             if (fitsInHeight(historySize, i + 1)) {
-                sb.append('\n');
+//                sb.append('\n');
                 // TODO REVERT
             } else {
-                sb.append('\n');
+//                sb.append('\n');
                 if (blink) {
-                    sb.append(ansi().bg(Ansi.Color.WHITE).fg(Ansi.Color.BLACK).render("SUP").reset());
+                result.add(ansi().bg(Ansi.Color.WHITE).fg(Ansi.Color.BLACK).render("SUP").reset().toString());
                 } else {
-                    sb.append(ansi().bg(Ansi.Color.BLACK).fg(Ansi.Color.WHITE).render("SUP").reset());
+                result.add(ansi().bg(Ansi.Color.BLACK).fg(Ansi.Color.WHITE).render("SUP").reset().toString());
                 }
                 blink = !blink;
             }
         }
-        return sb.toString();
+        return result;
     }
 
     private boolean fitsInHeight(int historySize, int i) {
@@ -251,15 +253,17 @@ public class ScrambleResult {
             }
             String wiringFirstPart = (terminal == -1) ? " " + wiringInput + " :::::> " : "╚► " + wiringInput;
             String wiringSecondPart = (terminal == 0) ? " :::> " : "";
-            String wiringThirdPart = (terminal == 1) ? " :::::> " + String.valueOf(wiringOutput) : String.valueOf(wiringOutput) + " ═╗\n";
+            String wiringThirdPart = (terminal == 1) ? " :::::> " + wiringOutput : String.valueOf(wiringOutput) + " ═╗\n";
             String returnBranch = getPadding("") + "   ╔════[" + Scrambler.DEFAULT_ALPHABET[result] + "]═════╝";
             String wiringPart = wiringFirstPart + wiringSecondPart + wiringThirdPart + ((terminal != 1) ? returnBranch : "");
             String mainPart = pad(stationId) + " : " + wiringPart;
             return ((getOffsetAsChar() != null) ? mainPart + ", offset = " + offsetAsChar : mainPart);
         }
 
-        public String toSandwichString(String letterLine1, String letterLine2) {
-            StringBuilder stringBuilder = new StringBuilder();
+        public List<String> toSandwichString(String letterLine1, String letterLine2) {
+            StringBuilder firstLine = new StringBuilder();
+            StringBuilder secondLine = new StringBuilder();
+            List<String> resultList = new ArrayList<>();
             int terminal;
             if (stationId.equals(INPUT_STRING)) {
                 terminal = -1;
@@ -270,29 +274,29 @@ public class ScrambleResult {
                     terminal = 0;
                 }
             }
-            stringBuilder.append(pad(stationId)).append(" : ");
+            firstLine.append(pad(stationId)).append(" : ");
             String wiringFirstPart = (terminal == -1) ? " " + wiringInput + " :::::> " : "╚► " + wiringInput;
             String wiringSecondPart = (terminal == 0) ? " :::> " : "";
             String wiringThirdPart = (terminal == 1) ? " :::::> " + wiringOutput : String.valueOf(wiringOutput) + " ═╗";
             String returnLink = getPadding("") + "   ╔════[" + Scrambler.DEFAULT_ALPHABET[result] + "]═════╝";
-            stringBuilder.append(wiringFirstPart).append(wiringSecondPart).append(wiringThirdPart);
-            int firstLineLength = stringBuilder.length();
+            firstLine.append(wiringFirstPart).append(wiringSecondPart).append(wiringThirdPart);
+            int firstLineLength = firstLine.length();
             if (letterLine1 != null) {
-                stringBuilder.append(getPadding(firstLineLength, SECOND_PADDING)).append(letterLine1);
-                firstLineLength = stringBuilder.length();
+                firstLine.append(getPadding(firstLineLength, SECOND_PADDING)).append(letterLine1);
             }
+            resultList.add(firstLine.toString());
             if (terminal != 1) {
-                stringBuilder.append('\n');
-                stringBuilder.append(returnLink);
+                secondLine.append(returnLink);
             }
             if (getOffsetAsChar() != null) {
-                stringBuilder.append(", offset = ").append(offsetAsChar);
+                secondLine.append(", offset = ").append(offsetAsChar);
             }
-            int secondLineLength = stringBuilder.length() - firstLineLength - 1;
+            int secondLineLength = secondLine.length();
             if (letterLine2 != null) {
-                stringBuilder.append(getPadding(secondLineLength, SECOND_PADDING)).append(letterLine2);
+                secondLine.append(getPadding(secondLineLength, SECOND_PADDING)).append(letterLine2);
             }
-            return stringBuilder.toString();
+            resultList.add(secondLine.toString());
+            return resultList;
         }
 
         public static String getPadding(String s) {

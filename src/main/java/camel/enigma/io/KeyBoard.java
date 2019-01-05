@@ -7,11 +7,11 @@ import org.apache.camel.Processor;
 import org.apache.camel.impl.DefaultConsumer;
 import org.jline.keymap.BindingReader;
 import org.jline.keymap.KeyMap;
+import org.jline.reader.EndOfFileException;
 import org.jline.terminal.Terminal;
 import org.jline.utils.InfoCmp;
 import org.jline.utils.NonBlockingReader;
 
-import java.io.InterruptedIOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -41,8 +41,8 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         this.bindingReader = new BindingReader(reader);
         keyMap = new KeyMap<>();
         Set<String> upperCaseChars = IntStream.range(0, Scrambler.DEFAULT_ALPHABET.length)
-                .mapToObj(value -> String.valueOf(Scrambler.DEFAULT_ALPHABET[value]))
-                .collect(Collectors.toSet());
+            .mapToObj(value -> String.valueOf(Scrambler.DEFAULT_ALPHABET[value]))
+            .collect(Collectors.toSet());
         Set<String> alphabetChars = new HashSet<>(upperCaseChars);
         upperCaseChars.forEach(s -> alphabetChars.add(s.toLowerCase()));
         bind(keyMap, Op.ENTER_CHAR, alphabetChars);
@@ -59,8 +59,8 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
     protected void doStart() throws Exception {
         super.doStart();
         executor = endpoint.getCamelContext()
-                .getExecutorServiceManager()
-                .newSingleThreadExecutor(this, "keyBoardThread");
+            .getExecutorServiceManager()
+            .newSingleThreadExecutor(this, "keyBoardThread");
         executor.execute(this);
 
     }
@@ -70,11 +70,13 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         terminal.close();
 
         if (executor != null) {
-            endpoint.getCamelContext().getExecutorServiceManager().shutdownNow(executor);
+            endpoint.getCamelContext().getExecutorServiceManager().shutdownGraceful(executor, 500);
             executor = null;
         }
 
         super.doStop();
+        log.info("Stopping CamelContext...");
+        endpoint.getCamelContext().stop();
     }
 
     @Override
@@ -85,9 +87,6 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
             } else {
                 readFromStreamDebug();
             }
-        } catch (InterruptedException | InterruptedIOException ignored) {
-            //ignoring
-            Thread.currentThread().interrupt();
         } catch (Exception e) {
             getExceptionHandler().handleException(e);
         }
@@ -104,37 +103,40 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         RIGHT
     }
 
-
     private void readFromStream() throws Exception {
-        Op input;
+        Op input = null;
         char inputChar;
         // TODO implement LineReader
         while (isRunAllowed()) {
-            input = bindingReader.readBinding(keyMap, null, false);
+            try {
+                input = bindingReader.readBinding(keyMap, null, false);
+            } catch (EndOfFileException e) {
+                System.out.println("wew");
+            }
             if (input != null) {
                 switch (input) {
-                    case ENTER_CHAR:
-                        inputChar = bindingReader.getLastBinding().charAt(0);
-                        processInput(inputChar);
-                        break;
-                    case RESET_OFFSETS:
-                        processResetOffsets();
-                        break;
-                    case DETAIL_MODE_TOGGLE:
-                        processDetailModeToggle();
-                        break;
-                    case UP:
-                        System.out.println("UP");
-                        break;
-                    case DOWN:
-                        System.out.println("DOWN");
-                        break;
-                    case LEFT:
-                        System.out.println("LEFT");
-                        break;
-                    case RIGHT:
-                        System.out.println("RIGHT");
-                        break;
+                case ENTER_CHAR:
+                    inputChar = bindingReader.getLastBinding().charAt(0);
+                    processInput(inputChar);
+                    break;
+                case RESET_OFFSETS:
+                    processResetOffsets();
+                    break;
+                case DETAIL_MODE_TOGGLE:
+                    processDetailModeToggle();
+                    break;
+                case UP:
+                    System.out.println("UP");
+                    break;
+                case DOWN:
+                    System.out.println("DOWN");
+                    break;
+                case LEFT:
+                    System.out.println("LEFT");
+                    break;
+                case RIGHT:
+                    System.out.println("RIGHT");
+                    break;
 //                    case QUIT:
 //                        terminal.close();
 //                        getEndpoint().getCamelContext().stop();
@@ -185,9 +187,8 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
     private void processQuit() {
         try {
             stop();
-            System.out.println("bang");
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("An exception occurred while stopping the consumer: ", e);
         }
     }
 }

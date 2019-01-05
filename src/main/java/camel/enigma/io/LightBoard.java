@@ -4,7 +4,6 @@ import camel.enigma.model.Armature;
 import camel.enigma.util.SettingManager;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
-import org.apache.camel.InvalidPayloadException;
 import org.apache.camel.impl.DefaultProducer;
 import org.fusesource.jansi.Ansi;
 import org.jline.reader.Buffer;
@@ -13,10 +12,7 @@ import org.jline.terminal.Cursor;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
-import org.jline.utils.AttributedString;
-import org.jline.utils.AttributedStringBuilder;
-import org.jline.utils.Display;
-import org.jline.utils.InfoCmp;
+import org.jline.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
@@ -43,7 +41,7 @@ public class LightBoard extends DefaultProducer {
 
     private KeyBoardEndpoint endpoint;
     private Terminal terminal;
-    //    private Status status;
+    private Status status;
     private Size size;
     private final Buffer buf;
     private Display display;
@@ -56,30 +54,27 @@ public class LightBoard extends DefaultProducer {
         super(endpoint);
         this.endpoint = endpoint;
         this.terminal = terminal;
+        size = new Size();
+        size.copy(terminal.getSize());
+        display = new Display(terminal, false);
+//        display.setDelayLineWrap(true);
         buf = new BufferImpl();
         clearBuffer();
     }
 
     @Override
     public void process(Exchange exchange) {
-        try {
-            //    private StringBuilder stringBuilder;
-            AttributedStringBuilder attrStringBuilder = new AttributedStringBuilder();
-//        size = new Size(terminal.getWidth(), terminal.getHeight());
-            display = new Display(terminal, false);
-//            size.setColumns(terminal.getWidth());
-//            size.setRows(terminal.getHeight());
-            String s = exchange.getIn().getMandatoryBody(String.class);
-            String toDisplay;
-            if (SettingManager.isDetailMode()) {
-                terminal.puts(InfoCmp.Capability.cursor_home);
-                terminal.puts(InfoCmp.Capability.clear_screen);
-//                terminal.writer().write(s);
-//                terminal.flush();
-                toDisplay = s;
-            } else {
-                buf.write(s);
-                toDisplay = buf.toString();
+        size.copy(terminal.getSize());
+        //    private StringBuilder stringBuilder;
+        AttributedStringBuilder attrStringBuilder = new AttributedStringBuilder();
+        List<String> s = exchange.getIn().getBody(List.class);
+        List<String> toDisplay;
+        if (SettingManager.isDetailMode()) {
+            terminal.puts(InfoCmp.Capability.clear_screen);
+            toDisplay = s;
+        } else {
+            s.forEach(buf::write);
+            toDisplay = Collections.singletonList(buf.toString());
 //                int terminalWidth = terminal.getWidth();
 //                oldLineNo = lineNo;
 //                int sbLength = /*staringBuilder.length();*/buf.length();
@@ -101,17 +96,29 @@ public class LightBoard extends DefaultProducer {
 //                System.out.println(pos.toString());
 //                List<AttributedString> statusStrings = createStatusStrings();
 //                updateStatus(statusStrings);
-            }
-                AttributedString lines = attrStringBuilder.append(toDisplay).toAttributedString();
-                display.resize(terminal.getHeight(), terminal.getWidth());
-                // TODO cursor not reset one letter after newline in cmd
-                // TODO lands in the middle of detail mode
-                // TODO actually return lines for detail mode (look into breaking up buffer)
-                // TODO also that issue about overriding the readline method
-                display.update(Collections.singletonList(lines), terminal.getSize().cursorPos(0, 0)/*size.cursorPos(lineNo, pos.getX())*/);
-        } catch (InvalidPayloadException e) {
-            logger.error("Invalid payload!", e);
         }
+//            lines = attrStringBuilder.append(toDisplay).toAttributedString();
+        display.clear();
+        display.reset();
+        display.resize(size.getRows(), size.getColumns());
+        List<AttributedString> lines = stringListToAttrStringList(toDisplay);
+        // TODO cursor not reset one letter after newline in cmd
+        // TODO lands in the middle of detail mode
+        // TODO also that issue about overriding the readline method
+        display.update(lines, size.cursorPos(0, 0)/*size.cursorPos(lineNo, pos.getX()*/);
+    }
+
+    private List<AttributedString> stringListToAttrStringList(List<String> toDisplay) {
+        return toDisplay.stream().sequential()
+            .collect(
+                Collector.of(
+                    ArrayList::new,
+                    (attributedStrings, s1) -> attributedStrings.add(AttributedString.fromAnsi(s1)),
+                    (list, list2) -> {
+                        list.addAll(list2);
+                        return list;
+                    }
+                ));
     }
 
     public List<AttributedString> createStatusStrings() {
