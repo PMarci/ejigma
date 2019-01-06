@@ -4,6 +4,7 @@ import camel.enigma.exception.ScramblerSettingAlphabetException;
 import camel.enigma.exception.ScramblerSettingException;
 import camel.enigma.exception.ScramblerSettingLengthException;
 import camel.enigma.exception.ScramblerSettingWiringException;
+import camel.enigma.model.type.ScramblerType;
 import camel.enigma.util.ScrambleResult;
 
 import static java.util.Objects.requireNonNull;
@@ -28,10 +29,6 @@ public abstract class Scrambler {
         this.alphabet = this.alphabetString.toCharArray();
         validateWiringString(wiringString);
         this.wiringString = wiringString;
-    }
-
-    void initWiring() {
-        setWiring(alphabetString, wiringString);
     }
 
     abstract void setWiring(String alphabetString, String wiringString);

@@ -6,12 +6,12 @@ import camel.enigma.model.Armature;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ExchangeProperty;
 import org.apache.camel.Handler;
+import org.jline.terminal.Terminal;
+import org.jline.utils.InfoCmp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import static org.fusesource.jansi.Ansi.ansi;
 
 @Component
 public class SettingManager {
@@ -30,19 +30,22 @@ public class SettingManager {
     public void handleControlInput(
             @ExchangeProperty(Properties.DETAIL_MODE_TOGGLE) Boolean detailModeToggle,
             @ExchangeProperty(Properties.RESET_OFFSETS) Boolean resetOffsets) {
+
+        LightBoard lightBoard = getLightBoard();
         if (detailModeToggle != null && detailModeToggle) {
-            System.out.printf("%n");
-            System.out.print(ansi().cursor(1,1).eraseScreen());
+            Terminal terminal = lightBoard.getTerminal();
+            terminal.puts(InfoCmp.Capability.scroll_forward);
+            terminal.puts(InfoCmp.Capability.cursor_down);
+            terminal.puts(InfoCmp.Capability.clear_screen);
             logger.info("\nReceived Ctrl+B, toggling detail mode...");
             toggleDetailMode();
-            getLightBoard().clearBuffer();
+            lightBoard.clearBuffer();
         }
         if (resetOffsets != null && resetOffsets) {
             System.out.printf("%n");
             logger.info("\nReceived Ctrl+R, resetting offsets...");
             armature.resetOffsets();
-            getLightBoard().clearBuffer();
-//            lightBoard.updateStatus(lightBoard.createStatusStrings());
+            lightBoard.clearBuffer();
         }
     }
 
@@ -59,7 +62,7 @@ public class SettingManager {
         return detailMode;
     }
 
-    public static void setDetailMode(boolean detailMode) {
+    private static void setDetailMode(boolean detailMode) {
         SettingManager.detailMode = detailMode;
     }
 }

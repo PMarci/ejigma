@@ -1,43 +1,26 @@
 package camel.enigma.io;
 
-import camel.enigma.model.Armature;
 import camel.enigma.util.SettingManager;
-import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.impl.DefaultProducer;
-import org.fusesource.jansi.Ansi;
 import org.jline.reader.Buffer;
+import org.jline.reader.LineReader;
 import org.jline.reader.impl.BufferImpl;
 import org.jline.terminal.Cursor;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
-import org.jline.utils.*;
+import org.jline.utils.Display;
+import org.jline.utils.InfoCmp;
+import org.jline.utils.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-
-import static java.util.Arrays.asList;
-import static org.fusesource.jansi.Ansi.ansi;
 
 public class LightBoard extends DefaultProducer {
 
     private static final Logger logger = LoggerFactory.getLogger(LightBoard.class);
-
-    @Autowired
-    private Armature armature;
-
-    @Autowired
-    private CamelContext camelContext;
 
     private KeyBoardEndpoint endpoint;
     private Terminal terminal;
@@ -49,6 +32,8 @@ public class LightBoard extends DefaultProducer {
     private int oldLineNo;
     private int len;
     private Cursor pos;
+    private LineReader selectRotorReader;
+    private List<String> oldLines;
 
     public LightBoard(KeyBoardEndpoint endpoint, Terminal terminal) {
         super(endpoint);
@@ -57,16 +42,16 @@ public class LightBoard extends DefaultProducer {
         size = new Size();
         size.copy(terminal.getSize());
         display = new Display(terminal, false);
-//        display.setDelayLineWrap(true);
+        // not setting this to true worsens linebreak behavior (tested in CMD thus far)
+        display.setDelayLineWrap(true);
         buf = new BufferImpl();
         clearBuffer();
     }
 
     @Override
     public void process(Exchange exchange) {
+
         size.copy(terminal.getSize());
-        //    private StringBuilder stringBuilder;
-        AttributedStringBuilder attrStringBuilder = new AttributedStringBuilder();
         List<String> s = exchange.getIn().getBody(List.class);
         List<String> toDisplay;
         if (SettingManager.isDetailMode()) {
@@ -97,53 +82,66 @@ public class LightBoard extends DefaultProducer {
 //                List<AttributedString> statusStrings = createStatusStrings();
 //                updateStatus(statusStrings);
         }
-//            lines = attrStringBuilder.append(toDisplay).toAttributedString();
+        // TODO cursor not reset one letter after newline in cmd
+        // TODO also look into that gh issue about overriding the readline method
+        display(toDisplay);
+        oldLines = toDisplay;
+    }
+
+    public void display(List<String> toDisplay) {
         display.clear();
         display.reset();
-        display.resize(size.getRows(), size.getColumns());
-        List<AttributedString> lines = stringListToAttrStringList(toDisplay);
-        // TODO cursor not reset one letter after newline in cmd
-        // TODO lands in the middle of detail mode
-        // TODO also that issue about overriding the readline method
-        display.update(lines, size.cursorPos(0, 0)/*size.cursorPos(lineNo, pos.getX()*/);
+        int columns;
+        int defaultColumns = 80;
+        int targetColumns = (columns = size.getColumns()) > 0 ? columns : defaultColumns;
+        display.resize(size.getRows(), targetColumns);
+        int cursorpos;
+        int targetCursorPos = (cursorpos = size.cursorPos(0, 0)) > -1 ? cursorpos : 0;
+        display.updateAnsi(toDisplay, targetCursorPos);
     }
 
-    private List<AttributedString> stringListToAttrStringList(List<String> toDisplay) {
-        return toDisplay.stream().sequential()
-            .collect(
-                Collector.of(
-                    ArrayList::new,
-                    (attributedStrings, s1) -> attributedStrings.add(AttributedString.fromAnsi(s1)),
-                    (list, list2) -> {
-                        list.addAll(list2);
-                        return list;
-                    }
-                ));
+    public void clearBuffer() {
+        buf.clear();
+        lineNo = 0;
+        oldLineNo = 0;
     }
 
-    public List<AttributedString> createStatusStrings() {
-        List<AttributedString> statusStrings = armature.getOffsetString().chars()
-            .mapToObj(value -> AttributedString.fromAnsi(
-                ansi()
-                    .bgBright(Ansi.Color.BLACK)
-                    .fg(Ansi.Color.WHITE)
-                    .render(String.valueOf(((char) value)))
-                    .reset()
-                    .toString()))
-            .collect(Collectors.toList());
-        terminal.flush();
-        asList("lineNo: " + lineNo,
-            ", oldLineNo: " + oldLineNo,
-//               ", prevPos: " + pos.toString(),
-//               ", newLine: " + (oldLineNo < lineNo))
-            ", len: " + len)
-            .forEach(s1 -> statusStrings.add(AttributedString.fromAnsi(s1)));
-        return statusStrings;
-    }
+//    private List<AttributedString> stringListToAttrStringList(List<String> toDisplay) {
+//        return toDisplay.stream().sequential()
+//                .collect(
+//                        Collector.of(
+//                                ArrayList::new,
+//                                (attributedStrings, s1) -> attributedStrings.add(AttributedString.fromAnsi(s1)),
+//                                (list, list2) -> {
+//                                    list.addAll(list2);
+//                                    return list;
+//                                }
+//                                    ));
+//    }
 
-    private void updateCursorPos() {
-        pos = terminal.getCursorPosition(null);
-    }
+//    public List<AttributedString> createStatusStrings() {
+//        List<AttributedString> statusStrings = armature.getOffsetString().chars()
+//                .mapToObj(value -> AttributedString.fromAnsi(
+//                        ansi()
+//                                .bgBright(Ansi.Color.BLACK)
+//                                .fg(Ansi.Color.WHITE)
+//                                .render(String.valueOf(((char) value)))
+//                                .reset()
+//                                .toString()))
+//                .collect(Collectors.toList());
+//        terminal.flush();
+//        asList("lineNo: " + lineNo,
+//               ", oldLineNo: " + oldLineNo,
+////               ", prevPos: " + pos.toString(),
+////               ", newLine: " + (oldLineNo < lineNo))
+//               ", len: " + len)
+//                .forEach(s1 -> statusStrings.add(AttributedString.fromAnsi(s1)));
+//        return statusStrings;
+//    }
+
+//    private void updateCursorPos() {
+//        pos = terminal.getCursorPosition(null);
+//    }
 
 //    private void advanceLine(int lineNo, int oldlineNo) {
 //        int diff = lineNo - oldlineNo;
@@ -178,13 +176,6 @@ public class LightBoard extends DefaultProducer {
 //        terminal.puts(InfoCmp.Capability.column_address, 0/*pos.getX()*/);
 //    }
 
-    public void clearBuffer() {
-//        stringBuilder = new StringBuilder();
-        buf.clear();
-        lineNo = 0;
-        oldLineNo = 0;
-    }
-
 //    private void initTerm() throws IOException {
 //        terminal = TerminalBuilder.builder()
 //            .system(true)
@@ -207,62 +198,61 @@ public class LightBoard extends DefaultProducer {
 ////        status.resize();
 //    }
 
-    private void initSecondTerm() throws IOException {
-        terminal = TerminalBuilder.builder()
-            .system(true)
-            .encoding(StandardCharsets.UTF_8)
-            .signalHandler(Terminal.SignalHandler.SIG_IGN)
-            .jansi(true)
-            .build();
-        terminal.enterRawMode();
-//        this.status = Status.getStatus(terminal);
-//        status.resize();
-    }
-
-    public Terminal getTerminal() {
-        return terminal;
-    }
-
-    private void exitPrompt() throws IOException {
-        char input;
-        try {
-            terminal.reader().close();
-            terminal.close();
-            initSecondTerm();
-            // this interrupts the reader
-            terminal.reader().read(1);
-        } catch (InterruptedIOException ignored) {
-            // ignore
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        do {
-//            updateStatus("Received SIGINT via Ctrl+C, exit application? [y/n]");
-            logger.info("Received SIGINT via Ctrl+C, exit application? [y/n]");
-            input = ((char) terminal.reader().read());
-        } while (input != 'y' && input != 'Y' && input != 'n' && input != 'N');
-        if (input == 'y' || input == 'Y') {
-            logger.info("\nExiting...");
-            try {
-                terminal.close();
-                camelContext.stop();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            System.exit(0);
-        } else {
-            logger.info("Resuming...");
-//            updateStatus("Resuming...");
-            try {
-                // the key to making a prompt like this work seems to be
-                // interrupting the waiting readers thread in the main loop
-                terminal.close();
-//                initTerm();
-                // todo real solution
-//                endpoint.restartConsumer();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
+//    private void initSecondTerm() throws IOException {
+//        terminal = TerminalBuilder.builder()
+//                .system(true)
+//                .encoding(StandardCharsets.UTF_8)
+//                .signalHandler(Terminal.SignalHandler.SIG_IGN)
+//                .jansi(true)
+//                .build();
+//        terminal.enterRawMode();
+////        this.status = Status.getStatus(terminal);
+////        status.resize();
+//    }
+//
+//    public Terminal getTerminal() {
+//        return terminal;
+//    }
+//
+//    private void exitPrompt() throws IOException {
+//        char input;
+//        try {
+//            terminal.reader().close();
+//            terminal.close();
+//            initSecondTerm();
+//            // this interrupts the reader
+//            terminal.reader().read(1);
+//        } catch (InterruptedIOException ignored) {
+//            // ignore
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        do {
+////            updateStatus("Received SIGINT via Ctrl+C, exit application? [y/n]");
+//            logger.info("Received SIGINT via Ctrl+C, exit application? [y/n]");
+//            input = ((char) terminal.reader().read());
+//        } while (input != 'y' && input != 'Y' && input != 'n' && input != 'N');
+//        if (input == 'y' || input == 'Y') {
+//            logger.info("\nExiting...");
+//            try {
+//                terminal.close();
+////                camelContext.stop();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//            System.exit(0);
+//        } else {
+//            logger.info("Resuming...");
+////            updateStatus("Resuming...");
+//            try {
+//                // the key to making a prompt like this work seems to be
+//                // interrupting the waiting readers thread in the main loop
+//                terminal.close();
+////                initTerm();
+////                endpoint.restartConsumer();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
 }

@@ -20,16 +20,6 @@ public class Util {
                 });
     }
 
-    public static int indexOf(char[] array, char input) {
-        for (int i = 0, arrayLength = array.length; i < arrayLength; i++) {
-            char c = array[i];
-            if (c == input) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
     public static boolean containsChar(char[] array, char inputChar) {
         for (char c : array) {
             if (c == inputChar) {
@@ -37,5 +27,9 @@ public class Util {
             }
         }
         return false;
+    }
+
+    public static boolean containsChar(String string, char inputChar) {
+        return string.indexOf(inputChar) != -1;
     }
 }

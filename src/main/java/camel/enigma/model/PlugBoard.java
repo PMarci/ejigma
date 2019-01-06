@@ -1,18 +1,23 @@
 package camel.enigma.model;
 
 import camel.enigma.exception.ScramblerSettingException;
+import camel.enigma.model.type.ScramblerType;
 import camel.enigma.util.ScrambleResult;
 
 public class PlugBoard extends Scrambler {
 
     private String sourceString;
 
-    PlugBoard(String alphabetString, String sourceString, String wiringString, ScramblerType scramblerType)
-        throws ScramblerSettingException {
-        super(alphabetString, wiringString, scramblerType);
+    public PlugBoard(String alphabetString, String sourceString, String wiringString)
+            throws ScramblerSettingException {
+        super(alphabetString, wiringString, getPlugBoardType(alphabetString));
         this.sourceString = sourceString;
         // TODO validate shorter than alphabet, contains only alphabet (or filter)
-        initWiring();
+        setWiring(this.sourceString, this.wiringString);
+    }
+
+    public PlugBoard() throws ScramblerSettingException {
+        this(Scrambler.DEFAULT_ALPHABET_STRING, null, null);
     }
 
     @Override
@@ -21,31 +26,40 @@ public class PlugBoard extends Scrambler {
     }
 
     @Override
-    void initWiring() {
-        setWiring(sourceString, wiringString);
+    void setWiring(String sourceString, String wiringString) {
+        this.forwardLinks = new int[alphabet.length];
+        if (sourceString != null && !sourceString.isEmpty() && wiringString != null && !wiringString.isEmpty()) {
+            setSomePlugs(sourceString, wiringString);
+        } else {
+            setNoPlugs();
+        }
+        this.reverseLinks = this.forwardLinks;
     }
 
-    @Override
-    void setWiring(String sourceString, String wiringString) {
-        char[] alphabetArray = alphabetString.toCharArray();
-        this.forwardLinks = new int[alphabetArray.length];
-        for (int i = 0; i < alphabetArray.length; i++) {
+    private void setNoPlugs() {
+        for (int i = 0; i < alphabet.length; i++) {
+            forwardLinks[i] = i;
+        }
+    }
+
+    private void setSomePlugs(String sourceString, String wiringString) {
+        for (int i = 0; i < alphabet.length; i++) {
             forwardLinks[i] = -1;
         }
         char[] sourceArray = sourceString.toCharArray();
         char[] wiringArray = wiringString.toCharArray();
         int i = 0;
         int j = 0;
-        boolean lastAlpha;
-        char wiringChar;
         char sourceChar;
+        char wiringChar;
         int outputAddress;
         char alphabetChar;
         boolean match = false;
         boolean unmapped;
+        boolean lastAlpha;
         boolean lastSource;
         int lastSourceIndex = sourceArray.length - 1;
-        int lastAlphaIndex = alphabetArray.length - 1;
+        int lastAlphaIndex = alphabet.length - 1;
         do {
             sourceChar = sourceArray[i];
             wiringChar = wiringArray[i];
@@ -53,7 +67,7 @@ public class PlugBoard extends Scrambler {
             do {
                 unmapped = forwardLinks[j] == j || forwardLinks[j] == -1;
                 if (unmapped) {
-                    alphabetChar = alphabetArray[j];
+                    alphabetChar = alphabet[j];
                     match = sourceChar == alphabetChar;
                     forwardLinks[j] = match ? outputAddress : j;
                 }
@@ -63,7 +77,6 @@ public class PlugBoard extends Scrambler {
             } while (!match && !(lastSource && lastAlpha));
             i = (!lastSource) ? i + 1 : lastSourceIndex;
         } while (!(lastSource && lastAlpha));
-        this.reverseLinks = this.forwardLinks;
     }
 
     @Override
@@ -84,5 +97,32 @@ public class PlugBoard extends Scrambler {
     @Override
     ScrambleResult reverseScramble(ScrambleResult input) {
         return scramble(input);
+    }
+
+
+    private static ScramblerType getPlugBoardType(String alphabetString) {
+        return new ScramblerType() {
+            @Override
+            public String getName() {
+                return "PLUGBOARD";
+            }
+
+            @Override
+            public PlugBoard freshScrambler() {
+                PlugBoard plugBoard = null;
+                try {
+                    plugBoard = new PlugBoard();
+                } catch (ScramblerSettingException ignored) {
+                    // ignored
+                }
+                return plugBoard;
+            }
+
+            @Override
+            public String getAlphabetString() {
+                return alphabetString;
+            }
+
+        };
     }
 }

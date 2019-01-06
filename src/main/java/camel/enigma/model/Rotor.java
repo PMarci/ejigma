@@ -1,41 +1,26 @@
 package camel.enigma.model;
 
 import camel.enigma.exception.ScramblerSettingException;
+import camel.enigma.model.type.ScramblerType;
 import camel.enigma.util.Util;
 
 public class Rotor extends ScramblerWheel {
 
-    static final char[] DEFAULT_NOTCH = new char[] { 'Q' };
+    public static final char[] DEFAULT_NOTCH = new char[]{'Q'};
 
     private int ringSetting;
     private char ringSettingAsChar;
     private char[] notch;
 
-    // TODO remove tests and const if useless
-    Rotor(String wiringString) throws ScramblerSettingException {
-        this(DEFAULT_ALPHABET_STRING, wiringString, DEFAULT_NOTCH, false, RotorType.NOOP);
-    }
-
-    Rotor(String wiringString, char[] notch, ScramblerType scramblerType) throws ScramblerSettingException{
-        this(DEFAULT_ALPHABET_STRING, wiringString, notch, false, scramblerType);
-    }
-
-    Rotor(
-        String alphabetString,
-        String wiringString,
-        char[] notch,
-        boolean staticc,
-        ScramblerType scramblerType) throws ScramblerSettingException {
+    public Rotor(
+            String alphabetString,
+            String wiringString,
+            char[] notch,
+            boolean staticc,
+            ScramblerType scramblerType) throws ScramblerSettingException {
 
         super(alphabetString, wiringString, staticc, scramblerType);
         this.notch = notch;
-    }
-
-    // TODO replace
-    public static char subtractOffset(char[] alphabet, char inputPos, Integer offset) {
-        int indexOfInput = Util.indexOf(alphabet, inputPos);
-        int offsetKeyIndex = (indexOfInput - ((offset != null) ? offset : 0) + alphabet.length) % alphabet.length;
-        return alphabet[offsetKeyIndex];
     }
 
     // TODO update

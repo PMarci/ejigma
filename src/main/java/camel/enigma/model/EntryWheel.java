@@ -1,11 +1,12 @@
 package camel.enigma.model;
 
 import camel.enigma.exception.ScramblerSettingException;
+import camel.enigma.model.type.ScramblerType;
 import camel.enigma.util.ScrambleResult;
 
 public class EntryWheel extends ScramblerWheel {
 
-    EntryWheel(String wiringString, ScramblerType scramblerType) throws ScramblerSettingException {
+    public EntryWheel(String wiringString, ScramblerType scramblerType) throws ScramblerSettingException {
         this(DEFAULT_ALPHABET_STRING, wiringString, scramblerType);
     }
 
@@ -15,7 +16,7 @@ public class EntryWheel extends ScramblerWheel {
 
     @Override
     ScrambleResult scramble(ScrambleResult input) {
-        input.putCharInputToIntResult(alphabetString);
+        input.putCharInputToIntResult();
         return super.scramble(input);
     }
 

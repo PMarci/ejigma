@@ -1,6 +1,8 @@
 package camel.enigma.io;
 
+import camel.enigma.model.Armature;
 import camel.enigma.model.Scrambler;
+import camel.enigma.model.type.ConfigContainer;
 import camel.enigma.util.ScrambleResult;
 import camel.enigma.util.Util;
 import org.apache.camel.*;
@@ -19,8 +21,11 @@ import java.util.Objects;
 public class KeyBoardEndpoint extends DefaultEndpoint {
 
     private static final Logger LOG = LoggerFactory.getLogger(KeyBoardEndpoint.class);
+    private final ConfigContainer configContainer;
+    private final Armature armature;
 
-    private final char[] alphabet;
+    private String alphabetString;
+    private char[] alphabet;
     private Charset charset;
     private final Terminal terminal;
 
@@ -31,23 +36,30 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
     private KeyBoard keyBoard;
     private LightBoard lightBoard;
 
-    KeyBoardEndpoint(String endpointUri, Component component, Terminal terminal) {
+    KeyBoardEndpoint(String endpointUri,
+                     Component component,
+                     Terminal terminal,
+                     ConfigContainer configContainer,
+                     Armature armature) {
         super(endpointUri, component);
-        alphabet = Scrambler.DEFAULT_ALPHABET;
+        this.configContainer = configContainer;
+        this.armature = armature;
+        alphabetString = Scrambler.DEFAULT_ALPHABET_STRING;
+        alphabet = alphabetString.toCharArray();
         this.terminal = terminal;
     }
 
     Exchange createExchange(Character input) {
         Exchange exchange = createExchange();
         ScrambleResult body = null;
-        if (!Util.containsChar(alphabet, input)) {
+        if (!Util.containsChar(alphabetString, input)) {
             char upperCase = Character.toUpperCase(input);
-            if (Util.containsChar(alphabet, upperCase)) {
+            if (Util.containsChar(alphabetString, upperCase)) {
                 input = upperCase;
             }
         }
-        if (Util.containsChar(alphabet, input)) {
-            body = new ScrambleResult(input);
+        if (Util.containsChar(alphabetString, input)) {
+            body = new ScrambleResult(alphabetString, input);
         }
         exchange.getIn().setBody(body);
         return exchange;
@@ -61,7 +73,6 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
 
     @Override
     public Consumer createConsumer(Processor processor) throws Exception {
-        // todo real solution
         keyBoard = new KeyBoard(this, processor, debugMode, terminal);
         return keyBoard;
     }
@@ -139,5 +150,13 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
 
     public LightBoard getLightBoard() {
         return lightBoard;
+    }
+
+    public ConfigContainer getConfigContainer() {
+        return configContainer;
+    }
+
+    public Armature getArmature() {
+        return armature;
     }
 }

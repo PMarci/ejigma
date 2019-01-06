@@ -1,5 +1,7 @@
 package camel.enigma.io;
 
+import camel.enigma.model.Armature;
+import camel.enigma.model.type.ConfigContainer;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Endpoint;
 import org.apache.camel.impl.DefaultComponent;
@@ -13,6 +15,12 @@ public class KeyBoardComponent extends DefaultComponent {
     @Autowired
     private Terminal terminal;
 
+    @Autowired
+    private Armature armature;
+
+    @Autowired
+    private ConfigContainer configContainer;
+
     public KeyBoardComponent() {
         this(null);
     }
@@ -23,6 +31,6 @@ public class KeyBoardComponent extends DefaultComponent {
 
     @Override
     protected Endpoint createEndpoint(String uri, String remaining, Map<String, Object> parameters) throws Exception {
-        return new KeyBoardEndpoint(uri, this, terminal);
+        return new KeyBoardEndpoint(uri, this, terminal, configContainer, armature);
     }
 }

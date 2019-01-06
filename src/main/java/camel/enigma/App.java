@@ -1,6 +1,7 @@
 package camel.enigma;
 
 import camel.enigma.io.KeyBoardEndpoint;
+import camel.enigma.model.type.ConfigContainer;
 import org.apache.camel.CamelContext;
 import org.jline.terminal.Terminal;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,39 +15,25 @@ public class App implements CommandLineRunner {
     @Autowired
     private CamelContext camelContext;
 
+    @Autowired
+    private ConfigContainer configContainer;
+
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
     }
 
     @Override
     public void run(String... args) throws Exception {
-        System.out.println("wayhoo");
         Terminal terminal = camelContext.getEndpoint("keyboard", KeyBoardEndpoint.class).getTerminal();
-//        Terminal terminal = null;
-//        try {
-//            terminal = TerminalBuilder.builder()
-//                .system(true)
-//                .encoding(StandardCharsets.UTF_8)
-//                .nativeSignals(true)
-//                //            .signalHandler(signal -> {
-//                //                if (signal == Terminal.Signal.INT) {
-//                //                    terminal.pause();
-//                //                    try {
-//                //                        exitPrompt();
-//                //                    } catch (IOException e) {
-//                //                        e.printStackTrace();
-//                //                    }
-//                //                }
-//                //            })
-//                .jansi(true)
-//                .build();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-        System.out.println(terminal.toString());
-//        Attributes prevAttr = terminal.enterRawMode();
-//        System.out.println(terminal.getCursorPosition(null).toString());
-//        terminal.setAttributes(prevAttr);
+        terminal.writer().write(
+                String.format("Welcome to the camel-enigma cli, your terminal type is: %s%n", terminal.getClass()
+                        .getSimpleName()));
+        terminal.writer().write(
+                String.format("The following rotor types are available: %n%s%n", configContainer.getRotorTypes().toString()));
+        terminal.writer().write(
+                String.format("The following reflector types are available: %n%s%n", configContainer.getReflectorTypes().toString()));
+        terminal.writer().write(
+                String.format("The following entry wheel types are available: %n%s%n", configContainer.getEntryWheelTypes().toString()));
+        terminal.flush();
     }
 }

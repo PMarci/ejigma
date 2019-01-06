@@ -1,8 +1,7 @@
 package camel.enigma.util;
 
-import camel.enigma.model.Rotor;
-import camel.enigma.model.Scrambler;
-import org.fusesource.jansi.Ansi;
+import org.jline.utils.AttributedString;
+import org.jline.utils.AttributedStyle;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,8 +16,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.fusesource.jansi.Ansi.ansi;
-
 public class ScrambleResult {
 
     private static boolean blink;
@@ -30,30 +27,30 @@ public class ScrambleResult {
     private static final String STEP_REGEX = "^([^/]+)(?:" + STEP_SEPARATOR + "(\\d+))?$";
     private static final Pattern STEP_PATTERN = Pattern.compile(STEP_REGEX);
 
+    private final String alphabetString;
+    private final char[] alphabet;
+
     private int result;
     private char resultAsChar;
     private List<HistoryEntry> history;
 
     private Character offsetAsChar;
 
-    public ScrambleResult(Character resultAsChar) {
+    public ScrambleResult(String alphabetString, Character resultAsChar) {
+        this.alphabetString = alphabetString;
+        this.alphabet = alphabetString.toCharArray();
         history = new ArrayList<>();
         putResult(0, resultAsChar, resultAsChar, resultAsChar, INPUT_STRING);
-        putDefaultCharInputToIntResult(this);
+        putCharInputToIntResult(this);
     }
 
-    public void putCharInputToIntResult(String alphabetString) {
-        putCharInputToIntResult(alphabetString, this);
+    public void putCharInputToIntResult() {
+        putCharInputToIntResult(this);
     }
 
-    public static ScrambleResult putDefaultCharInputToIntResult(ScrambleResult input) {
-        return putCharInputToIntResult(Scrambler.DEFAULT_ALPHABET_STRING, input);
-    }
-
-    public static ScrambleResult putCharInputToIntResult(String alphabetString, ScrambleResult input) {
-        int wheelPos = alphabetString.indexOf(input.getResultAsChar());
+    private void putCharInputToIntResult(ScrambleResult input) {
+        int wheelPos = this.alphabetString.indexOf(input.getResultAsChar());
         input.setResult(wheelPos);
-        return input;
     }
 
     public char getResultAsChar() {
@@ -61,13 +58,13 @@ public class ScrambleResult {
     }
 
     public ScrambleResult putResult(
-        int result,
-        char wiringInput,
-        char wiringOutput,
-        char resultAsChar,
-        String stepId,
-        int offset,
-        char offsetAsChar) {
+            int result,
+            char wiringInput,
+            char wiringOutput,
+            char resultAsChar,
+            String stepId,
+            int offset,
+            char offsetAsChar) {
 
         this.result = result;
         this.resultAsChar = resultAsChar;
@@ -77,11 +74,11 @@ public class ScrambleResult {
     }
 
     public ScrambleResult putResult(
-        int result,
-        char wiringInput,
-        char wiringOutput,
-        char resultAsChar,
-        String stepId) {
+            int result,
+            char wiringInput,
+            char wiringOutput,
+            char resultAsChar,
+            String stepId) {
 
         this.result = result;
         this.resultAsChar = resultAsChar;
@@ -90,10 +87,10 @@ public class ScrambleResult {
     }
 
     private void addHistoryEntry(char wiringInput,
-        char wiringOutput,
-        String stepId,
-        Integer offset,
-        Character offsetAsChar) {
+                                 char wiringOutput,
+                                 String stepId,
+                                 Integer offset,
+                                 Character offsetAsChar) {
         HistoryEntry newEntry = generateHistoryEntry(wiringInput, wiringOutput, stepId);
         newEntry.setOffset(offset);
         newEntry.setOffsetAsChar(offsetAsChar);
@@ -115,43 +112,49 @@ public class ScrambleResult {
         }
         int passNo = (passNoString != null) ? Integer.valueOf(passNoString) : 0;
         boolean stepVisited = history.stream().sequential()
-            .anyMatch(historyEntry -> historyEntry.getStationId().equals(stepId));
+                .anyMatch(historyEntry -> historyEntry.getStationId().equals(stepId));
         HistoryEntry newEntry;
+        String newStepId;
         if (!stepVisited) {
-            newEntry = new HistoryEntry(wiringInput, wiringOutput, result, stepId);
+            newStepId = stepId;
         } else if (passNo == 0) {
-            newEntry = new HistoryEntry(wiringInput, wiringOutput, result, stepId + STEP_SEPARATOR + 2);
+            newStepId = stepId + STEP_SEPARATOR + 2;
         } else {
-            newEntry = new HistoryEntry(wiringInput, wiringOutput, result, stationId + STEP_SEPARATOR + ++passNo);
+            newStepId = stationId + STEP_SEPARATOR + ++passNo;
         }
+        newEntry = new HistoryEntry(wiringInput, wiringOutput, result, newStepId, alphabet);
         return newEntry;
     }
 
     public void recordOutput() {
         HistoryEntry last = history.get(history.size() - 1);
-        Character lastValue = last.getWiringOutput();
+        Character lastOutput = last.getWiringOutput();
         // assuming no rotation since last...
         // TODO figure out association with keyboard/output
         Integer lastOffset = last.getOffset();
+        ////////
+        char wiringOutput = alphabet[result];
+        ////////
         HistoryEntry newEntry = new HistoryEntry(
-            lastValue,
-            Rotor.subtractOffset(Scrambler.DEFAULT_ALPHABET, lastValue, lastOffset),
-            result,
-            OUTPUT_STRING);
-        // TODO unneeded if we can assume static entry wheel and output always after it
-        if (lastOffset != null) {
-            newEntry.setOffset(lastOffset);
-        }
+                lastOutput,
+                wiringOutput,
+                result,
+                OUTPUT_STRING,
+                alphabet);
+        newEntry.setOffset(lastOffset);
+        this.resultAsChar = wiringOutput;
         history.add(newEntry);
     }
 
     public List<String> printHistory() {
-        List<String> result = new ArrayList<>();
-//        StringBuilder sb = new StringBuilder();
+        AttributedStyle redStyle = new AttributedStyle().foreground(AttributedStyle.BRIGHT).foreground(AttributedStyle.RED);
+        AttributedStyle blackOnWhiteStyle = new AttributedStyle().foreground(AttributedStyle.BLACK).background(AttributedStyle.BRIGHT).background(AttributedStyle.WHITE);
+        AttributedStyle whiteOnBlackStyle = new AttributedStyle().foreground(AttributedStyle.BRIGHT).foreground(AttributedStyle.WHITE).background(AttributedStyle.BLACK);
+        List<String> resultList = new ArrayList<>();
         int historySize = history.size();
         int lastOutputIndex = (historySize > 0) ?
-            Util.indexOf(Scrambler.DEFAULT_ALPHABET, history.get(historySize - 1).getWiringOutput()) :
-            0;
+                              alphabetString.indexOf(history.get(historySize - 1).getWiringOutput()) :
+                              0;
         List<String> letterLines = HistoryEntry.letters[lastOutputIndex];
         Iterator<String> letterLineIterator = letterLines.iterator();
         for (int i = 0; fitsInHeight(historySize, i); i++) {
@@ -162,29 +165,28 @@ public class ScrambleResult {
             if (i < historySize) {
                 historyEntry = history.get(i);
                 if (letterLineIterator.hasNext()) {
-                    letterLine1 = ansi().fg(Ansi.Color.RED).render(letterLineIterator.next()).reset().toString();
+                    letterLine1 = new AttributedString(letterLineIterator.next(), redStyle).toAnsi();
                 }
                 if (letterLineIterator.hasNext()) {
-                    letterLine2 = ansi().fg(Ansi.Color.RED).render(letterLineIterator.next()).reset().toString();
+                    letterLine2 = new AttributedString(letterLineIterator.next(), redStyle).toAnsi();
                 }
-                historyEntryBlock = historyEntry.toSandwichString(letterLine1, letterLine2);
-//                sb.append(historyEntryBlock);
-                result.addAll(historyEntryBlock);
+                historyEntryBlock = historyEntry.toDetailString(letterLine1, letterLine2);
+                resultList.addAll(historyEntryBlock);
             }
-            if (fitsInHeight(historySize, i + 1)) {
-//                sb.append('\n');
-                // TODO REVERT
-            } else {
-//                sb.append('\n');
-                if (blink) {
-                result.add(ansi().bg(Ansi.Color.WHITE).fg(Ansi.Color.BLACK).render("SUP").reset().toString());
+            if (!fitsInHeight(historySize, i + 1)) {
+                if (blink()) {
+                    resultList.add(new AttributedString("SUP", whiteOnBlackStyle).toAnsi());
                 } else {
-                result.add(ansi().bg(Ansi.Color.BLACK).fg(Ansi.Color.WHITE).render("SUP").reset().toString());
+                    resultList.add(new AttributedString("SUP", blackOnWhiteStyle).toAnsi());
                 }
-                blink = !blink;
             }
         }
-        return result;
+        return resultList;
+    }
+
+    private static boolean blink() {
+        blink = !blink;
+        return blink;
     }
 
     private boolean fitsInHeight(int historySize, int i) {
@@ -228,15 +230,17 @@ public class ScrambleResult {
         private char wiringOutput;
         private int result;
         private String stationId;
+        private final char[] alphabet;
 
         private Integer offset;
         private Character offsetAsChar;
 
-        HistoryEntry(char wiringInput, char wiringOutput, int result, String stationId) {
+        HistoryEntry(char wiringInput, char wiringOutput, int result, String stationId, char[] alphabet) {
             this.wiringInput = wiringInput;
             this.wiringOutput = wiringOutput;
             this.result = result;
             this.stationId = stationId;
+            this.alphabet = alphabet;
         }
 
         @Override
@@ -253,39 +257,57 @@ public class ScrambleResult {
             }
             String wiringFirstPart = (terminal == -1) ? " " + wiringInput + " :::::> " : "╚► " + wiringInput;
             String wiringSecondPart = (terminal == 0) ? " :::> " : "";
-            String wiringThirdPart = (terminal == 1) ? " :::::> " + wiringOutput : String.valueOf(wiringOutput) + " ═╗\n";
-            String returnBranch = getPadding("") + "   ╔════[" + Scrambler.DEFAULT_ALPHABET[result] + "]═════╝";
-            String wiringPart = wiringFirstPart + wiringSecondPart + wiringThirdPart + ((terminal != 1) ? returnBranch : "");
+            String wiringThirdPart =
+                    (terminal == 1) ? " :::::> " + wiringOutput : String.valueOf(wiringOutput) + " ═╗\n";
+            String returnBranch = getPadding("") + "   ╔════[" + alphabet[result] + "]═════╝";
+            String wiringPart =
+                    wiringFirstPart + wiringSecondPart + wiringThirdPart + ((terminal != 1) ? returnBranch : "");
             String mainPart = pad(stationId) + " : " + wiringPart;
             return ((getOffsetAsChar() != null) ? mainPart + ", offset = " + offsetAsChar : mainPart);
         }
 
-        public List<String> toSandwichString(String letterLine1, String letterLine2) {
+        List<String> toDetailString(String letterLine1, String letterLine2) {
             StringBuilder firstLine = new StringBuilder();
             StringBuilder secondLine = new StringBuilder();
             List<String> resultList = new ArrayList<>();
-            int terminal;
+            int firstMidLast;
             if (stationId.equals(INPUT_STRING)) {
-                terminal = -1;
+                firstMidLast = -1;
             } else {
                 if (stationId.equals(OUTPUT_STRING)) {
-                    terminal = 1;
+                    firstMidLast = 1;
                 } else {
-                    terminal = 0;
+                    firstMidLast = 0;
                 }
             }
             firstLine.append(pad(stationId)).append(" : ");
-            String wiringFirstPart = (terminal == -1) ? " " + wiringInput + " :::::> " : "╚► " + wiringInput;
-            String wiringSecondPart = (terminal == 0) ? " :::> " : "";
-            String wiringThirdPart = (terminal == 1) ? " :::::> " + wiringOutput : String.valueOf(wiringOutput) + " ═╗";
-            String returnLink = getPadding("") + "   ╔════[" + Scrambler.DEFAULT_ALPHABET[result] + "]═════╝";
-            firstLine.append(wiringFirstPart).append(wiringSecondPart).append(wiringThirdPart);
+            String wiringFirstPart;
+            if (firstMidLast == -1) {
+                wiringFirstPart = "   " + wiringInput + " " + ":::::>";
+            } else if (firstMidLast == 1) {
+                wiringFirstPart = "╚► " + ":::::> ";
+            } else {
+                wiringFirstPart = "╚► " + wiringInput;
+            }
+            String wiringSecondPart = (firstMidLast == 0) ? " :::> " : "";
+            String wiringThirdPart;
+            if (firstMidLast == 1) {
+                wiringThirdPart = String.valueOf(wiringOutput);
+            } else if (firstMidLast == -1) {
+                wiringThirdPart = " ═╗";
+            } else {
+                wiringThirdPart = String.valueOf(wiringOutput) + " ═╗";
+            }
+            String returnLink = getPadding("") + "   ╔════[" + alphabet[result] + "]═════╝";
+            firstLine.append(wiringFirstPart)
+                    .append(wiringSecondPart)
+                    .append(wiringThirdPart);
             int firstLineLength = firstLine.length();
             if (letterLine1 != null) {
                 firstLine.append(getPadding(firstLineLength, SECOND_PADDING)).append(letterLine1);
             }
             resultList.add(firstLine.toString());
-            if (terminal != 1) {
+            if (firstMidLast != 1) {
                 secondLine.append(returnLink);
             }
             if (getOffsetAsChar() != null) {
@@ -299,7 +321,7 @@ public class ScrambleResult {
             return resultList;
         }
 
-        public static String getPadding(String s) {
+        static String getPadding(String s) {
             return getPadding(s, PADDING);
         }
 
@@ -311,7 +333,7 @@ public class ScrambleResult {
             return sb.toString();
         }
 
-        public static String getPadding(int strLen, int padding) {
+        static String getPadding(int strLen, int padding) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < getSpace(strLen, padding); i++) {
                 sb.append(' ');
@@ -327,12 +349,8 @@ public class ScrambleResult {
             return (padding > strLen) ? padding - strLen : 0;
         }
 
-        private static String pad(String s) {
-            return pad(s, PADDING);
-        }
-
-        public static String pad(String s, int padding) {
-            return s.concat(getPadding(s, padding));
+        static String pad(String s) {
+            return s.concat(getPadding(s, HistoryEntry.PADDING));
         }
 
         private static List[] initLetters() {
@@ -356,15 +374,15 @@ public class ScrambleResult {
                 e.printStackTrace();
             }
             List<String> result = new ArrayList<>();
-                while (i < content.size()) {
-                    String line = content.get(i);
-                    i++;
-                    if (delimiters == index && 0 < line.length() && line.charAt(0) != '_') {
-                        result.add(line);
-                    } else if (0 < line.length() && line.charAt(0) == '_') {
-                        delimiters++;
-                    }
+            while (i < content.size()) {
+                String line = content.get(i);
+                i++;
+                if (delimiters == index && 0 < line.length() && line.charAt(0) != '_') {
+                    result.add(line);
+                } else if (0 < line.length() && line.charAt(0) == '_') {
+                    delimiters++;
                 }
+            }
             return result;
         }
 

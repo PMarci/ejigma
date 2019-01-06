@@ -1,8 +1,8 @@
 package camel.enigma.model;
 
 import camel.enigma.exception.ScramblerSettingException;
+import camel.enigma.model.type.ScramblerType;
 import camel.enigma.util.ScrambleResult;
-import camel.enigma.util.Util;
 
 public abstract class ScramblerWheel extends Scrambler {
 
@@ -13,7 +13,7 @@ public abstract class ScramblerWheel extends Scrambler {
     ScramblerWheel(String alphabetString, String wiringString, boolean staticc, ScramblerType scramblerType)
         throws ScramblerSettingException {
         super(alphabetString, wiringString, scramblerType);
-        initWiring();
+        setWiring(this.alphabetString, this.wiringString);
         offset = 0;
         offsetAsChar = alphabet[offset];
         this.staticc = staticc;
@@ -42,9 +42,27 @@ public abstract class ScramblerWheel extends Scrambler {
         return result;
     }
 
+    public int getOffset() {
+        return offset;
+    }
+
+    public char getOffsetAsChar() {
+        return offsetAsChar;
+    }
+
     public void setOffset(char offset) {
         this.offsetAsChar = offset;
-        int index = Util.indexOf(alphabet, offset);
+        int index = alphabetString.indexOf(offset);
+        if (index != -1) {
+            this.offset = index;
+        } else {
+            throw new IllegalArgumentException("invalid offset!");
+        }
+    }
+
+    public void setOffset(int offset) {
+        this.offset = offset;
+        int index = alphabetString.indexOf(offset);
         if (index != -1) {
             this.offset = index;
         } else {
