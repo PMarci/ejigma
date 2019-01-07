@@ -7,17 +7,12 @@ import org.apache.camel.BeanInject;
 import org.apache.camel.builder.ExpressionBuilder;
 import org.apache.camel.builder.PredicateBuilder;
 import org.apache.camel.builder.RouteBuilder;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 
 @Component
 public class EnigmaRouteBuilder extends RouteBuilder {
-
-    // use with run configuration containing -Dspring-boot.run.arguments=--input.debug=true
-    @Value("${input.debug}")
-    private String debugMode;
 
     @BeanInject
     private Armature armature;
@@ -30,14 +25,12 @@ public class EnigmaRouteBuilder extends RouteBuilder {
 //        ;
 
         //@formatter:off
-
-        // TODO maybe look into making this resolve using spring too
-        from("keyboard?debugMode=" + /*"{{input.debug}}" */ debugMode).routeId("internalChain")
+        from("keyboard").routeId("internalChain")
                 .choice()
                     .when(PredicateBuilder.isNotNull(ExpressionBuilder.bodyExpression()))
                         .to("direct:scramblerChain")
                     .otherwise()
-                        .bean(SettingManager.class)
+                        .bean(SettingManager.class).id("settingManager")
                         .stop()
                 .end()
                 .choice()

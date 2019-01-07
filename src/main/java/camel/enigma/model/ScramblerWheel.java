@@ -13,7 +13,7 @@ public abstract class ScramblerWheel extends Scrambler {
     ScramblerWheel(String alphabetString, String wiringString, boolean staticc, ScramblerType scramblerType)
         throws ScramblerSettingException {
         super(alphabetString, wiringString, scramblerType);
-        setWiring(this.alphabetString, this.wiringString);
+        setWiring(getAlphabetString(), this.wiringString);
         offset = 0;
         offsetAsChar = alphabet[offset];
         this.staticc = staticc;
@@ -52,7 +52,7 @@ public abstract class ScramblerWheel extends Scrambler {
 
     public void setOffset(char offset) {
         this.offsetAsChar = offset;
-        int index = alphabetString.indexOf(offset);
+        int index = getAlphabetString().indexOf(offset);
         if (index != -1) {
             this.offset = index;
         } else {
@@ -62,7 +62,7 @@ public abstract class ScramblerWheel extends Scrambler {
 
     public void setOffset(int offset) {
         this.offset = offset;
-        int index = alphabetString.indexOf(offset);
+        int index = getAlphabetString().indexOf(offset);
         if (index != -1) {
             this.offset = index;
         } else {

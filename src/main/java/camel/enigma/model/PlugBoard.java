@@ -63,7 +63,7 @@ public class PlugBoard extends Scrambler {
         do {
             sourceChar = sourceArray[i];
             wiringChar = wiringArray[i];
-            outputAddress = alphabetString.indexOf(wiringChar);
+            outputAddress = getAlphabetString().indexOf(wiringChar);
             do {
                 unmapped = forwardLinks[j] == j || forwardLinks[j] == -1;
                 if (unmapped) {

@@ -14,8 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Objects;
 
 @UriEndpoint(firstVersion = "1.3.0", scheme = "keyboard", title = "KeyBoardEndpoint", syntax = "keyboard", consumerClass = KeyBoard.class, label = "system")
 public class KeyBoardEndpoint extends DefaultEndpoint {
@@ -31,8 +29,6 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
 
     @UriParam
     private String encoding;
-    @UriParam(label = "consumer", defaultValue = "false")
-    private boolean debugMode = false;
     private KeyBoard keyBoard;
     private LightBoard lightBoard;
 
@@ -73,7 +69,7 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
 
     @Override
     public Consumer createConsumer(Processor processor) throws Exception {
-        keyBoard = new KeyBoard(this, processor, debugMode, terminal);
+        keyBoard = new KeyBoard(this, processor, terminal);
         return keyBoard;
     }
 
@@ -99,6 +95,10 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
         return Charset.forName(encoding);
     }
 
+    public void switchAlphabet(String newAlphabet) {
+        setAlphabet(newAlphabet);
+    }
+
     public Charset getCharset() {
         return charset;
     }
@@ -107,37 +107,13 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
         this.charset = charset;
     }
 
-    public boolean isDebugMode() {
-        return debugMode;
+    public String getAlphabetString() {
+        return alphabetString;
     }
 
-    public void setDebugMode(boolean debugMode) {
-        this.debugMode = debugMode;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        if (!super.equals(o)) {
-            return false;
-        }
-        KeyBoardEndpoint that = (KeyBoardEndpoint) o;
-        return debugMode == that.debugMode &&
-                Arrays.equals(alphabet, that.alphabet) &&
-                Objects.equals(charset, that.charset);
-    }
-
-    @Override
-    public int hashCode() {
-
-        int result = Objects.hash(super.hashCode(), charset, debugMode);
-        result = 31 * result + Arrays.hashCode(alphabet);
-        return result;
+    public void setAlphabet(String alphabetString) {
+        this.alphabetString = alphabetString;
+        this.alphabet = alphabetString.toCharArray();
     }
 
     public Terminal getTerminal() {

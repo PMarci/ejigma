@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 public class CustomRotorType implements RotorType {
 
     private String name;
-    private String alphabetString;
+    private String alphabetString = Scrambler.DEFAULT_ALPHABET_STRING.substring(0, 22);
 
     public CustomRotorType(@Value("${test.name}") String name) {
         this.name = name;

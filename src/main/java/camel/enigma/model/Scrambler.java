@@ -14,7 +14,7 @@ public abstract class Scrambler {
     public static final String DEFAULT_ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     public static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
     final ScramblerType type;
-    final String alphabetString;
+    private final String alphabetString;
 
     String wiringString;
 
@@ -70,5 +70,9 @@ public abstract class Scrambler {
             }
         }
         return result;
+    }
+
+    public String getAlphabetString() {
+        return alphabetString;
     }
 }

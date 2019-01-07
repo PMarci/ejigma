@@ -12,13 +12,6 @@ import java.nio.charset.StandardCharsets;
 @Configuration
 public class TerminalProvider {
 
-    private static Terminal terminal = null;
-
-//    @EventListener(ContextRefreshedEvent.class)
-//    public void contextRefreshedEvent() {
-//        System.out.println("sup");
-//    }
-
     @Bean(name = "theTerminal", destroyMethod = "")
     public static Terminal initTerminal() throws IOException {
         Terminal terminal;
@@ -30,7 +23,6 @@ public class TerminalProvider {
             .build();
         terminal.enterRawMode();
         terminal.puts(InfoCmp.Capability.keypad_xmit);
-        TerminalProvider.terminal = terminal;
         return terminal;
     }
 }

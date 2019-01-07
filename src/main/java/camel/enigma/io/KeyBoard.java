@@ -1,5 +1,6 @@
 package camel.enigma.io;
 
+import camel.enigma.exception.ArmatureInitException;
 import camel.enigma.model.Scrambler;
 import camel.enigma.model.type.RotorType;
 import camel.enigma.util.Properties;
@@ -30,46 +31,38 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
 
     private KeyBoardEndpoint endpoint;
     private ExecutorService executor;
-    private boolean debugMode;
     private Terminal terminal;
     private NonBlockingReader reader;
     private LineReader selectRotorReader;
     private final Pattern numbers = Pattern.compile("[^0-9]*([0-9]+)[^0-9]*");
     private final BindingReader bindingReader;
     private final KeyMap<Op> keyMap;
+    private boolean filterCompletion;
+    private String newAlphabetString = null;
 
-    KeyBoard(KeyBoardEndpoint endpoint, Processor processor, boolean debugMode, Terminal terminal) {
+    KeyBoard(KeyBoardEndpoint endpoint, Processor processor, Terminal terminal) {
         super(endpoint, processor);
         this.endpoint = endpoint;
-        this.debugMode = debugMode;
         this.terminal = terminal;
         terminal.handle(Terminal.Signal.INT, signal -> processQuit());
-        selectRotorReader = LineReaderBuilder.builder()
+        this.selectRotorReader = initRotorReader(terminal);
+        this.reader = terminal.reader();
+        this.bindingReader = new BindingReader(reader);
+        keyMap = getKeyMap(terminal);
+    }
+
+    private LineReader initRotorReader(Terminal terminal) {
+        LineReader result = LineReaderBuilder.builder()
                 .terminal(terminal)
                 .completer(new RotorsCompleter())
                 .build();
-        selectRotorReader.setOpt(LineReader.Option.AUTO_MENU);
-        selectRotorReader.setOpt(LineReader.Option.ERASE_LINE_ON_FINISH);
-        selectRotorReader.setOpt(LineReader.Option.DISABLE_EVENT_EXPANSION);
-        selectRotorReader.setOpt(LineReader.Option.COMPLETE_IN_WORD);
-        selectRotorReader.setOpt(LineReader.Option.DISABLE_HIGHLIGHTER);
-        selectRotorReader.setVariable(LineReader.DISABLE_HISTORY, true);
-        this.reader = terminal.reader();
-        this.bindingReader = new BindingReader(reader);
-        keyMap = new KeyMap<>();
-        Set<String> upperCaseChars = IntStream.range(0, Scrambler.DEFAULT_ALPHABET.length)
-                .mapToObj(value -> String.valueOf(Scrambler.DEFAULT_ALPHABET[value]))
-                .collect(Collectors.toSet());
-        Set<String> alphabetChars = new HashSet<>(upperCaseChars);
-        upperCaseChars.forEach(s -> alphabetChars.add(s.toLowerCase()));
-        bind(keyMap, Op.ENTER_CHAR, alphabetChars);
-        bind(keyMap, Op.RESET_OFFSETS, ctrl('R'));
-        bind(keyMap, Op.DETAIL_MODE_TOGGLE, ctrl('B'));
-        bind(keyMap, Op.SELECT_ROTOR, ctrl('I'));
-        bind(keyMap, Op.UP, key(terminal, InfoCmp.Capability.key_up));
-        bind(keyMap, Op.DOWN, key(terminal, InfoCmp.Capability.key_down));
-        bind(keyMap, Op.LEFT, key(terminal, InfoCmp.Capability.key_left));
-        bind(keyMap, Op.RIGHT, key(terminal, InfoCmp.Capability.key_right));
+        result.setOpt(LineReader.Option.AUTO_MENU);
+        result.setOpt(LineReader.Option.ERASE_LINE_ON_FINISH);
+        result.setOpt(LineReader.Option.DISABLE_EVENT_EXPANSION);
+        result.setOpt(LineReader.Option.COMPLETE_IN_WORD);
+        result.setOpt(LineReader.Option.DISABLE_HIGHLIGHTER);
+        result.setVariable(LineReader.DISABLE_HISTORY, true);
+        return result;
     }
 
     @Override
@@ -99,18 +92,13 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
     @Override
     public void run() {
         try {
-            if (!debugMode) {
-                readFromStream();
-            } else {
-                readFromStreamDebug();
-            }
+            readFromStream();
         } catch (Exception e) {
             getExceptionHandler().handleException(e);
         }
     }
 
     public enum Op {
-        //        QUIT,
         ENTER_CHAR,
         SELECT_ROTOR,
         RESET_OFFSETS,
@@ -133,21 +121,7 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
                         processInput(inputChar);
                         break;
                     case SELECT_ROTOR:
-                        int rotorNo;
-                        RotorType[] newRotorTypes;
-                        selectRotorReader.setVariable(LineReader.DISABLE_COMPLETION, true);
-                        try {
-                            rotorNo = promptForRotorNo();
-                        } catch (UserInterruptException e) {
-                            break;
-                        }
-                        selectRotorReader.setVariable(LineReader.DISABLE_COMPLETION, false);
-                        try {
-                            newRotorTypes = promptForTypes(rotorNo);
-                        } catch (UserInterruptException e) {
-                            break;
-                        }
-                        endpoint.getArmature().setRotors(newRotorTypes);
+                        processSelectRotors();
                         break;
                     case RESET_OFFSETS:
                         processResetOffsets();
@@ -166,9 +140,32 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         }
     }
 
+    private void processSelectRotors() {
+        int rotorNo;
+        RotorType[] newRotorTypes;
+        selectRotorReader.setVariable(LineReader.DISABLE_COMPLETION, true);
+        try {
+            rotorNo = promptForRotorNo();
+        } catch (UserInterruptException e) {
+            return;
+        }
+        selectRotorReader.setVariable(LineReader.DISABLE_COMPLETION, false);
+        try {
+            newRotorTypes = promptForRotorTypes(rotorNo);
+        } catch (UserInterruptException e) {
+            return;
+        }
+        try {
+            endpoint.getArmature().setRotors(newRotorTypes);
+            endpoint.switchAlphabet(newRotorTypes[0].getAlphabetString());
+        } catch (ArmatureInitException e) {
+            selectRotorReader.printAbove("Can't change rotors: " + e.getMessage());
+        }
+    }
+
     private int promptForRotorNo() {
         boolean choose = true;
-        String prompt = "Enter number of Rotors: ";
+        String prompt = "Enter number of rotors: ";
         String nanString = "That's not a number.";
         int rotorNo = 0;
         while (choose) {
@@ -191,30 +188,50 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         return rotorNo;
     }
 
-    private RotorType[] promptForTypes(int rotorNo) {
+    private RotorType[] promptForRotorTypes(int rotorNo) {
         RotorType[] newRotorTypes = new RotorType[rotorNo];
         String promptFormat = "Enter a type for rotor %d: ";
-        String notATypestring = "Not a valid rotorType";
+        String notATypeString = "Not a valid rotorType";
+        String oldAlphabetString = endpoint.getAlphabetString();
         String prompt;
         int i = 0;
+        filterCompletion = false;
         while (i < rotorNo) {
             prompt = String.format(promptFormat, i);
-            String tInput;
-            tInput = selectRotorReader.readLine(prompt).trim();
+            String tInput = selectRotorReader.readLine(prompt).trim();
             Optional<RotorType> rotorType = endpoint.getConfigContainer().getRotorTypes().stream()
                     .filter(rotorType1 -> rotorType1.getName().equals(tInput)).findAny();
             if (rotorType.isPresent()) {
-                newRotorTypes[i] = rotorType.get();
+                RotorType type = rotorType.get();
+                String typeAlphabetString = type.getAlphabetString();
+                if (i == 0) {
+                    newAlphabetString = typeAlphabetString;
+                    filterCompletion = true;
+                } else if (newAlphabetString != null && !newAlphabetString.equals(typeAlphabetString)) {
+                    selectRotorReader.printAbove("Incompatible alphabetString.");
+                    continue;
+                }
+                newRotorTypes[i] = type;
                 i++;
             } else {
-                selectRotorReader.printAbove(notATypestring);
+                selectRotorReader.printAbove(notATypeString);
             }
         }
         return newRotorTypes;
     }
 
-    private void processControl(Op input) {
-        // TODO
+    private KeyMap<Op> getKeyMap(Terminal terminal) {
+        KeyMap<Op> result = new KeyMap<>();
+        Set<String> alphabetChars = getUpperAndLower(Scrambler.DEFAULT_ALPHABET);
+        bind(result, Op.ENTER_CHAR, alphabetChars);
+        bind(result, Op.RESET_OFFSETS, ctrl('R'));
+        bind(result, Op.DETAIL_MODE_TOGGLE, ctrl('B'));
+        bind(result, Op.SELECT_ROTOR, ctrl('I'));
+        bind(result, Op.UP, key(terminal, InfoCmp.Capability.key_up));
+        bind(result, Op.DOWN, key(terminal, InfoCmp.Capability.key_down));
+        bind(result, Op.LEFT, key(terminal, InfoCmp.Capability.key_left));
+        bind(result, Op.RIGHT, key(terminal, InfoCmp.Capability.key_right));
+        return result;
     }
 
     private void bind(KeyMap<Op> map, Op op, Iterable<? extends CharSequence> keySeqs) {
@@ -225,22 +242,30 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         map.bind(op, keySeqs);
     }
 
-    private void readFromStreamDebug() throws Exception {
-        char input;
-        while (isRunAllowed()) {
-            input = ((char) reader.read());
-            if (input == 'c') {
-                terminal.raise(Terminal.Signal.INT);
-            }
-            // skipping the enter keypress required by IDE
-            reader.read();
-            processInput(input);
-        }
+    private static Set<String> getUpperAndLower(char[] upperCaseAlphaber) {
+        Set<String> upperCaseChars = IntStream.range(0, upperCaseAlphaber.length)
+                .mapToObj(value -> String.valueOf(upperCaseAlphaber[value]))
+                .collect(Collectors.toSet());
+        Set<String> alphabetChars = new HashSet<>(upperCaseChars);
+        upperCaseChars.forEach(s -> alphabetChars.add(s.toLowerCase()));
+        return alphabetChars;
     }
 
     private void processInput(char input) throws Exception {
         Exchange exchange = endpoint.createExchange(input);
         getProcessor().process(exchange);
+    }
+
+    private void processControl(Op input) {
+        LightBoard lightBoard = endpoint.getLightBoard();
+        if (input == Op.LEFT) {
+            lightBoard.getBuffer().move(-1);
+        }
+        if (input == Op.RIGHT) {
+            lightBoard.getBuffer().move(1);
+        }
+        lightBoard.redisplay();
+
     }
 
     private void processResetOffsets() throws Exception {
@@ -267,8 +292,10 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         @Override
         public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
             List<RotorType> rotorTypes = endpoint.getConfigContainer().getRotorTypes();
-            candidates.addAll(rotorTypes
-                                      .stream()
+            candidates.addAll(rotorTypes.stream()
+                                      // TODO filter by armature alphabet
+                                      .filter(rotorType -> !filterCompletion || (newAlphabetString != null &&
+                                              newAlphabetString.equals(rotorType.getAlphabetString())))
                                       .map(rotorType -> new Candidate(rotorType.getName()))
                                       .collect(Collectors.toList()));
         }

@@ -109,6 +109,10 @@ public class Armature {
         return current;
     }
 
+    public <T extends ScramblerWheel> boolean fits(T scramblerWheel) {
+        return alphabetString.equals(scramblerWheel.getAlphabetString());
+    }
+
     private void validateEntryWheel(EntryWheelType entryWheelType, int length) {
         // TODO do other stuff
 //        return entryWheelType.freshScrambler().alphabet.length;
