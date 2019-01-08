@@ -100,8 +100,8 @@ public class PlugBoard extends Scrambler {
     }
 
 
-    private static ScramblerType getPlugBoardType(String alphabetString) {
-        return new ScramblerType() {
+    private static ScramblerType<PlugBoard> getPlugBoardType(String alphabetString) {
+        return new ScramblerType<>() {
             @Override
             public String getName() {
                 return "PLUGBOARD";

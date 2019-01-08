@@ -48,8 +48,8 @@ public class ScramblerTest {
         System.out.printf("Ansi enabled: %b%n", Ansi.isEnabled());
         System.out.printf("Spring ansi enabled: %s%n", springAnsiEnabled);
         String linesString;
-        List<String> lines = ScrambleResult.HistoryEntry.loadLetter(4);
-        List<String> lines2 = ScrambleResult.HistoryEntry.loadLetter(26);
+        List<String> lines = ScrambleResult.HistoryEntry.loadLetter(4, "letters.txt");
+        List<String> lines2 = ScrambleResult.HistoryEntry.loadLetter(26, "letters.txt");
         int linesSize = lines.size();
         int linesSize2 = lines2.size();
         for (int i = 0; i < linesSize || i < linesSize2; i++) {

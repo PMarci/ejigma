@@ -1,17 +1,18 @@
 package camel.enigma.model;
 
 import camel.enigma.exception.ScramblerSettingException;
-import camel.enigma.model.type.ScramblerType;
+import camel.enigma.model.type.ReflectorType;
 import camel.enigma.util.ScrambleResult;
+import camel.enigma.util.Util;
 
 public class Reflector extends ScramblerWheel {
 
-    public Reflector(String alphabetString, String wiringString, ScramblerType scramblerType) throws ScramblerSettingException {
-        this(alphabetString, wiringString, true, scramblerType);
+    public Reflector(String alphabetString, String wiringString, ReflectorType reflectorType) throws ScramblerSettingException {
+        this(alphabetString, wiringString, true, reflectorType);
     }
 
-    private Reflector(String alphabetString, String wiringString, boolean staticc, ScramblerType scramblerType) throws ScramblerSettingException {
-        super(alphabetString, wiringString, staticc, scramblerType);
+    private Reflector(String alphabetString, String wiringString, boolean staticc, ReflectorType reflectorType) throws ScramblerSettingException {
+        super(alphabetString, wiringString, staticc, reflectorType);
     }
 
     @Override
@@ -33,4 +34,33 @@ public class Reflector extends ScramblerWheel {
     public boolean isNotchEngaged() {
         return false;
     }
+
+    public static ReflectorType auto(String alphabetString) {
+        return new ReflectorType() {
+            @Override
+            public String getName() {
+                return "AUTO_REFLECTOR";
+            }
+
+            @Override
+            public Reflector freshScrambler() {
+                Reflector reflector = null;
+                String wiringString = Util.fisherYatesShuffle(alphabetString);
+                try {
+                    reflector = new Reflector(alphabetString, wiringString, this);
+                } catch (ScramblerSettingException e) {
+                    e.printStackTrace();
+                }
+                return reflector;
+            }
+
+            @Override
+            public String getAlphabetString() {
+                return alphabetString;
+            }
+        };
+    }
+
+
+
 }

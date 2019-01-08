@@ -51,9 +51,9 @@ public abstract class ScramblerWheel extends Scrambler {
     }
 
     public void setOffset(char offset) {
-        this.offsetAsChar = offset;
         int index = getAlphabetString().indexOf(offset);
         if (index != -1) {
+            this.offsetAsChar = offset;
             this.offset = index;
         } else {
             throw new IllegalArgumentException("invalid offset!");
@@ -61,10 +61,9 @@ public abstract class ScramblerWheel extends Scrambler {
     }
 
     public void setOffset(int offset) {
-        this.offset = offset;
-        int index = getAlphabetString().indexOf(offset);
-        if (index != -1) {
-            this.offset = index;
+        if (-1 < offset && offset < alphabet.length) {
+            this.offset = offset;
+            this.offsetAsChar = getAlphabetString().charAt(offset);
         } else {
             throw new IllegalArgumentException("invalid offset!");
         }

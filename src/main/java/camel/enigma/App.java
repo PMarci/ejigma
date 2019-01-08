@@ -1,6 +1,7 @@
 package camel.enigma;
 
 import camel.enigma.io.KeyBoardEndpoint;
+import camel.enigma.model.Armature;
 import camel.enigma.model.type.ConfigContainer;
 import org.apache.camel.CamelContext;
 import org.jline.terminal.Terminal;
@@ -18,6 +19,9 @@ public class App implements CommandLineRunner {
     @Autowired
     private ConfigContainer configContainer;
 
+    @Autowired
+    private Armature armature;
+
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
     }
@@ -34,6 +38,9 @@ public class App implements CommandLineRunner {
                 String.format("The following reflector types are available: %n%s%n", configContainer.getReflectorTypes().toString()));
         terminal.writer().write(
                 String.format("The following entry wheel types are available: %n%s%n", configContainer.getEntryWheelTypes().toString()));
+        terminal.flush();
+        terminal.writer().write(String.format("This bastard fucks everything up: %n%s%n%s%n", armature.getReflector().getAlphabetString(),
+            armature.getReflector().getWiringString()));
         terminal.flush();
     }
 }

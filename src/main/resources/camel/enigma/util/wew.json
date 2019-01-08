@@ -1,0 +1,6 @@
+{
+  "name": "wew",
+  "alphabetString": "ABCDEFGHIJKLMNOPQRSTUVWXY ",
+  "wiringString":   "ABQDEKGHIJFLMNOPCRSTUVWX Y",
+  "notch": ["C"]
+}

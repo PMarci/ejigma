@@ -1,7 +1,7 @@
 package camel.enigma.model;
 
 import camel.enigma.exception.ScramblerSettingException;
-import camel.enigma.model.type.ScramblerType;
+import camel.enigma.model.type.RotorType;
 import camel.enigma.util.Util;
 
 public class Rotor extends ScramblerWheel {
@@ -17,9 +17,10 @@ public class Rotor extends ScramblerWheel {
             String wiringString,
             char[] notch,
             boolean staticc,
-            ScramblerType scramblerType) throws ScramblerSettingException {
+            RotorType rotorType) throws ScramblerSettingException {
 
-        super(alphabetString, wiringString, staticc, scramblerType);
+        super(alphabetString, wiringString, staticc, rotorType);
+        // TODO validate whether alphabetString contains it
         this.notch = notch;
     }
 

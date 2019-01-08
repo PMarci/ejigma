@@ -1,0 +1,6 @@
+{
+  "name": "magyar",
+  "alphabetString": "AÁBCDEÉFGHIÍJKLMNOÓÖŐPQRSTUÚVWXY",
+  "wiringString":   "SÁTOÖNBQEMUWVAHIRLGŐXCKÚÉFYÍDÓPJ",
+  "notch": ["Q"]
+}

@@ -36,31 +36,30 @@ public class ScrambleResult {
     private List<HistoryEntry> history;
 
     private Character offsetAsChar;
-    private final AttributedStyle redStyle =
+    private static final AttributedStyle redStyle =
             new AttributedStyle().foreground(AttributedStyle.BRIGHT).foreground(AttributedStyle.RED);
-    private final AttributedStyle blackOnWhiteStyle = new AttributedStyle().foreground(AttributedStyle.BLACK)
+    private static final AttributedStyle blackOnWhiteStyle = new AttributedStyle().foreground(AttributedStyle.BLACK)
             .background(AttributedStyle.BRIGHT)
             .background(AttributedStyle.WHITE);
-    private final AttributedStyle whiteOnBlackStyle = new AttributedStyle().foreground(AttributedStyle.BRIGHT)
+    private static final AttributedStyle whiteOnBlackStyle = new AttributedStyle().foreground(AttributedStyle.BRIGHT)
             .foreground(AttributedStyle.WHITE)
             .background(AttributedStyle.BLACK);
 
     public ScrambleResult(String alphabetString, Character resultAsChar) {
+        this(0, alphabetString, resultAsChar);
+    }
+
+    public ScrambleResult(int result, String alphabetString, Character resultAsChar) {
         this.alphabetString = alphabetString;
         this.alphabet = alphabetString.toCharArray();
         history = new ArrayList<>();
-        putResult(0, resultAsChar, resultAsChar, resultAsChar, INPUT_STRING);
-        putCharInputToIntResult(this);
+        putResult(result, resultAsChar, resultAsChar, resultAsChar, INPUT_STRING);
+        putCharInputToIntResult();
     }
 
-    // TODO probably move
     public void putCharInputToIntResult() {
-        putCharInputToIntResult(this);
-    }
-
-    private void putCharInputToIntResult(ScrambleResult input) {
-        int wheelPos = this.alphabetString.indexOf(input.getResultAsChar());
-        input.setResult(wheelPos);
+        int wheelPos = this.alphabetString.indexOf(getResultAsChar());
+        setResult(wheelPos);
     }
 
     public char getResultAsChar() {
@@ -144,7 +143,10 @@ public class ScrambleResult {
         int lastOutputIndex = (historySize > 0) ?
                               alphabetString.indexOf(history.get(historySize - 1).getWiringOutput()) :
                               0;
-        List<String> letterLines = HistoryEntry.letters[lastOutputIndex];
+        List<String> letterLines = Collections.emptyList();
+        if (-1 < lastOutputIndex && lastOutputIndex < HistoryEntry.letters.length) {
+            letterLines = HistoryEntry.letters[lastOutputIndex];
+        }
         Iterator<String> letterLineIterator = letterLines.iterator();
         for (int i = 0; fitsInHeight(historySize, i); i++) {
             HistoryEntry historyEntry;
@@ -208,7 +210,7 @@ public class ScrambleResult {
 
     public static class HistoryEntry {
 
-        private static final List[] letters = initLetters();
+        private static final List<String>[] letters = initLetters();
 
         private static final int HEIGHT = 15;
 
@@ -362,20 +364,22 @@ public class ScrambleResult {
             return s.concat(getPadding(s, HistoryEntry.PADDING));
         }
 
-        private static List[] initLetters() {
-            List[] result = new ArrayList[28];
+        private static List<String>[] initLetters() {
+            // TODO read size first
+            List<String>[] result = new ArrayList[28];
             for (int i = 0; i < 28; i++) {
-                result[i] = loadLetter(i);
+                result[i] = loadLetter(i, "letters.txt");
             }
             return result;
         }
 
-        public static List<String> loadLetter(int index) {
+        public static List<String> loadLetter(int index, String fileName) {
 
+            char letterSeparator = '_';
             int delimiters = 0;
             int i = 0;
             List<String> content = Collections.emptyList();
-            try (InputStream lettersStream = ScrambleResult.class.getResourceAsStream("letters.txt")) {
+            try (InputStream lettersStream = ScrambleResult.class.getResourceAsStream(fileName)) {
                 content = new BufferedReader(new InputStreamReader(lettersStream, StandardCharsets.UTF_8))
                         .lines()
                         .collect(Collectors.toList());
@@ -386,9 +390,9 @@ public class ScrambleResult {
             while (i < content.size()) {
                 String line = content.get(i);
                 i++;
-                if (delimiters == index && 0 < line.length() && line.charAt(0) != '_') {
+                if (delimiters == index && 0 < line.length() && line.charAt(0) != letterSeparator) {
                     result.add(line);
-                } else if (0 < line.length() && line.charAt(0) == '_') {
+                } else if (0 < line.length() && line.charAt(0) == letterSeparator) {
                     delimiters++;
                 }
             }

@@ -2,6 +2,8 @@ package camel.enigma.util;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collector;
 
 public class Util {
@@ -31,5 +33,19 @@ public class Util {
 
     public static boolean containsChar(String string, char inputChar) {
         return string.indexOf(inputChar) != -1;
+    }
+
+    // TODO result has to give 2-cycles
+    public static String fisherYatesShuffle(String alphabet) {
+        Random random = ThreadLocalRandom.current();
+        int[] alphaArray = alphabet.codePoints().toArray();
+        for (int i = alphaArray.length - 1; i > 0; i--) {
+            int rnd = random.nextInt(i + 1);
+            int a = alphaArray[rnd];
+            alphaArray[rnd] = alphaArray[i];
+            alphaArray[i] = a;
+
+        }
+        return new String(alphaArray, 0, alphaArray.length);
     }
 }

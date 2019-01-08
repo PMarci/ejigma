@@ -9,6 +9,7 @@ import camel.enigma.model.type.RotorType;
 public enum HistoricRotorType implements RotorType {
 
     I("EKMFLGDQVZNTOWYHXUSPAIBRCJ", new char[]{'Q'}),
+    M("AÁBCDEÉFGHIÍJKLMNOÓÖŐPQRST", "SÁTOÖNBQEMAHIRLGŐCKÉFÍDÓPJ", new char[]{'Q'}),
     II("AJDKSIRUXBLHWTMCQGZNPYFVOE", new char[]{'E'}),
     III("BDFHJLCPRTXVZNYEIWGAKMUSQO", new char[]{'V'}),
     IV("ESOVPZJAYQUIRHXLNFTGKDCMWB", new char[]{'J'}),
@@ -26,6 +27,14 @@ public enum HistoricRotorType implements RotorType {
     HistoricRotorType(String wiringString, char[] notch) {
         this.alphabetString = Scrambler.DEFAULT_ALPHABET_STRING;
         this.alphabet = Scrambler.DEFAULT_ALPHABET_STRING.toCharArray();
+        this.wiringString = wiringString;
+        this.notch = notch;
+        this.staticc = false;
+    }
+
+    HistoricRotorType(String alphabetString, String wiringString, char[] notch) {
+        this.alphabetString = alphabetString;
+        this.alphabet = alphabetString.toCharArray();
         this.wiringString = wiringString;
         this.notch = notch;
         this.staticc = false;

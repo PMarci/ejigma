@@ -40,11 +40,12 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
         super(endpointUri, component);
         this.configContainer = configContainer;
         this.armature = armature;
-        alphabetString = Scrambler.DEFAULT_ALPHABET_STRING;
+        alphabetString = /*HistoricRotorType.M.getAlphabetString()*/Scrambler.DEFAULT_ALPHABET_STRING;
         alphabet = alphabetString.toCharArray();
         this.terminal = terminal;
     }
 
+    // TODO can this be improved? (hint: yes)
     Exchange createExchange(Character input) {
         Exchange exchange = createExchange();
         ScrambleResult body = null;
@@ -55,7 +56,8 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
             }
         }
         if (Util.containsChar(alphabetString, input)) {
-            body = new ScrambleResult(alphabetString, input);
+            int initialResult = alphabetString.indexOf(input);
+            body = new ScrambleResult((initialResult != -1) ? initialResult : 0, alphabetString, input);
         }
         exchange.getIn().setBody(body);
         return exchange;
@@ -134,5 +136,9 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
 
     public Armature getArmature() {
         return armature;
+    }
+
+    public char[] getAlphabet() {
+        return alphabet;
     }
 }

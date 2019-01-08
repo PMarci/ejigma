@@ -13,7 +13,7 @@ public abstract class Scrambler {
 
     public static final String DEFAULT_ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     public static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
-    final ScramblerType type;
+    final ScramblerType<? extends Scrambler> type;
     private final String alphabetString;
 
     String wiringString;
@@ -22,7 +22,7 @@ public abstract class Scrambler {
     int[] forwardLinks;
     int[] reverseLinks;
 
-    Scrambler(String alphabetString, String wiringString, ScramblerType scramblerType) throws ScramblerSettingException {
+    Scrambler(String alphabetString, String wiringString, ScramblerType<? extends Scrambler> scramblerType) throws ScramblerSettingException {
         this.type = scramblerType;
         validateAlphabetString(alphabetString);
         this.alphabetString = alphabetString;
@@ -74,5 +74,10 @@ public abstract class Scrambler {
 
     public String getAlphabetString() {
         return alphabetString;
+    }
+
+    // TODO TEMP
+    public String getWiringString() {
+        return wiringString;
     }
 }

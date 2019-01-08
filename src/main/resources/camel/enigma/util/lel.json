@@ -1,0 +1,6 @@
+{
+  "name": "fourletter",
+  "alphabetString": "ABCD",
+  "wiringString":   "BCDA",
+  "notch": ["C"]
+}
