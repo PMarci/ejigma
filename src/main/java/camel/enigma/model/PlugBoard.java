@@ -43,9 +43,7 @@ public class PlugBoard extends Scrambler {
     }
 
     private void setSomePlugs(String sourceString, String wiringString) {
-        for (int i = 0; i < alphabet.length; i++) {
-            forwardLinks[i] = -1;
-        }
+        markArray(forwardLinks);
         char[] sourceArray = sourceString.toCharArray();
         char[] wiringArray = wiringString.toCharArray();
         int i = 0;
@@ -77,6 +75,12 @@ public class PlugBoard extends Scrambler {
             } while (!match && !(lastSource && lastAlpha));
             i = (!lastSource) ? i + 1 : lastSourceIndex;
         } while (!(lastSource && lastAlpha));
+    }
+
+    private static void markArray(int[] array) {
+        for (int i = 0; i < array.length; i++) {
+            array[i] = -1;
+        }
     }
 
     @Override

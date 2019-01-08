@@ -40,7 +40,7 @@ public class KeyBoardEndpoint extends DefaultEndpoint {
         super(endpointUri, component);
         this.configContainer = configContainer;
         this.armature = armature;
-        alphabetString = /*HistoricRotorType.M.getAlphabetString()*/Scrambler.DEFAULT_ALPHABET_STRING;
+        alphabetString = Scrambler.DEFAULT_ALPHABET_STRING;
         alphabet = alphabetString.toCharArray();
         this.terminal = terminal;
     }

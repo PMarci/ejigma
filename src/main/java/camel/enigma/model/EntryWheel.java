@@ -16,10 +16,7 @@ public class EntryWheel extends ScramblerWheel {
 
     @Override
     ScrambleResult scramble(ScrambleResult input) {
-        // TODO proper
-        if (input.getHistory().size() < 2) {
-            input.putCharInputToIntResult();
-        }
+        input.putCharInputToIntResult();
         return super.scramble(input);
     }
 

@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class ScrambleResult {
@@ -23,8 +22,6 @@ public class ScrambleResult {
     private static final String OUTPUT_STRING = "OUTPUT";
 
     private static final String STEP_SEPARATOR = "/";
-    private static final String STEP_REGEX = "^([^/]+)(?:" + STEP_SEPARATOR + "(\\d+))?$";
-    private static final Pattern STEP_PATTERN = Pattern.compile(STEP_REGEX);
 
     // TODO try and get out of here
     private final String alphabetString;
@@ -111,7 +108,6 @@ public class ScrambleResult {
         history.add(newEntry);
     }
 
-    // TODO fix by searching for highest passNo
     private HistoryEntry generateHistoryEntry(char wiringInput, char wiringOutput, String stationId) {
         int maxPassNo = history.stream().sequential()
                 .filter(historyEntry -> historyEntry.getStationId().equals(stationId))
@@ -252,41 +248,28 @@ public class ScrambleResult {
 
         @Override
         public String toString() {
-            int terminal;
-            if (stationId.equals(INPUT_STRING)) {
-                terminal = -1;
-            } else {
-                if (stationId.equals(OUTPUT_STRING)) {
-                    terminal = 1;
-                } else {
-                    terminal = 0;
-                }
-            }
-            String wiringFirstPart = (terminal == -1) ? " " + wiringInput + " :::::> " : "╚► " + wiringInput;
-            String wiringSecondPart = (terminal == 0) ? " :::> " : "";
-            String wiringThirdPart =
-                    (terminal == 1) ? " :::::> " + wiringOutput : String.valueOf(wiringOutput) + " ═╗\n";
-            String returnBranch = getPadding("") + "   ╔════[" + alphabet[result] + "]═════╝";
-            String wiringPart =
-                    wiringFirstPart + wiringSecondPart + wiringThirdPart + ((terminal != 1) ? returnBranch : "");
-            String mainPart = pad(getStepIdString()) + " : " + wiringPart;
-            return ((getOffsetAsChar() != null) ? mainPart + ", offset = " + offsetAsChar : mainPart);
+            int firstMidLast = getFirstMidLast();
+            String firstLine = getWiringFirstLine(firstMidLast);
+            String secondLine = getWiringSecondLine(firstMidLast);
+            return String.join("\n", firstLine, secondLine);
         }
 
         List<String> toDetailString(String letterLine1, String letterLine2) {
-            StringBuilder firstLine = new StringBuilder();
-            StringBuilder secondLine = new StringBuilder();
             List<String> resultList = new ArrayList<>();
-            int firstMidLast;
-            if (stationId.equals(INPUT_STRING)) {
-                firstMidLast = -1;
-            } else {
-                if (stationId.equals(OUTPUT_STRING)) {
-                    firstMidLast = 1;
-                } else {
-                    firstMidLast = 0;
-                }
-            }
+            int firstMidLast = getFirstMidLast();
+            String firstLine = getWiringFirstLine(letterLine1, firstMidLast);
+            resultList.add(firstLine);
+            String secondLine = getWiringSecondLine(letterLine2, firstMidLast);
+            resultList.add(secondLine);
+            return resultList;
+        }
+
+        private String getWiringFirstLine(int firstMidLast) {
+            return getWiringFirstLine(null, firstMidLast);
+        }
+
+        private String getWiringFirstLine(String letterLine1, int firstMidLast) {
+            StringBuilder firstLine = new StringBuilder();
             firstLine.append(pad(getStepIdString())).append(" : ");
             String wiringFirstPart;
             if (firstMidLast == -1) {
@@ -305,17 +288,25 @@ public class ScrambleResult {
             } else {
                 wiringThirdPart = String.valueOf(wiringOutput) + " ═╗";
             }
-            String returnLink = getPadding("") + "   ╔════[" + alphabet[result] + "]═════╝";
             firstLine.append(wiringFirstPart)
-                    .append(wiringSecondPart)
-                    .append(wiringThirdPart);
+                .append(wiringSecondPart)
+                .append(wiringThirdPart);
+
             int firstLineLength = firstLine.length();
             if (letterLine1 != null) {
                 firstLine.append(getPadding(firstLineLength, SECOND_PADDING)).append(letterLine1);
             }
-            resultList.add(firstLine.toString());
+            return firstLine.toString();
+        }
+
+        private String getWiringSecondLine(int firstMidLast) {
+            return getWiringSecondLine(null, firstMidLast);
+        }
+
+        private String getWiringSecondLine(String letterLine2, int firstMidLast) {
+            StringBuilder secondLine = new StringBuilder();
             if (firstMidLast != 1) {
-                secondLine.append(returnLink);
+                secondLine.append(getPadding("")).append("   ╔════[").append(alphabet[result]).append("]═════╝");
             }
             if (getOffsetAsChar() != null) {
                 secondLine.append(", offset = ").append(offsetAsChar);
@@ -324,8 +315,21 @@ public class ScrambleResult {
             if (letterLine2 != null) {
                 secondLine.append(getPadding(secondLineLength, SECOND_PADDING)).append(letterLine2);
             }
-            resultList.add(secondLine.toString());
-            return resultList;
+            return secondLine.toString();
+        }
+
+        private int getFirstMidLast() {
+            int firstMidLast;
+            if (stationId.equals(INPUT_STRING)) {
+                firstMidLast = -1;
+            } else {
+                if (stationId.equals(OUTPUT_STRING)) {
+                    firstMidLast = 1;
+                } else {
+                    firstMidLast = 0;
+                }
+            }
+            return firstMidLast;
         }
 
         private String getStepIdString() {

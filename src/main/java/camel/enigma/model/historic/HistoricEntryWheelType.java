@@ -6,7 +6,8 @@ import camel.enigma.model.Scrambler;
 import camel.enigma.model.type.EntryWheelType;
 
 public enum HistoricEntryWheelType implements EntryWheelType {
-    ENIGMA_I();
+    ENIGMA_I(),
+    REICHSBAHN("QWERTZUIOASDFGHJKPYXCVBNML");
 
     private final String alphabetString;
     private final char[] alphabet;
@@ -17,6 +18,11 @@ public enum HistoricEntryWheelType implements EntryWheelType {
         this.alphabetString = Scrambler.DEFAULT_ALPHABET_STRING;
         this.alphabet = alphabetString.toCharArray();
         this.wiringString = alphabetString;
+    }
+
+    HistoricEntryWheelType(String wiringString) {
+        this();
+        this.wiringString = wiringString;
     }
 
     @Override

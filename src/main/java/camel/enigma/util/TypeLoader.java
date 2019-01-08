@@ -1,6 +1,8 @@
 package camel.enigma.util;
 
-import camel.enigma.model.CustomRotorType;
+import camel.enigma.model.type.CustomEntryWheelType;
+import camel.enigma.model.type.CustomReflectorType;
+import camel.enigma.model.type.CustomRotorType;
 import camel.enigma.model.type.RotorType;
 import org.eclipse.persistence.jaxb.UnmarshallerProperties;
 import org.springframework.context.annotation.Bean;
@@ -22,26 +24,12 @@ import java.util.stream.Collectors;
 @Configuration
 public class TypeLoader {
 
-    private static JAXBContext jaxbContext;
-
-    static {
-        try {
-            jaxbContext = JAXBContext.newInstance(CustomRotorType.class);
-        } catch (JAXBException e) {
-            e.printStackTrace();
-        }
-    }
+    private static JAXBContext jaxbContext = initJaxbContext();
 
     private static String path = getPath();
 
-    private static String getPath() {
-        Class<TypeLoader> typeLoaderClass = TypeLoader.class;
-        URL resource = typeLoaderClass.getResource("./");
-        return resource.getPath();
-    }
-
     @Bean
-    public static List<RotorType> loadRotorTypes() {
+    public static List<RotorType> loadCustomRotorTypes() {
         List<RotorType> rotorTypes = Collections.emptyList();
         List<File> sourceFiles = listFiles();
         try {
@@ -68,9 +56,7 @@ public class TypeLoader {
         List<RotorType> result = new ArrayList<>();
         CustomRotorType customRotorType;
         for (File sourceFile : sourceFiles) {
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            unmarshaller.setProperty(UnmarshallerProperties.MEDIA_TYPE, "application/json");
-            unmarshaller.setProperty(UnmarshallerProperties.JSON_INCLUDE_ROOT, false);
+            Unmarshaller unmarshaller = getUnmarshaller();
             JAXBElement<CustomRotorType> customRotorTypeElem = unmarshaller.unmarshal(new StreamSource(sourceFile), CustomRotorType.class);
             if (customRotorTypeElem != null) {
                 customRotorType = customRotorTypeElem.getValue();
@@ -78,6 +64,29 @@ public class TypeLoader {
                     result.add(customRotorType);
                 }
             }
+        }
+        return result;
+    }
+
+    private static String getPath() {
+        Class<TypeLoader> typeLoaderClass = TypeLoader.class;
+        URL resource = typeLoaderClass.getResource("./");
+        return resource.getPath();
+    }
+
+    private static Unmarshaller getUnmarshaller() throws JAXBException {
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        unmarshaller.setProperty(UnmarshallerProperties.MEDIA_TYPE, "application/json");
+        unmarshaller.setProperty(UnmarshallerProperties.JSON_INCLUDE_ROOT, false);
+        return unmarshaller;
+    }
+
+    private static JAXBContext initJaxbContext() {
+        JAXBContext result = null;
+        try {
+            result = JAXBContext.newInstance(CustomRotorType.class, CustomReflectorType.class, CustomEntryWheelType.class);
+        } catch (JAXBException e) {
+            e.printStackTrace();
         }
         return result;
     }

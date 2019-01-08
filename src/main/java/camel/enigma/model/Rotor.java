@@ -6,8 +6,6 @@ import camel.enigma.util.Util;
 
 public class Rotor extends ScramblerWheel {
 
-    public static final char[] DEFAULT_NOTCH = new char[]{'Q'};
-
     private int ringSetting;
     private char ringSettingAsChar;
     private char[] notch;
@@ -20,7 +18,7 @@ public class Rotor extends ScramblerWheel {
             RotorType rotorType) throws ScramblerSettingException {
 
         super(alphabetString, wiringString, staticc, rotorType);
-        // TODO validate whether alphabetString contains it
+        // TODO validate whether alphabetString contains it + set last if null maybe
         this.notch = notch;
     }
 

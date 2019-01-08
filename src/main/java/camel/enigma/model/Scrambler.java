@@ -6,6 +6,7 @@ import camel.enigma.exception.ScramblerSettingLengthException;
 import camel.enigma.exception.ScramblerSettingWiringException;
 import camel.enigma.model.type.ScramblerType;
 import camel.enigma.util.ScrambleResult;
+import camel.enigma.util.Util;
 
 import static java.util.Objects.requireNonNull;
 
@@ -13,12 +14,13 @@ public abstract class Scrambler {
 
     public static final String DEFAULT_ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     public static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
-    final ScramblerType<? extends Scrambler> type;
-    private final String alphabetString;
 
-    String wiringString;
+    protected final ScramblerType<? extends Scrambler> type;
+    protected final String alphabetString;
+    protected final String wiringString;
 
-    final char[] alphabet;
+    protected final char[] alphabet;
+
     int[] forwardLinks;
     int[] reverseLinks;
 
@@ -42,7 +44,7 @@ public abstract class Scrambler {
     private void validateAlphabetString(String alphabetString) throws ScramblerSettingAlphabetException {
         requireNonNull(alphabetString);
         for (char c : alphabetString.toCharArray()) {
-            int freq = countOccurrences(alphabetString, c);
+            int freq = Util.countOccurrences(alphabetString, c);
             if (freq > 1) {
                 throw new ScramblerSettingAlphabetException("An alphabet string can only contain each letter once!");
             }
@@ -55,29 +57,18 @@ public abstract class Scrambler {
             throw new ScramblerSettingLengthException(String.format("Wirings only accept %d char strings!", alphabet.length));
         }
         for (char c : alphabet) {
-            int freq = countOccurrences(wiringString, c);
+            int freq = Util.countOccurrences(wiringString, c);
             if (freq > 1) {
                 throw new ScramblerSettingWiringException("Scrambler wirings can only map each letter once!");
             }
         }
     }
 
-    private int countOccurrences(String s, char inputChar) {
-        int result = 0;
-        for (char c : s.toCharArray()) {
-            if (c == inputChar) {
-                result++;
-            }
-        }
-        return result;
-    }
-
     public String getAlphabetString() {
         return alphabetString;
     }
 
-    // TODO TEMP
-    public String getWiringString() {
-        return wiringString;
+    public ScramblerType getType() {
+        return type;
     }
 }

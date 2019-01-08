@@ -39,8 +39,5 @@ public class App implements CommandLineRunner {
         terminal.writer().write(
                 String.format("The following entry wheel types are available: %n%s%n", configContainer.getEntryWheelTypes().toString()));
         terminal.flush();
-        terminal.writer().write(String.format("This bastard fucks everything up: %n%s%n%s%n", armature.getReflector().getAlphabetString(),
-            armature.getReflector().getWiringString()));
-        terminal.flush();
     }
 }

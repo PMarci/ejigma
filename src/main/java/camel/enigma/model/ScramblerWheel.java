@@ -10,7 +10,7 @@ public abstract class ScramblerWheel extends Scrambler {
     char offsetAsChar;
     private final boolean staticc;
 
-    ScramblerWheel(String alphabetString, String wiringString, boolean staticc, ScramblerType scramblerType)
+    ScramblerWheel(String alphabetString, String wiringString, boolean staticc, ScramblerType<? extends ScramblerWheel> scramblerType)
         throws ScramblerSettingException {
         super(alphabetString, wiringString, scramblerType);
         setWiring(getAlphabetString(), this.wiringString);
@@ -88,10 +88,8 @@ public abstract class ScramblerWheel extends Scrambler {
         for (int i = 0, alphabetLength = alphabetArray.length; i < alphabetLength; i++) {
             char target = wiringArray[i];
             char source = alphabetArray[i];
-            int outputAddress = alphabetString.indexOf(target);
-            int inputAddress = wiringString.indexOf(source);
-            this.forwardLinks[i] = outputAddress;
-            this.reverseLinks[i] = inputAddress;
+            this.forwardLinks[i] = alphabetString.indexOf(target);
+            this.reverseLinks[i] = wiringString.indexOf(source);
         }
 
     }

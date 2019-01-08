@@ -45,7 +45,7 @@ public class Reflector extends ScramblerWheel {
             @Override
             public Reflector freshScrambler() {
                 Reflector reflector = null;
-                String wiringString = Util.fisherYatesShuffle(alphabetString);
+                String wiringString = Util.generate2Cycles(alphabetString);
                 try {
                     reflector = new Reflector(alphabetString, wiringString, this);
                 } catch (ScramblerSettingException e) {

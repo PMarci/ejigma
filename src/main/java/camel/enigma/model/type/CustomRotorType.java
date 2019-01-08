@@ -1,7 +1,7 @@
-package camel.enigma.model;
+package camel.enigma.model.type;
 
 import camel.enigma.exception.ScramblerSettingException;
-import camel.enigma.model.type.RotorType;
+import camel.enigma.model.Rotor;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

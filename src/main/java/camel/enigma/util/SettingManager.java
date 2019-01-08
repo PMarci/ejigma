@@ -28,12 +28,12 @@ public class SettingManager {
 
     @Handler
     public void handleControlInput(
-            @ExchangeProperty(Properties.DETAIL_MODE_TOGGLE) Boolean detailModeToggle,
-            @ExchangeProperty(Properties.RESET_OFFSETS) Boolean resetOffsets) {
+        @ExchangeProperty(Properties.DETAIL_MODE_TOGGLE) Boolean detailModeToggle,
+        @ExchangeProperty(Properties.RESET_OFFSETS) Boolean resetOffsets) {
 
         LightBoard lightBoard = getLightBoard();
+        Terminal terminal = lightBoard.getTerminal();
         if (detailModeToggle != null && detailModeToggle) {
-            Terminal terminal = lightBoard.getTerminal();
             terminal.puts(InfoCmp.Capability.scroll_forward);
             terminal.puts(InfoCmp.Capability.cursor_down);
             terminal.puts(InfoCmp.Capability.clear_screen);
@@ -42,7 +42,7 @@ public class SettingManager {
             lightBoard.clearBuffer();
         }
         if (resetOffsets != null && resetOffsets) {
-            System.out.printf("%n");
+            terminal.puts(InfoCmp.Capability.newline);
             logger.info("\nReceived Ctrl+R, resetting offsets...");
             armature.resetOffsets();
             lightBoard.clearBuffer();
@@ -56,7 +56,6 @@ public class SettingManager {
     private static void toggleDetailMode() {
         setDetailMode(!isDetailMode());
     }
-
 
     public static boolean isDetailMode() {
         return detailMode;

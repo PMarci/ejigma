@@ -4,35 +4,28 @@ import camel.enigma.util.ScrambleResult;
 
 public class ScramblerMounting {
 
-    private Scrambler scrambler;
-    private boolean reverseWired;
+    private final Scrambler scrambler;
+    private final boolean reverseWired;
 
-    public ScramblerMounting(Scrambler scrambler, boolean reverseWired) {
+    ScramblerMounting(Scrambler scrambler, boolean reverseWired) {
         this.scrambler = scrambler;
         this.reverseWired = reverseWired;
     }
 
-    public ScrambleResult scramble(ScrambleResult input) {
-        return !reverseWired ? scrambler.scramble(input) : scrambler.reverseScramble(input);
+    ScramblerMounting(Scrambler scrambler) {
+        this.scrambler = scrambler;
+        this.reverseWired = false;
     }
 
-    public ScramblerMounting(Scrambler scrambler) {
-        this.scrambler = scrambler;
+    ScrambleResult scramble(ScrambleResult input) {
+        return !reverseWired ? scrambler.scramble(input) : scrambler.reverseScramble(input);
     }
 
     public Scrambler getScrambler() {
         return scrambler;
     }
 
-    public void setScrambler(Scrambler scrambler) {
-        this.scrambler = scrambler;
-    }
-
     public boolean isReverseWired() {
         return reverseWired;
-    }
-
-    public void setReverseWired(boolean reverseWired) {
-        this.reverseWired = reverseWired;
     }
 }

@@ -9,7 +9,6 @@ import camel.enigma.model.type.RotorType;
 public enum HistoricRotorType implements RotorType {
 
     I("EKMFLGDQVZNTOWYHXUSPAIBRCJ", new char[]{'Q'}),
-    M("AÁBCDEÉFGHIÍJKLMNOÓÖŐPQRST", "SÁTOÖNBQEMAHIRLGŐCKÉFÍDÓPJ", new char[]{'Q'}),
     II("AJDKSIRUXBLHWTMCQGZNPYFVOE", new char[]{'E'}),
     III("BDFHJLCPRTXVZNYEIWGAKMUSQO", new char[]{'V'}),
     IV("ESOVPZJAYQUIRHXLNFTGKDCMWB", new char[]{'J'}),
