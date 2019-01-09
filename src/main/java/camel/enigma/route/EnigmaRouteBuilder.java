@@ -20,10 +20,6 @@ public class EnigmaRouteBuilder extends RouteBuilder {
     @Override
     public void configure() throws Exception {
 
-//        from("stream:file?fileName=src/main/resources/sup&scanStream=true&scanStreamDelay=100&retry=true&fileWatcher=true")
-//            .to("stream:out")
-//        ;
-
         //@formatter:off
         from("keyboard").routeId("internalChain")
                 .choice()
@@ -34,9 +30,7 @@ public class EnigmaRouteBuilder extends RouteBuilder {
                         .stop()
                 .end()
                 .choice()
-                    .when(exchange -> SettingManager.isDetailMode())
-                        .setBody(exchange -> exchange.getIn().getBody(ScrambleResult.class).printHistory())
-                    .otherwise()
+                    .when(exchange -> !SettingManager.isDetailMode())
                         .setBody(exchange -> Collections.singletonList(
                             String.valueOf(
                                 exchange.getIn().getBody(ScrambleResult.class).getResultAsChar())))

@@ -106,6 +106,7 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         SELECT_ROTOR,
         SELECT_REFLECTOR,
         RESET_OFFSETS,
+        CLEAR_BUFFER,
         DETAIL_MODE_TOGGLE,
         UP,
         DOWN,
@@ -135,6 +136,9 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
                     break;
                 case RESET_OFFSETS:
                     processResetOffsets();
+                    break;
+                case CLEAR_BUFFER:
+                    processClearBUffer();
                     break;
                 case DETAIL_MODE_TOGGLE:
                     processDetailModeToggle();
@@ -329,6 +333,7 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         bind(result, Op.SELECT_ROTOR, ctrl('I'));
         bind(result, Op.SELECT_ENTRY, ctrl('E'));
         bind(result, Op.SELECT_REFLECTOR, ctrl('F'));
+        bind(result, Op.CLEAR_BUFFER, ctrl('D'));
         bind(result, Op.UP, key(terminal, InfoCmp.Capability.key_up));
         bind(result, Op.DOWN, key(terminal, InfoCmp.Capability.key_down));
         bind(result, Op.LEFT, key(terminal, InfoCmp.Capability.key_left));
@@ -381,6 +386,12 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
     private void processResetOffsets() throws Exception {
         Exchange exchange = endpoint.createExchange();
         exchange.setProperty(Properties.RESET_OFFSETS, true);
+        getProcessor().process(exchange);
+    }
+
+    private void processClearBUffer() throws Exception {
+        Exchange exchange = endpoint.createExchange();
+        exchange.setProperty(Properties.CLEAR_BUFFER, true);
         getProcessor().process(exchange);
     }
 

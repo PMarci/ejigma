@@ -1,5 +1,6 @@
 package camel.enigma.io;
 
+import camel.enigma.util.ScrambleResult;
 import camel.enigma.util.SettingManager;
 import org.apache.camel.Exchange;
 import org.apache.camel.impl.DefaultProducer;
@@ -34,6 +35,7 @@ public class LightBoard extends DefaultProducer {
     private Cursor pos;
     private LineReader selectRotorReader;
     private List<String> oldLines = Collections.emptyList();
+    private List<String> detailLines = Collections.emptyList();
 
     public LightBoard(KeyBoardEndpoint endpoint, Terminal terminal) {
         super(endpoint);
@@ -51,13 +53,21 @@ public class LightBoard extends DefaultProducer {
     @Override
     public void process(Exchange exchange) {
 
-        size.copy(terminal.getSize());
-        List<String> s = exchange.getIn().getBody(List.class);
+        List<String> s;
         List<String> toDisplay;
+        // TODO erase only oldlines amount also don't slam the screen
+        terminal.puts(InfoCmp.Capability.clear_screen);
         if (SettingManager.isDetailMode()) {
-            terminal.puts(InfoCmp.Capability.clear_screen);
+            ScrambleResult scrambleResult = exchange.getIn().getBody(ScrambleResult.class);
+            s = scrambleResult.printHistory();
+            Character detailModeChar = scrambleResult.getResultAsChar();
             toDisplay = s;
+            detailLines = s;
+            buf.write(detailModeChar);
+            toDisplay.add(buf.toString());
         } else {
+            s = exchange.getIn().getBody(List.class);
+            detailLines = Collections.emptyList();
             s.forEach(buf::write);
             toDisplay = Collections.singletonList(buf.toString());
 //                int terminalWidth = terminal.getWidth();
@@ -82,20 +92,22 @@ public class LightBoard extends DefaultProducer {
 //                List<AttributedString> statusStrings = createStatusStrings();
 //                updateStatus(statusStrings);
         }
-        // TODO cursor not reset one letter after newline in cmd
+        // TODO cursor not reset one letter after newline
         // TODO also look into that gh issue about overriding the readline method
         display(toDisplay);
     }
 
     public void display(List<String> toDisplay) {
+        size.copy(terminal.getSize());
         display.clear();
         display.reset();
         int columns;
         int defaultColumns = 80;
         int targetColumns = (columns = size.getColumns()) > 0 ? columns : defaultColumns;
         display.resize(size.getRows(), targetColumns);
-        int cursorpos;
-        int targetCursorPos = (cursorpos = buf.cursor()/*size.cursorPos(0, 0)*/) > -1 ? cursorpos : 0;
+        int targetRow = (detailLines.size() - 1 >= 0) ? (detailLines.size() - 1) : 0;
+        int cursorPos = buf.cursor() + size.cursorPos(targetRow, 0);
+        int targetCursorPos = (cursorPos) > -1 ? cursorPos : 0;
         display.updateAnsi(toDisplay, targetCursorPos);
         oldLines = toDisplay;
     }
@@ -106,9 +118,16 @@ public class LightBoard extends DefaultProducer {
 
     public void clearBuffer() {
         buf.clear();
-        lineNo = 0;
-        oldLineNo = 0;
+        this.lineNo = 0;
+        this.oldLineNo = 0;
+        // TODO implement for real
+        for (int i = 0; i < 5; i++) {
+            terminal.puts(InfoCmp.Capability.delete_line);
+        }
+        display((detailLines != null) ? detailLines : Collections.emptyList());
     }
+
+
 
     public Terminal getTerminal() {
         return terminal;

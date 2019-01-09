@@ -281,10 +281,10 @@ public class ScrambleResult {
             }
             String wiringSecondPart = (firstMidLast == 0) ? " :::> " : "";
             String wiringThirdPart;
-            if (firstMidLast == 1) {
-                wiringThirdPart = String.valueOf(wiringOutput);
-            } else if (firstMidLast == -1) {
+            if (firstMidLast == -1) {
                 wiringThirdPart = " ═╗";
+            } else if (firstMidLast == 1) {
+                wiringThirdPart = String.valueOf(wiringOutput);
             } else {
                 wiringThirdPart = String.valueOf(wiringOutput) + " ═╗";
             }
