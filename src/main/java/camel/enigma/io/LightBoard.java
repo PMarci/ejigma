@@ -2,8 +2,6 @@ package camel.enigma.io;
 
 import camel.enigma.util.ScrambleResult;
 import camel.enigma.util.SettingManager;
-import org.apache.camel.Exchange;
-import org.apache.camel.impl.DefaultProducer;
 import org.jline.reader.Buffer;
 import org.jline.reader.LineReader;
 import org.jline.reader.impl.BufferImpl;
@@ -15,15 +13,19 @@ import org.jline.utils.InfoCmp;
 import org.jline.utils.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
 
-public class LightBoard extends DefaultProducer {
+@Component
+public class LightBoard
+//        extends DefaultProducer
+{
 
     private static final Logger logger = LoggerFactory.getLogger(LightBoard.class);
 
-    private KeyBoardEndpoint endpoint;
+//    private KeyBoardEndpoint endpoint;
     private Terminal terminal;
     private Status status;
     private Size size;
@@ -37,9 +39,21 @@ public class LightBoard extends DefaultProducer {
     private List<String> oldLines = Collections.emptyList();
     private List<String> detailLines = Collections.emptyList();
 
-    public LightBoard(KeyBoardEndpoint endpoint, Terminal terminal) {
-        super(endpoint);
-        this.endpoint = endpoint;
+//    public LightBoard(KeyBoardEndpoint endpoint, Terminal terminal) {
+////        super(endpoint);
+////        this.endpoint = endpoint;
+//        this.terminal = terminal;
+//        size = new Size();
+//        size.copy(terminal.getSize());
+//        display = new Display(terminal, false);
+//        // not setting this to true worsens linebreak behavior (tested in CMD thus far)
+//        display.setDelayLineWrap(true);
+//        buf = new BufferImpl();
+//        clearBuffer();
+//    }
+
+    public LightBoard(Terminal terminal) {
+//        super(endpoint);
         this.terminal = terminal;
         size = new Size();
         size.copy(terminal.getSize());
@@ -50,23 +64,22 @@ public class LightBoard extends DefaultProducer {
         clearBuffer();
     }
 
-    @Override
-    public void process(Exchange exchange) {
+//    @Override
+    public void process(ScrambleResult scrambleResult) {
 
         List<String> s;
         List<String> toDisplay;
         // TODO erase only oldlines amount also don't slam the screen
         terminal.puts(InfoCmp.Capability.clear_screen);
         if (SettingManager.isDetailMode()) {
-            ScrambleResult scrambleResult = exchange.getIn().getBody(ScrambleResult.class);
             s = scrambleResult.printHistory();
-            Character detailModeChar = scrambleResult.getResultAsChar();
+            char detailModeChar = scrambleResult.getResultAsChar();
             toDisplay = s;
             detailLines = s;
             buf.write(detailModeChar);
             toDisplay.add(buf.toString());
         } else {
-            s = exchange.getIn().getBody(List.class);
+            s = Collections.singletonList(String.valueOf(scrambleResult.getResultAsChar()));
             detailLines = Collections.emptyList();
             s.forEach(buf::write);
             toDisplay = Collections.singletonList(buf.toString());

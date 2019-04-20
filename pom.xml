@@ -29,20 +29,21 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <dependency>
-                <groupId>org.apache.camel</groupId>
-                <artifactId>camel-spring-boot-dependencies</artifactId>
-                <version>${camel.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.camel</groupId>
-                <artifactId>camel-parent</artifactId>
-                <version>${camel.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
+            <!-- TODO remove-->
+<!--            <dependency>-->
+<!--                <groupId>org.apache.camel</groupId>-->
+<!--                <artifactId>camel-spring-boot-dependencies</artifactId>-->
+<!--                <version>${camel.version}</version>-->
+<!--                <type>pom</type>-->
+<!--                <scope>import</scope>-->
+<!--            </dependency>-->
+<!--            <dependency>-->
+<!--                <groupId>org.apache.camel</groupId>-->
+<!--                <artifactId>camel-parent</artifactId>-->
+<!--                <version>${camel.version}</version>-->
+<!--                <type>pom</type>-->
+<!--                <scope>import</scope>-->
+<!--            </dependency>-->
         </dependencies>
     </dependencyManagement>
 
@@ -54,20 +55,21 @@
             <!-- Uncomment this if you need an embedded Tomcat -->
             <!-- <artifactId>spring-boot-starter-web</artifactId> -->
         </dependency>
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-spring-boot-starter</artifactId>
-        </dependency>
+        <!--TODO remove-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.camel</groupId>-->
+<!--            <artifactId>camel-spring-boot-starter</artifactId>-->
+<!--        </dependency>-->
 
-        <!-- Camel -->
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-stream</artifactId>
-        </dependency>
+<!--        &lt;!&ndash; Camel &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.camel</groupId>-->
+<!--            <artifactId>camel-core</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.camel</groupId>-->
+<!--            <artifactId>camel-stream</artifactId>-->
+<!--        </dependency>-->
 
         <!--Other-->
         <dependency>
@@ -100,11 +102,6 @@
         </dependency>
 
         <!--Tests-->
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-test-spring</artifactId>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

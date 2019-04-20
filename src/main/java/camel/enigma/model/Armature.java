@@ -9,8 +9,6 @@ import camel.enigma.model.type.ReflectorType;
 import camel.enigma.model.type.RotorType;
 import camel.enigma.model.type.ScramblerType;
 import camel.enigma.util.ScrambleResult;
-import org.apache.camel.Body;
-import org.apache.camel.Handler;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -47,8 +45,8 @@ public class Armature {
         scramblerWiring = initWiring();
     }
 
-    @Handler
-    public ScrambleResult handle(@Body ScrambleResult scrambleResult) {
+//    @Handler
+    public ScrambleResult handle(/*@Body*/ ScrambleResult scrambleResult) {
 
         click();
 

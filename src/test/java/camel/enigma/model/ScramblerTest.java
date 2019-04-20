@@ -1,7 +1,6 @@
 package camel.enigma.model;
 
 import camel.enigma.util.ScrambleResult;
-import org.apache.camel.util.IOHelper;
 import org.fusesource.jansi.Ansi;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,7 +13,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -42,8 +40,7 @@ public class ScramblerTest {
     @Test
     public void testPrinting() throws IOException {
         Charset charset = StandardCharsets.UTF_8;
-        Writer writer = new OutputStreamWriter(System.out, charset);
-        BufferedWriter bw = IOHelper.buffered(writer);
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out, charset));
         System.out.printf("%nAnsi detected: %b%n", Ansi.isDetected());
         System.out.printf("Ansi enabled: %b%n", Ansi.isEnabled());
         System.out.printf("Spring ansi enabled: %s%n", springAnsiEnabled);
@@ -63,7 +60,8 @@ public class ScramblerTest {
         bw.write("╔══╦══╗");
         bw.write(System.lineSeparator());
         bw.flush();
-        bw.write("╠═" + ansi().fgBright(Ansi.Color.BLACK).render("═").reset() + "║" + ansi().fgBright(Ansi.Color.BLACK).render("═").reset() + "═╣");
+        bw.write("╠═" + ansi().fgBright(Ansi.Color.BLACK).render("═").reset() + "║" +
+                         ansi().fgBright(Ansi.Color.BLACK).render("═").reset() + "═╣");
         bw.write(System.lineSeparator());
         bw.flush();
         bw.write("╚══╩══╝");

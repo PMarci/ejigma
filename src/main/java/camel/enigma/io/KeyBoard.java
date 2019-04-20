@@ -1,21 +1,31 @@
 package camel.enigma.io;
 
 import camel.enigma.exception.ArmatureInitException;
+import camel.enigma.model.Armature;
+import camel.enigma.model.Scrambler;
+import camel.enigma.model.type.ConfigContainer;
 import camel.enigma.model.type.EntryWheelType;
 import camel.enigma.model.type.RotorType;
 import camel.enigma.model.type.ScramblerType;
-import camel.enigma.util.Properties;
-import org.apache.camel.Exchange;
-import org.apache.camel.Processor;
-import org.apache.camel.impl.DefaultConsumer;
+import camel.enigma.util.ScrambleResult;
+import camel.enigma.util.SettingManager;
+import camel.enigma.util.Util;
 import org.jline.keymap.BindingReader;
 import org.jline.keymap.KeyMap;
 import org.jline.reader.*;
 import org.jline.terminal.Terminal;
 import org.jline.utils.InfoCmp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -24,11 +34,15 @@ import java.util.stream.IntStream;
 import static org.jline.keymap.KeyMap.ctrl;
 import static org.jline.keymap.KeyMap.key;
 
-public class KeyBoard extends DefaultConsumer implements Runnable {
+@Component
+public class KeyBoard
+//        extends DefaultConsumer
+        implements Runnable {
+
+    private static Logger logger = LoggerFactory.getLogger(KeyBoard.class);
 
     private final String FILTER_COMPLETION = "filterCompletion";
-    private KeyBoardEndpoint endpoint;
-    private ExecutorService executor;
+//    private KeyBoardEndpoint endpoint;
     private Terminal terminal;
     private LineReader selectionReader;
     private final Pattern numbers = Pattern.compile("[^0-9]*([0-9]+)[^0-9]*");
@@ -38,23 +52,54 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
     private String newAlphabetString = null;
     private SelectCompleter selectCompleter;
 
-    KeyBoard(KeyBoardEndpoint endpoint, Processor processor, Terminal terminal) {
-        super(endpoint, processor);
-        this.endpoint = endpoint;
+    private ExecutorService executor;
+    private final AtomicBoolean shuttingdown = new AtomicBoolean(false);
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
+
+    private final SettingManager settingManager;
+    private final Armature armature;
+    private final LightBoard lightBoard;
+
+    private String alphabetString;
+    private char[] alphabet;
+    private Charset charset;
+
+    private String encoding;
+    private KeyBoard keyBoard;
+    private final ConfigContainer configContainer;
+
+
+    @Autowired
+    KeyBoard(
+//            KeyBoardEndpoint endpoint,
+//            Processor processor,
+            Terminal terminal,
+            ConfigContainer configContainer,
+            Armature armature,
+            LightBoard lightBoard,
+            SettingManager settingManager) {
+//        super(endpoint, processor);
+//        this.endpoint = endpoint;
+        setAlphabet(Scrambler.DEFAULT_ALPHABET_STRING);
         this.terminal = terminal;
+        this.settingManager = settingManager;
+        this.lightBoard = lightBoard;
 //        this.oldAlphabetString = endpoint.getAlphabetString();
         terminal.handle(Terminal.Signal.INT, signal -> processQuit());
         this.selectionReader = initSelectionReader(terminal);
         this.bindingReader = new BindingReader(terminal.reader());
-        keyMap = getKeyMap(terminal);
+        this.keyMap = getKeyMap(terminal);
+
+        this.armature = armature;
+        this.configContainer = configContainer;
     }
 
     private LineReader initSelectionReader(Terminal terminal) {
         selectCompleter = new SelectCompleter();
         LineReader result = LineReaderBuilder.builder()
-            .terminal(terminal)
-            .completer(selectCompleter)
-            .build();
+                .terminal(terminal)
+                .completer(selectCompleter)
+                .build();
         result.setOpt(LineReader.Option.AUTO_MENU);
         result.setOpt(LineReader.Option.ERASE_LINE_ON_FINISH);
         result.setOpt(LineReader.Option.DISABLE_EVENT_EXPANSION);
@@ -65,38 +110,53 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         return result;
     }
 
-    @Override
-    protected void doStart() throws Exception {
-        super.doStart();
-        executor = endpoint.getCamelContext()
-            .getExecutorServiceManager()
-            .newSingleThreadExecutor(this, "keyBoardThread");
+    //    @Override
+    public void doStart() throws Exception {
+//        super.doStart();
+        ThreadFactory factory = r -> {
+            String threadName = "\"The\" thread";
+            Thread result = new Thread(r, threadName);
+            // the JVM instaquits if only daemon (user) threads are running, so set this to false
+            result.setDaemon(false);
+            return result;
+        };
+
+        this.executor = Executors.newSingleThreadExecutor(factory);
+//        executor = endpoint.getCamelContext()
+//                .getExecutorServiceManager()
+//                .newSingleThreadExecutor(this, "keyBoardThread");
+        logger.info("executing...");
         executor.execute(this);
 
     }
 
-    @Override
+    //    @Override
     protected void doStop() throws Exception {
+        shuttingdown.set(true);
         terminal.puts(InfoCmp.Capability.newline);
-        log.info("Stopping Consumer...");
+        logger.info("Stopping...");
         terminal.close();
 
         if (executor != null) {
-            endpoint.getCamelContext().getExecutorServiceManager().shutdownGraceful(executor, 300);
+//            endpoint.getCamelContext().getExecutorServiceManager().shutdownGraceful(executor, 300);
+//            TODO maybe implement awaitTermination
+            executor.shutdown();
+            shutdown.set(true);
             executor = null;
         }
 
-        super.doStop();
-        log.info("Stopping CamelContext...");
-        endpoint.getCamelContext().stop();
+//        super.doStop();
+//        endpoint.getCamelContext().stop();
     }
 
     @Override
     public void run() {
         try {
+            logger.info("running...");
             readFromStream();
         } catch (Exception e) {
-            getExceptionHandler().handleException(e);
+//            getExceptionHandler().handleException(e);
+            logger.error("big oof", e);
         }
     }
 
@@ -121,34 +181,34 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
             input = bindingReader.readBinding(keyMap, null, false);
             if (input != null) {
                 switch (input) {
-                case ENTER_CHAR:
-                    inputChar = bindingReader.getLastBinding().charAt(0);
-                    processInput(inputChar);
-                    break;
-                case SELECT_ENTRY:
-                    processSelectEntry();
-                    break;
-                case SELECT_ROTOR:
-                    processSelectRotors(true, true);
-                    break;
-                case SELECT_REFLECTOR:
-                    processSelectReflector();
-                    break;
-                case RESET_OFFSETS:
-                    processResetOffsets();
-                    break;
-                case CLEAR_BUFFER:
-                    processClearBUffer();
-                    break;
-                case DETAIL_MODE_TOGGLE:
-                    processDetailModeToggle();
-                    break;
-                case UP:
-                case DOWN:
-                case LEFT:
-                case RIGHT:
-                    processControl(input);
-                    break;
+                    case ENTER_CHAR:
+                        inputChar = bindingReader.getLastBinding().charAt(0);
+                        processInput(inputChar);
+                        break;
+                    case SELECT_ENTRY:
+                        processSelectEntry();
+                        break;
+                    case SELECT_ROTOR:
+                        processSelectRotors(true, true);
+                        break;
+                    case SELECT_REFLECTOR:
+                        processSelectReflector();
+                        break;
+                    case RESET_OFFSETS:
+                        processResetOffsets();
+                        break;
+                    case CLEAR_BUFFER:
+                        processClearBuffer();
+                        break;
+                    case DETAIL_MODE_TOGGLE:
+                        processDetailModeToggle();
+                        break;
+                    case UP:
+                    case DOWN:
+                    case LEFT:
+                    case RIGHT:
+                        processControl(input);
+                        break;
                 }
             }
         }
@@ -163,11 +223,11 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         }
         EntryWheelType newType = newEntryWheelTypeResponse.getScramblerType();
         if (newEntryWheelTypeResponse.isReselect()) {
-            endpoint.getArmature().setEntryWheel(newType, true);
+            armature.setEntryWheel(newType, true);
             processSelectRotors(false, false, newType);
             // TODO reflector too
         } else {
-            endpoint.getArmature().setEntryWheel(newType, false);
+            armature.setEntryWheel(newType, false);
         }
     }
 
@@ -185,13 +245,14 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
             choose2 = true;
             selectionReader.setVariable(FILTER_COMPLETION, false);
             String tInput = selectionReader.readLine(prompt).trim();
-            Optional<EntryWheelType> optionalEntryWheelType = endpoint.getConfigContainer().getEntryWheelTypes().stream()
-                .filter(eWType -> eWType.getName().equals(tInput)).findAny();
+            Optional<EntryWheelType> optionalEntryWheelType =
+                    configContainer.getEntryWheelTypes().stream()
+                            .filter(eWType -> eWType.getName().equals(tInput)).findAny();
             if (optionalEntryWheelType.isPresent()) {
                 newEntryWheelType = optionalEntryWheelType.get();
                 this.newAlphabetString = newEntryWheelType.getAlphabetString();
                 selectionReader.setVariable(FILTER_COMPLETION, false);
-                boolean fits = endpoint.getArmature().validateWithCurrent(newEntryWheelType);
+                boolean fits = armature.validateWithCurrent(newEntryWheelType);
                 if (!fits) {
                     selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
                     while (choose2) {
@@ -209,7 +270,6 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
                 } else {
                     response = new ScramblerSelectResponse<>(newEntryWheelType, false);
                     choose = false;
-                    choose2 = false;
                 }
             } else {
                 selectionReader.printAbove(notATypeString);
@@ -244,21 +304,21 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
                 String vNewAlphabetString = newRotorTypes[0].getAlphabetString();
 //                char[] newAlphabet = vNewAlphabetString.toCharArray();
 //                char[] oldAlphabet = oldAlphabetString.toCharArray();
-                endpoint.getArmature().setRotors(newRotorTypes, autoEntryWheel, autoRandomReflector);
-                endpoint.switchAlphabet(vNewAlphabetString);
-//                Set<String> oldUpperAndLower = getUpperAndLower(oldAlphabet, Locale.ROOT);
+                armature.setRotors(newRotorTypes, autoEntryWheel, autoRandomReflector);
+                setAlphabet(vNewAlphabetString);
+                //                Set<String> oldUpperAndLower = getUpperAndLower(oldAlphabet, Locale.ROOT);
 //                Set<String> upperAndLower = getUpperAndLower(newAlphabet, Locale.ROOT);
 //                unbind(keyMap, oldUpperAndLower);
 //                bind(keyMap, Op.ENTER_CHAR, upperAndLower);
                 keyMap.setUnicode(Op.ENTER_CHAR);
             } catch (ArmatureInitException e) {
                 if (prevType != null) {
-                    endpoint.getArmature().setEntryWheel(prevType, true);
+                    armature.setEntryWheel(prevType, true);
                 }
                 selectionReader.printAbove("Can't change rotors: " + e.getMessage());
             }
         }
-        endpoint.getLightBoard().redisplay();
+        lightBoard.redisplay();
     }
 
     private int promptForRotorNo() {
@@ -298,8 +358,8 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
         while (i < rotorNo) {
             prompt = String.format(promptFormat, i);
             String tInput = selectionReader.readLine(prompt).trim();
-            Optional<RotorType> rotorType = endpoint.getConfigContainer().getRotorTypes().stream()
-                .filter(rotorType1 -> rotorType1.getName().equals(tInput)).findAny();
+            Optional<RotorType> rotorType = configContainer.getRotorTypes().stream()
+                    .filter(rotorType1 -> rotorType1.getName().equals(tInput)).findAny();
             if (rotorType.isPresent()) {
                 RotorType type = rotorType.get();
                 String typeAlphabetString = type.getAlphabetString();
@@ -325,7 +385,7 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
 
     private KeyMap<Op> getKeyMap(Terminal terminal) {
         KeyMap<Op> result = new KeyMap<>();
-        Set<String> alphabetChars = getUpperAndLower(endpoint.getAlphabetString().toCharArray(), Locale.ROOT);
+        Set<String> alphabetChars = getUpperAndLower(alphabetString.toCharArray(), Locale.ROOT);
         bind(result, Op.ENTER_CHAR, alphabetChars);
         result.setUnicode(Op.ENTER_CHAR);
         bind(result, Op.RESET_OFFSETS, ctrl('R'));
@@ -359,20 +419,32 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
 
     private static Set<String> getUpperAndLower(char[] upperCaseAlphabet, Locale locale) {
         Set<String> upperCaseChars = IntStream.range(0, upperCaseAlphabet.length)
-            .mapToObj(value -> String.valueOf(upperCaseAlphabet[value]))
-            .collect(Collectors.toSet());
+                .mapToObj(value -> String.valueOf(upperCaseAlphabet[value]))
+                .collect(Collectors.toSet());
         Set<String> alphabetChars = new HashSet<>(upperCaseChars);
         upperCaseChars.forEach(s -> alphabetChars.add(s.toLowerCase(locale)));
         return alphabetChars;
     }
 
-    private void processInput(char input) throws Exception {
-        Exchange exchange = endpoint.createExchange(input);
-        getProcessor().process(exchange);
+    private void processInput(char input) {
+        ScrambleResult scrambleResult = null;
+        if (!Util.containsChar(alphabetString, input)) {
+            char upperCase = Character.toUpperCase(input);
+            if (Util.containsChar(alphabetString, upperCase)) {
+                input = upperCase;
+            }
+        }
+        if (Util.containsChar(alphabetString, input)) {
+            int initialResult = alphabetString.indexOf(input);
+            scrambleResult = new ScrambleResult((initialResult != -1) ? initialResult : 0, alphabetString, input);
+        }
+
+        ScrambleResult armatureResult = armature.handle(scrambleResult);
+        lightBoard.process(armatureResult);
+
     }
 
     private void processControl(Op input) {
-        LightBoard lightBoard = endpoint.getLightBoard();
         if (input == Op.LEFT) {
             lightBoard.getBuffer().move(-1);
         }
@@ -384,29 +456,41 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
     }
 
     private void processResetOffsets() throws Exception {
-        Exchange exchange = endpoint.createExchange();
-        exchange.setProperty(Properties.RESET_OFFSETS, true);
-        getProcessor().process(exchange);
+        // TODO new constructor or change assumptions
+        ScrambleResult scrambleResult = new ScrambleResult(alphabetString, 'a');
+        scrambleResult.setResetOffsets(true);
+        settingManager.handleControlInput(scrambleResult);
     }
 
-    private void processClearBUffer() throws Exception {
-        Exchange exchange = endpoint.createExchange();
-        exchange.setProperty(Properties.CLEAR_BUFFER, true);
-        getProcessor().process(exchange);
+    private void processClearBuffer() throws Exception {
+        ScrambleResult scrambleResult = new ScrambleResult(alphabetString, 'a');
+        scrambleResult.setClearBuffer(true);
+        settingManager.handleControlInput(scrambleResult);
     }
 
     private void processDetailModeToggle() throws Exception {
-        Exchange exchange = endpoint.createExchange();
-        exchange.setProperty(Properties.DETAIL_MODE_TOGGLE, true);
-        getProcessor().process(exchange);
+        ScrambleResult scrambleResult = new ScrambleResult(alphabetString, 'a');
+        scrambleResult.setDetailModeToggle(true);
+        settingManager.handleControlInput(scrambleResult);
     }
 
     private void processQuit() {
         try {
-            stop();
+//            TODO maybe take some functionality from camel lifecycle management
+            doStop();
         } catch (Exception e) {
-            log.error("An exception occurred while stopping the consumer: ", e);
+            logger.error("An exception occurred while stopping the consumer: ", e);
         }
+    }
+
+    private boolean isRunAllowed() {
+        boolean result = !shutdown.get() && !shuttingdown.get();
+        return result;
+    }
+
+    public void setAlphabet(String alphabetString) {
+        this.alphabetString = alphabetString;
+        this.alphabet = alphabetString.toCharArray();
     }
 
     public class ScramblerSelectResponse<T extends ScramblerType> {
@@ -445,26 +529,28 @@ public class KeyBoard extends DefaultConsumer implements Runnable {
     private class RotorsCompleter implements Completer {
         @Override
         public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-            List<RotorType> rotorTypes = endpoint.getConfigContainer().getRotorTypes();
+            List<RotorType> rotorTypes = configContainer.getRotorTypes();
             candidates.addAll(rotorTypes.stream()
-                .filter(rotorType ->
-                    !((Boolean) reader.getVariable(FILTER_COMPLETION)) || (newAlphabetString != null && newAlphabetString
-                        .equals(rotorType.getAlphabetString())))
-                .map(rotorType -> new Candidate(rotorType.getName()))
-                .collect(Collectors.toSet()));
+                                      .filter(rotorType ->
+                                                      !((Boolean) reader.getVariable(FILTER_COMPLETION)) ||
+                                                              (newAlphabetString != null && newAlphabetString
+                                                                      .equals(rotorType.getAlphabetString())))
+                                      .map(rotorType -> new Candidate(rotorType.getName()))
+                                      .collect(Collectors.toSet()));
         }
     }
 
     private class EntryWheelCompleter implements Completer {
         @Override
         public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-            List<EntryWheelType> entryWheelTypes = endpoint.getConfigContainer().getEntryWheelTypes();
+            List<EntryWheelType> entryWheelTypes = configContainer.getEntryWheelTypes();
             candidates.addAll(entryWheelTypes.stream()
-                .filter(entryWheelType ->
-                    !((Boolean) reader.getVariable(FILTER_COMPLETION)) || (newAlphabetString != null && newAlphabetString
-                        .equals(entryWheelType.getAlphabetString())))
-                .map(rotorType -> new Candidate(rotorType.getName()))
-                .collect(Collectors.toSet()));
+                                      .filter(entryWheelType ->
+                                                      !((Boolean) reader.getVariable(FILTER_COMPLETION)) ||
+                                                              (newAlphabetString != null && newAlphabetString
+                                                                      .equals(entryWheelType.getAlphabetString())))
+                                      .map(rotorType -> new Candidate(rotorType.getName()))
+                                      .collect(Collectors.toSet()));
         }
     }
 }

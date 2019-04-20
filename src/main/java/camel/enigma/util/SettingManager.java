@@ -1,11 +1,7 @@
 package camel.enigma.util;
 
-import camel.enigma.io.KeyBoardEndpoint;
 import camel.enigma.io.LightBoard;
 import camel.enigma.model.Armature;
-import org.apache.camel.CamelContext;
-import org.apache.camel.ExchangeProperty;
-import org.apache.camel.Handler;
 import org.jline.terminal.Terminal;
 import org.jline.utils.InfoCmp;
 import org.slf4j.Logger;
@@ -22,17 +18,25 @@ public class SettingManager {
     private Armature armature;
 
     @Autowired
-    private CamelContext camelContext;
+    private LightBoard lightBoard;
+//
+//    @Autowired
+//    private CamelContext camelContext;
 
     private static boolean detailMode;
 
-    @Handler
-    public void handleControlInput(
-        @ExchangeProperty(Properties.DETAIL_MODE_TOGGLE) Boolean detailModeToggle,
-        @ExchangeProperty(Properties.CLEAR_BUFFER) Boolean clearBuffer,
-        @ExchangeProperty(Properties.RESET_OFFSETS) Boolean resetOffsets) {
+    public void handleControlInput(ScrambleResult scrambleResult) {
+        handleControlInput(scrambleResult.isDetailModeToggle(),
+                           scrambleResult.isClearBuffer(),
+                           scrambleResult.isResetOffsets());
+    }
 
-        LightBoard lightBoard = getLightBoard();
+//    @Handler
+    public void handleControlInput(
+        /*@ExchangeProperty(Properties.DETAIL_MODE_TOGGLE) */Boolean detailModeToggle,
+        /*@ExchangeProperty(Properties.CLEAR_BUFFER) */Boolean clearBuffer,
+        /*@ExchangeProperty(Properties.RESET_OFFSETS) */Boolean resetOffsets) {
+
         Terminal terminal = lightBoard.getTerminal();
         if (detailModeToggle != null && detailModeToggle) {
             terminal.puts(InfoCmp.Capability.scroll_forward);
@@ -52,9 +56,9 @@ public class SettingManager {
         }
     }
 
-    private LightBoard getLightBoard() {
-        return camelContext.getEndpoint("keyboard", KeyBoardEndpoint.class).getLightBoard();
-    }
+//    private LightBoard getLightBoard() {
+//        return camelContext.getEndpoint("keyboard", KeyBoardEndpoint.class).getLightBoard();
+//    }
 
     private static void toggleDetailMode() {
         setDetailMode(!isDetailMode());

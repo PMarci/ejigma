@@ -52,6 +52,7 @@ public class TypeLoader {
         return sourceFiles;
     }
 
+    // TODO fix charset/encoding (magyar is broken)
     private static List<RotorType> getCustomRotorTypes(List<File> sourceFiles) throws JAXBException {
         List<RotorType> result = new ArrayList<>();
         CustomRotorType customRotorType;

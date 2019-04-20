@@ -32,6 +32,10 @@ public class ScrambleResult {
     private char resultAsChar;
     private List<HistoryEntry> history;
 
+    private boolean resetOffsets;
+    private boolean clearBuffer;
+    private boolean detailModeToggle;
+
     private Character offsetAsChar;
     private static final AttributedStyle redStyle =
             new AttributedStyle().foreground(AttributedStyle.BRIGHT).foreground(AttributedStyle.RED);
@@ -202,6 +206,30 @@ public class ScrambleResult {
 
     private void setResult(int result) {
         this.result = result;
+    }
+
+    public boolean isResetOffsets() {
+        return resetOffsets;
+    }
+
+    public void setResetOffsets(boolean resetOffsets) {
+        this.resetOffsets = resetOffsets;
+    }
+
+    public boolean isClearBuffer() {
+        return clearBuffer;
+    }
+
+    public void setClearBuffer(boolean clearBuffer) {
+        this.clearBuffer = clearBuffer;
+    }
+
+    public boolean isDetailModeToggle() {
+        return detailModeToggle;
+    }
+
+    public void setDetailModeToggle(boolean detailModeToggle) {
+        this.detailModeToggle = detailModeToggle;
     }
 
     public static class HistoryEntry {

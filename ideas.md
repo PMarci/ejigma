@@ -8,3 +8,4 @@
 * highlight invalidly encoded regions after insert/delete in the middle = bracket matching problem
 * shortcut to reencode buffer
 * this will necessitate being able to assign an offset to each character pos in the buffer
+* MAVEN_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"

@@ -1,9 +1,7 @@
 package camel.enigma;
 
-import camel.enigma.io.KeyBoardEndpoint;
-import camel.enigma.model.Armature;
+import camel.enigma.io.KeyBoard;
 import camel.enigma.model.type.ConfigContainer;
-import org.apache.camel.CamelContext;
 import org.jline.terminal.Terminal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -14,13 +12,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class App implements CommandLineRunner {
 
     @Autowired
-    private CamelContext camelContext;
+    private KeyBoard keyBoard;
+
+    @Autowired
+    private Terminal terminal;
 
     @Autowired
     private ConfigContainer configContainer;
-
-    @Autowired
-    private Armature armature;
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
@@ -28,7 +26,6 @@ public class App implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        Terminal terminal = camelContext.getEndpoint("keyboard", KeyBoardEndpoint.class).getTerminal();
         terminal.writer().write(
                 String.format("Welcome to the camel-enigma cli, your terminal type is: %s%n", terminal.getClass()
                         .getSimpleName()));
@@ -39,5 +36,6 @@ public class App implements CommandLineRunner {
         terminal.writer().write(
                 String.format("The following entry wheel types are available: %n%s%n", configContainer.getEntryWheelTypes().toString()));
         terminal.flush();
+        keyBoard.doStart();
     }
 }
