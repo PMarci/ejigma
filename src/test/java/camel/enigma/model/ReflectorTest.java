@@ -6,7 +6,7 @@ import org.springframework.test.context.TestPropertySource;
 
 // TODO figure out if needed
 @TestPropertySource("classpath:application.properties")
-@ActiveProfiles({"routeless", "test"})
+@ActiveProfiles("test")
 public class ReflectorTest {
 
     @Test

@@ -19,13 +19,10 @@ import java.util.Collections;
 import java.util.List;
 
 @Component
-public class LightBoard
-//        extends DefaultProducer
-{
+public class LightBoard {
 
     private static final Logger logger = LoggerFactory.getLogger(LightBoard.class);
 
-//    private KeyBoardEndpoint endpoint;
     private Terminal terminal;
     private Status status;
     private Size size;
@@ -39,21 +36,7 @@ public class LightBoard
     private List<String> oldLines = Collections.emptyList();
     private List<String> detailLines = Collections.emptyList();
 
-//    public LightBoard(KeyBoardEndpoint endpoint, Terminal terminal) {
-////        super(endpoint);
-////        this.endpoint = endpoint;
-//        this.terminal = terminal;
-//        size = new Size();
-//        size.copy(terminal.getSize());
-//        display = new Display(terminal, false);
-//        // not setting this to true worsens linebreak behavior (tested in CMD thus far)
-//        display.setDelayLineWrap(true);
-//        buf = new BufferImpl();
-//        clearBuffer();
-//    }
-
     public LightBoard(Terminal terminal) {
-//        super(endpoint);
         this.terminal = terminal;
         size = new Size();
         size.copy(terminal.getSize());
@@ -64,24 +47,23 @@ public class LightBoard
         clearBuffer();
     }
 
-//    @Override
     public void process(ScrambleResult scrambleResult) {
 
-        List<String> s;
+        List<String> lines;
         List<String> toDisplay;
         // TODO erase only oldlines amount also don't slam the screen
         terminal.puts(InfoCmp.Capability.clear_screen);
         if (SettingManager.isDetailMode()) {
-            s = scrambleResult.printHistory();
+            lines = scrambleResult.printHistory();
             char detailModeChar = scrambleResult.getResultAsChar();
-            toDisplay = s;
-            detailLines = s;
+            toDisplay = lines;
+            detailLines = lines;
             buf.write(detailModeChar);
             toDisplay.add(buf.toString());
         } else {
-            s = Collections.singletonList(String.valueOf(scrambleResult.getResultAsChar()));
+            String characterAsString =String.valueOf(scrambleResult.getResultAsChar());
             detailLines = Collections.emptyList();
-            s.forEach(buf::write);
+            buf.write(characterAsString);
             toDisplay = Collections.singletonList(buf.toString());
 //                int terminalWidth = terminal.getWidth();
 //                oldLineNo = lineNo;

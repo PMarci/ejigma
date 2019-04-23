@@ -10,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 
 // TODO figure out if needed
 @TestPropertySource("classpath:application.properties")
-@ActiveProfiles({ "routeless", "test" })
+@ActiveProfiles("test")
 public class PlugBoardTest {
 
     @Test

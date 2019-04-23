@@ -19,16 +19,15 @@ import java.util.List;
 
 import static org.fusesource.jansi.Ansi.ansi;
 
-// TODO figure out if needed
 @RunWith(SpringJUnit4ClassRunner.class)
 @TestPropertySource("classpath:application.properties")
-@ActiveProfiles({"routeless", "test"})
+@ActiveProfiles("test")
 public class ScramblerTest {
 
 //    private Rotor errorRotor;
 
     @Value("${spring.output.ansi.enabled}")
-    String springAnsiEnabled;
+    private String springAnsiEnabled;
 
     @Before
     public void setUp() throws Exception {

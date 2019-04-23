@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.Charset;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,20 +35,17 @@ import static org.jline.keymap.KeyMap.ctrl;
 import static org.jline.keymap.KeyMap.key;
 
 @Component
-public class KeyBoard
-//        extends DefaultConsumer
-        implements Runnable {
+public class KeyBoard implements Runnable {
 
     private static Logger logger = LoggerFactory.getLogger(KeyBoard.class);
+    private static final String FILTER_COMPLETION = "filterCompletion";
 
-    private final String FILTER_COMPLETION = "filterCompletion";
-//    private KeyBoardEndpoint endpoint;
     private Terminal terminal;
     private LineReader selectionReader;
     private final Pattern numbers = Pattern.compile("[^0-9]*([0-9]+)[^0-9]*");
     private final BindingReader bindingReader;
     private final KeyMap<Op> keyMap;
-    //    private String oldAlphabetString;
+
     private String newAlphabetString = null;
     private SelectCompleter selectCompleter;
 
@@ -62,33 +59,25 @@ public class KeyBoard
 
     private String alphabetString;
     private char[] alphabet;
-    private Charset charset;
 
-    private String encoding;
-    private KeyBoard keyBoard;
     private final ConfigContainer configContainer;
 
 
     @Autowired
     KeyBoard(
-//            KeyBoardEndpoint endpoint,
-//            Processor processor,
             Terminal terminal,
             ConfigContainer configContainer,
             Armature armature,
             LightBoard lightBoard,
             SettingManager settingManager) {
-//        super(endpoint, processor);
-//        this.endpoint = endpoint;
         setAlphabet(Scrambler.DEFAULT_ALPHABET_STRING);
         this.terminal = terminal;
         this.settingManager = settingManager;
         this.lightBoard = lightBoard;
-//        this.oldAlphabetString = endpoint.getAlphabetString();
         terminal.handle(Terminal.Signal.INT, signal -> processQuit());
         this.selectionReader = initSelectionReader(terminal);
         this.bindingReader = new BindingReader(terminal.reader());
-        this.keyMap = getKeyMap(terminal);
+        this.keyMap = initKeyMap(new KeyMap<Op>());
 
         this.armature = armature;
         this.configContainer = configContainer;
@@ -110,9 +99,7 @@ public class KeyBoard
         return result;
     }
 
-    //    @Override
-    public void doStart() throws Exception {
-//        super.doStart();
+    public void doStart() {
         ThreadFactory factory = r -> {
             String threadName = "\"The\" thread";
             Thread result = new Thread(r, threadName);
@@ -122,16 +109,12 @@ public class KeyBoard
         };
 
         this.executor = Executors.newSingleThreadExecutor(factory);
-//        executor = endpoint.getCamelContext()
-//                .getExecutorServiceManager()
-//                .newSingleThreadExecutor(this, "keyBoardThread");
         logger.info("executing...");
         executor.execute(this);
 
     }
 
-    //    @Override
-    protected void doStop() throws Exception {
+    protected void doStop() throws IOException {
         shuttingdown.set(true);
         terminal.puts(InfoCmp.Capability.newline);
         logger.info("Stopping...");
@@ -144,9 +127,6 @@ public class KeyBoard
             shutdown.set(true);
             executor = null;
         }
-
-//        super.doStop();
-//        endpoint.getCamelContext().stop();
     }
 
     @Override
@@ -155,7 +135,6 @@ public class KeyBoard
             logger.info("running...");
             readFromStream();
         } catch (Exception e) {
-//            getExceptionHandler().handleException(e);
             logger.error("big oof", e);
         }
     }
@@ -174,7 +153,7 @@ public class KeyBoard
         RIGHT
     }
 
-    private void readFromStream() throws Exception {
+    private void readFromStream() {
         Op input;
         char inputChar;
         while (isRunAllowed()) {
@@ -302,15 +281,8 @@ public class KeyBoard
         if (newRotorTypes.length > 0) {
             try {
                 String vNewAlphabetString = newRotorTypes[0].getAlphabetString();
-//                char[] newAlphabet = vNewAlphabetString.toCharArray();
-//                char[] oldAlphabet = oldAlphabetString.toCharArray();
                 armature.setRotors(newRotorTypes, autoEntryWheel, autoRandomReflector);
-                setAlphabet(vNewAlphabetString);
-                //                Set<String> oldUpperAndLower = getUpperAndLower(oldAlphabet, Locale.ROOT);
-//                Set<String> upperAndLower = getUpperAndLower(newAlphabet, Locale.ROOT);
-//                unbind(keyMap, oldUpperAndLower);
-//                bind(keyMap, Op.ENTER_CHAR, upperAndLower);
-                keyMap.setUnicode(Op.ENTER_CHAR);
+                rebindKeyMap(vNewAlphabetString);
             } catch (ArmatureInitException e) {
                 if (prevType != null) {
                     armature.setEntryWheel(prevType, true);
@@ -383,22 +355,27 @@ public class KeyBoard
 
     }
 
-    private KeyMap<Op> getKeyMap(Terminal terminal) {
-        KeyMap<Op> result = new KeyMap<>();
+    private KeyMap<Op> initKeyMap(KeyMap<Op> keyMap) {
         Set<String> alphabetChars = getUpperAndLower(alphabetString.toCharArray(), Locale.ROOT);
-        bind(result, Op.ENTER_CHAR, alphabetChars);
-        result.setUnicode(Op.ENTER_CHAR);
-        bind(result, Op.RESET_OFFSETS, ctrl('R'));
-        bind(result, Op.DETAIL_MODE_TOGGLE, ctrl('B'));
-        bind(result, Op.SELECT_ROTOR, ctrl('I'));
-        bind(result, Op.SELECT_ENTRY, ctrl('E'));
-        bind(result, Op.SELECT_REFLECTOR, ctrl('F'));
-        bind(result, Op.CLEAR_BUFFER, ctrl('D'));
-        bind(result, Op.UP, key(terminal, InfoCmp.Capability.key_up));
-        bind(result, Op.DOWN, key(terminal, InfoCmp.Capability.key_down));
-        bind(result, Op.LEFT, key(terminal, InfoCmp.Capability.key_left));
-        bind(result, Op.RIGHT, key(terminal, InfoCmp.Capability.key_right));
-        return result;
+        bind(keyMap, Op.ENTER_CHAR, alphabetChars);
+        keyMap.setUnicode(Op.ENTER_CHAR);
+        bind(keyMap, Op.RESET_OFFSETS, ctrl('R'));
+        bind(keyMap, Op.DETAIL_MODE_TOGGLE, ctrl('B'));
+        bind(keyMap, Op.SELECT_ROTOR, ctrl('I'));
+        bind(keyMap, Op.SELECT_ENTRY, ctrl('E'));
+        bind(keyMap, Op.SELECT_REFLECTOR, ctrl('F'));
+        bind(keyMap, Op.CLEAR_BUFFER, ctrl('D'));
+        bind(keyMap, Op.UP, key(terminal, InfoCmp.Capability.key_up));
+        bind(keyMap, Op.DOWN, key(terminal, InfoCmp.Capability.key_down));
+        bind(keyMap, Op.LEFT, key(terminal, InfoCmp.Capability.key_left));
+        bind(keyMap, Op.RIGHT, key(terminal, InfoCmp.Capability.key_right));
+        return keyMap;
+    }
+
+    private void rebindKeyMap(String newAlphabetString) {
+        unbind(keyMap, getUpperAndLower(alphabet, Locale.ROOT));
+        setAlphabet(newAlphabetString);
+        initKeyMap(keyMap);
     }
 
     private void bind(KeyMap<Op> map, Op op, Iterable<? extends CharSequence> keySeqs) {
@@ -455,20 +432,20 @@ public class KeyBoard
 
     }
 
-    private void processResetOffsets() throws Exception {
+    private void processResetOffsets() {
         // TODO new constructor or change assumptions
         ScrambleResult scrambleResult = new ScrambleResult(alphabetString, 'a');
         scrambleResult.setResetOffsets(true);
         settingManager.handleControlInput(scrambleResult);
     }
 
-    private void processClearBuffer() throws Exception {
+    private void processClearBuffer() {
         ScrambleResult scrambleResult = new ScrambleResult(alphabetString, 'a');
         scrambleResult.setClearBuffer(true);
         settingManager.handleControlInput(scrambleResult);
     }
 
-    private void processDetailModeToggle() throws Exception {
+    private void processDetailModeToggle() {
         ScrambleResult scrambleResult = new ScrambleResult(alphabetString, 'a');
         scrambleResult.setDetailModeToggle(true);
         settingManager.handleControlInput(scrambleResult);
@@ -484,8 +461,7 @@ public class KeyBoard
     }
 
     private boolean isRunAllowed() {
-        boolean result = !shutdown.get() && !shuttingdown.get();
-        return result;
+        return !shutdown.get() && !shuttingdown.get();
     }
 
     public void setAlphabet(String alphabetString) {
@@ -521,7 +497,7 @@ public class KeyBoard
             completer.complete(reader, line, candidates);
         }
 
-        public void setCompleter(Completer completer) {
+        void setCompleter(Completer completer) {
             this.completer = completer;
         }
     }

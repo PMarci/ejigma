@@ -14,7 +14,11 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,7 +38,7 @@ public class TypeLoader {
         List<File> sourceFiles = listFiles();
         try {
             rotorTypes = getCustomRotorTypes(sourceFiles);
-        } catch (JAXBException e) {
+        } catch (JAXBException | FileNotFoundException e) {
             e.printStackTrace();
         }
         return rotorTypes;
@@ -52,13 +56,14 @@ public class TypeLoader {
         return sourceFiles;
     }
 
-    // TODO fix charset/encoding (magyar is broken)
-    private static List<RotorType> getCustomRotorTypes(List<File> sourceFiles) throws JAXBException {
+    private static List<RotorType> getCustomRotorTypes(List<File> sourceFiles) throws JAXBException, FileNotFoundException {
         List<RotorType> result = new ArrayList<>();
         CustomRotorType customRotorType;
         for (File sourceFile : sourceFiles) {
             Unmarshaller unmarshaller = getUnmarshaller();
-            JAXBElement<CustomRotorType> customRotorTypeElem = unmarshaller.unmarshal(new StreamSource(sourceFile), CustomRotorType.class);
+            InputStreamReader reader = new InputStreamReader(new FileInputStream(sourceFile), StandardCharsets.UTF_8);
+            StreamSource source = new StreamSource(reader);
+            JAXBElement<CustomRotorType> customRotorTypeElem = unmarshaller.unmarshal(source, CustomRotorType.class);
             if (customRotorTypeElem != null) {
                 customRotorType = customRotorTypeElem.getValue();
                 if (customRotorType != null) {
