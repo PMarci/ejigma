@@ -1,9 +1,7 @@
 package camel.enigma.io;
 
 import camel.enigma.util.ScrambleResult;
-import camel.enigma.util.SettingManager;
 import org.jline.reader.Buffer;
-import org.jline.reader.LineReader;
 import org.jline.reader.impl.BufferImpl;
 import org.jline.terminal.Cursor;
 import org.jline.terminal.Size;
@@ -15,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,9 +31,13 @@ public class LightBoard {
     private int oldLineNo;
     private int len;
     private Cursor pos;
-    private LineReader selectRotorReader;
+
     private List<String> oldLines = Collections.emptyList();
+    private ScrambleResult oldResult;
+
     private List<String> detailLines = Collections.emptyList();
+
+    private boolean detailMode;
 
     public LightBoard(Terminal terminal) {
         this.terminal = terminal;
@@ -47,21 +50,14 @@ public class LightBoard {
         clearBuffer();
     }
 
-    public void process(ScrambleResult scrambleResult) {
-
-        List<String> lines;
+    void process(ScrambleResult scrambleResult) {
         List<String> toDisplay;
         // TODO erase only oldlines amount also don't slam the screen
         terminal.puts(InfoCmp.Capability.clear_screen);
-        if (SettingManager.isDetailMode()) {
-            lines = scrambleResult.printHistory();
-            char detailModeChar = scrambleResult.getResultAsChar();
-            toDisplay = lines;
-            detailLines = lines;
-            buf.write(detailModeChar);
-            toDisplay.add(buf.toString());
+        if (isDetailMode()) {
+            toDisplay = prepareDetailModeLines(scrambleResult);
         } else {
-            String characterAsString =String.valueOf(scrambleResult.getResultAsChar());
+            String characterAsString = String.valueOf(scrambleResult.getResultAsChar());
             detailLines = Collections.emptyList();
             buf.write(characterAsString);
             toDisplay = Collections.singletonList(buf.toString());
@@ -90,6 +86,7 @@ public class LightBoard {
         // TODO cursor not reset one letter after newline
         // TODO also look into that gh issue about overriding the readline method
         display(toDisplay);
+        oldResult = scrambleResult;
     }
 
     public void display(List<String> toDisplay) {
@@ -100,7 +97,7 @@ public class LightBoard {
         int defaultColumns = 80;
         int targetColumns = (columns = size.getColumns()) > 0 ? columns : defaultColumns;
         display.resize(size.getRows(), targetColumns);
-        int targetRow = (detailLines.size() - 1 >= 0) ? (detailLines.size() - 1) : 0;
+        int targetRow = detailLines.size();
         int cursorPos = buf.cursor() + size.cursorPos(targetRow, 0);
         int targetCursorPos = (cursorPos) > -1 ? cursorPos : 0;
         display.updateAnsi(toDisplay, targetCursorPos);
@@ -111,6 +108,18 @@ public class LightBoard {
         display(oldLines);
     }
 
+    private List<String> prepareDetailModeLines(ScrambleResult scrambleResult) {
+        List<String> lines;
+        List<String> toDisplay;
+        lines = scrambleResult.printHistory();
+        char detailModeChar = scrambleResult.getResultAsChar();
+        detailLines = lines;
+        toDisplay = new ArrayList<>(detailLines);
+        buf.write(detailModeChar);
+        toDisplay.add(buf.toString());
+        return toDisplay;
+    }
+
     public void clearBuffer() {
         buf.clear();
         this.lineNo = 0;
@@ -119,10 +128,26 @@ public class LightBoard {
         for (int i = 0; i < 5; i++) {
             terminal.puts(InfoCmp.Capability.delete_line);
         }
-        display((detailLines != null) ? detailLines : Collections.emptyList());
+        display(detailLines);
     }
 
+    void toggleDetailMode() {
+        setDetailMode(!isDetailMode());
+        if (oldResult != null) {
+            process(oldResult);
+        } else {
+            // TODO replace
+            logger.info("No scrambled characters, can't display detailLines");
+        }
+    }
 
+    private boolean isDetailMode() {
+        return detailMode;
+    }
+
+    private void setDetailMode(boolean detailMode) {
+        this.detailMode = detailMode;
+    }
 
     public Terminal getTerminal() {
         return terminal;

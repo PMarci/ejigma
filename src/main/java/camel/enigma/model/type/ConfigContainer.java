@@ -44,6 +44,18 @@ public class ConfigContainer {
         }
     }
 
+    public <T extends ScramblerType> List<T> getScramblerTypes(Class<T> scramblerType) {
+        List<T> result = null;
+        if (scramblerType.isAssignableFrom(RotorType.class)) {
+            result = (List<T>) getRotorTypes();
+        } else if (scramblerType.isAssignableFrom(ReflectorType.class)) {
+            result = (List<T>) getReflectorTypes();
+        } else if (scramblerType.isAssignableFrom(EntryWheelType.class)) {
+            result = (List<T>) getEntryWheelTypes();
+        }
+        return result;
+    }
+
     public List<RotorType> getRotorTypes() {
         return rotorTypes;
     }
