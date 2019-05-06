@@ -278,4 +278,12 @@ public class Armature {
         }
         return presentTypes;
     }
+
+    public EntryWheelType getEntryWheelType() {
+        return (EntryWheelType) entryWheel.getType();
+    }
+
+    public ReflectorType getReflectorType() {
+        return (ReflectorType) reflector.getType();
+    }
 }

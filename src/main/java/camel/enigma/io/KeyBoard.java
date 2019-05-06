@@ -59,8 +59,6 @@ public class KeyBoard implements Runnable {
 
     private final ConfigContainer configContainer;
 
-
-
     @Autowired
     KeyBoard(Terminal terminal,
              ConfigContainer configContainer,
@@ -111,6 +109,7 @@ public class KeyBoard implements Runnable {
     private void doStop() throws IOException {
         shuttingDown.set(true);
         terminal.puts(InfoCmp.Capability.newline);
+        // TODO investigate not quitting all the way outside CMD
         logger.info("Stopping...");
         terminal.close();
 
@@ -200,10 +199,15 @@ public class KeyBoard implements Runnable {
         EntryWheelType newType = newEntryWheelTypeResponse.getScramblerType();
         String vNewAlphabetString = newType.getAlphabetString();
         if (newEntryWheelTypeResponse.isReselect()) {
-            armature.forceSetEntryWheel(newType);
-            processSelectRotors();
-            processSelectReflector();
-            rebindKeyMap(vNewAlphabetString);
+            EntryWheelType oldEntryWheel = armature.getEntryWheelType();
+            try {
+                armature.forceSetEntryWheel(newType);
+                processSelectRotors();
+                processSelectReflector();
+                rebindKeyMap(vNewAlphabetString);
+            } catch (UserInterruptException e) {
+                armature.forceSetEntryWheel(oldEntryWheel);
+            }
         } else {
             try {
                 armature.setEntryWheel(newType);
@@ -211,6 +215,7 @@ public class KeyBoard implements Runnable {
                 selectionReader.printAbove("Can't change entryWheel: " + e.getMessage());
             }
         }
+        lightBoard.redisplay();
     }
 
     private void processSelectReflectorIgnoreInterrupt() {
@@ -227,10 +232,15 @@ public class KeyBoard implements Runnable {
         ReflectorType newType = newReflectorTypeResponse.getScramblerType();
         String vNewAlphabetString = newType.getAlphabetString();
         if (newReflectorTypeResponse.isReselect()) {
-            armature.forceSetReflector(newType);
-            processSelectEntry();
-            processSelectRotors();
-            rebindKeyMap(vNewAlphabetString);
+            ReflectorType oldReflectorType = armature.getReflectorType();
+            try {
+                armature.forceSetReflector(newType);
+                processSelectEntry();
+                processSelectRotors();
+                rebindKeyMap(vNewAlphabetString);
+            } catch (UserInterruptException e) {
+                armature.forceSetReflector(oldReflectorType);
+            }
         } else {
             try {
                 armature.setReflector(newType);
@@ -252,7 +262,7 @@ public class KeyBoard implements Runnable {
         String notATypeString = String.format("Not a valid %s", scramblerTypeTypeName);
         String prompt = String.format("Enter a type for the %s: ", scramblerName);
         String denyString = String.format("Not setting %s...", scramblerName);
-        selectCompleter.setCompleter(new ReflectorCompleter());
+        selectCompleter.setCompleter(scramblerTypeType);
         while (choose) {
             choose2 = true;
             selectionReader.setVariable(FILTER_COMPLETION, false);
@@ -309,7 +319,7 @@ public class KeyBoard implements Runnable {
         selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
         rotorNo = promptForRotorNo();
         selectionReader.setVariable(LineReader.DISABLE_COMPLETION, false);
-        selectCompleter.setCompleter(new RotorsCompleter());
+        selectCompleter.setCompleter(RotorType.class);
         newRotorResponse = promptForRotorTypes(rotorNo);
         if (newRotorResponse != null) {
             RotorType[] newRotorTypes = newRotorResponse.getScramblerTypes();
@@ -328,11 +338,10 @@ public class KeyBoard implements Runnable {
                     } else {
                         processSelectReflector();
                     }
+                    rebindKeyMap(vNewAlphabetString);
                 } catch (UserInterruptException e) {
                     armature.forceSetRotors(oldRotorTypes);
-                    return;
                 }
-                rebindKeyMap(vNewAlphabetString);
             } else {
                 try {
                     armature.setRotors(newRotorTypes);
@@ -587,6 +596,9 @@ public class KeyBoard implements Runnable {
     private class SelectCompleter implements Completer {
 
         Completer completer;
+        private RotorsCompleter rotorsCompleter = new RotorsCompleter();
+        private EntryWheelCompleter entryCompleter = new EntryWheelCompleter();
+        private ReflectorCompleter reflectorCompleter = new ReflectorCompleter();
 
         @Override
         public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
@@ -595,6 +607,16 @@ public class KeyBoard implements Runnable {
 
         void setCompleter(Completer completer) {
             this.completer = completer;
+        }
+
+        <T extends ScramblerType> void setCompleter(Class<T> scramblerTypeType) {
+            if (scramblerTypeType.isAssignableFrom(ReflectorType.class)) {
+                setCompleter(reflectorCompleter);
+            } else if (scramblerTypeType.isAssignableFrom(EntryWheelType.class)) {
+                setCompleter(entryCompleter);
+            } else if (scramblerTypeType.isAssignableFrom(RotorType.class)) {
+                setCompleter(rotorsCompleter);
+            }
         }
     }
 
