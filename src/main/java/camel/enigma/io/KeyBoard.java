@@ -33,13 +33,14 @@ import static org.jline.keymap.KeyMap.key;
 @Component
 public class KeyBoard implements Runnable {
 
-    private static Logger logger = LoggerFactory.getLogger(KeyBoard.class);
+    private static final Logger logger = LoggerFactory.getLogger(KeyBoard.class);
     private static final String FILTER_COMPLETION = "filterCompletion";
-    private static final Pattern typeSuffixPattern = Pattern.compile("^(.*)Type$");
+    private static final String SWITCH_PROMPT = ", change them as well? (y/n): ";
+    private static final Pattern TYPE_SUFFIX_PATTERN = Pattern.compile("^(.*)Type$");
+    private static final Pattern NUMBERS_PATTERN = Pattern.compile("[^0-9]*([0-9]+)[^0-9]*");
 
-    private Terminal terminal;
-    private LineReader selectionReader;
-    private final Pattern numbers = Pattern.compile("[^0-9]*([0-9]+)[^0-9]*");
+    private final Terminal terminal;
+    private final LineReader selectionReader;
     private final BindingReader bindingReader;
     private final KeyMap<Op> keyMap;
 
@@ -58,7 +59,6 @@ public class KeyBoard implements Runnable {
 
     private final ConfigContainer configContainer;
 
-    private static final String SWITCH_PROMPT = ", change them as well? (y/n): ";
 
 
     @Autowired
@@ -247,7 +247,7 @@ public class KeyBoard implements Runnable {
         T newScramblerType;
         ScramblerSelectResponse<T> response = null;
         String scramblerTypeTypeName = scramblerTypeType.getSimpleName();
-        Matcher typeMatcher = typeSuffixPattern.matcher(scramblerTypeTypeName);
+        Matcher typeMatcher = TYPE_SUFFIX_PATTERN.matcher(scramblerTypeTypeName);
         String scramblerName = (typeMatcher.find()) ? typeMatcher.group(1) : "Scrambler";
         String notATypeString = String.format("Not a valid %s", scramblerTypeTypeName);
         String prompt = String.format("Enter a type for the %s: ", scramblerName);
@@ -328,7 +328,6 @@ public class KeyBoard implements Runnable {
                     } else {
                         processSelectReflector();
                     }
-                    // TODO this is not enough to ensure that the above selections happened
                 } catch (UserInterruptException e) {
                     armature.forceSetRotors(oldRotorTypes);
                     return;
@@ -354,7 +353,7 @@ public class KeyBoard implements Runnable {
             String nInput;
             nInput = selectionReader.readLine(prompt);
 
-            Matcher numberMatcher = numbers.matcher(nInput);
+            Matcher numberMatcher = NUMBERS_PATTERN.matcher(nInput);
             if (numberMatcher.matches()) {
                 try {
                     rotorNo = Integer.valueOf(numberMatcher.group(1));

@@ -1,11 +1,13 @@
 package camel.enigma.io;
 
+import camel.enigma.model.Armature;
+import camel.enigma.model.EnigmaBuffer;
 import camel.enigma.util.ScrambleResult;
 import org.jline.reader.Buffer;
-import org.jline.reader.impl.BufferImpl;
 import org.jline.terminal.Cursor;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
+import org.jline.utils.AttributedString;
 import org.jline.utils.Display;
 import org.jline.utils.InfoCmp;
 import org.jline.utils.Status;
@@ -25,7 +27,7 @@ public class LightBoard {
     private Terminal terminal;
     private Status status;
     private Size size;
-    private final Buffer buf;
+    private final EnigmaBuffer buf;
     private Display display;
     private int lineNo;
     private int oldLineNo;
@@ -39,14 +41,18 @@ public class LightBoard {
 
     private boolean detailMode;
 
-    public LightBoard(Terminal terminal) {
+    private Armature armature;
+
+    public LightBoard(Terminal terminal, Armature armature) {
         this.terminal = terminal;
+        this.armature = armature;
         size = new Size();
         size.copy(terminal.getSize());
         display = new Display(terminal, false);
+        status = Status.getStatus(terminal);
         // not setting this to true worsens linebreak behavior (tested in CMD thus far)
         display.setDelayLineWrap(true);
-        buf = new BufferImpl();
+        buf = new EnigmaBuffer();
         clearBuffer();
     }
 
@@ -100,6 +106,7 @@ public class LightBoard {
         int targetRow = detailLines.size();
         int cursorPos = buf.cursor() + size.cursorPos(targetRow, 0);
         int targetCursorPos = (cursorPos) > -1 ? cursorPos : 0;
+        status.update(Collections.singletonList(AttributedString.fromAnsi(armature.getOffsetString())));
         display.updateAnsi(toDisplay, targetCursorPos);
         oldLines = toDisplay;
     }

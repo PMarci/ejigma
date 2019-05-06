@@ -8,4 +8,8 @@
 * highlight invalidly encoded regions after insert/delete in the middle = bracket matching problem
 * shortcut to reencode buffer
 * this will necessitate being able to assign an offset to each character pos in the buffer
-* MAVEN_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+* histogram widget
+* JSON/YAML-agnostic config loading
+    * "take inspiration" from FSCrawler (if it even has that)
+* maybe some sort of QR-code or ssh image kind of functionality
+    * using a standard library or rolling own for fun
