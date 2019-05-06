@@ -11,5 +11,5 @@
 * histogram widget
 * JSON/YAML-agnostic config loading
     * "take inspiration" from FSCrawler (if it even has that)
-* maybe some sort of QR-code or ssh image kind of functionality
+* maybe some sort of QR-code or ssh randomart kind of functionality
     * using a standard library or rolling own for fun
