@@ -19,29 +19,7 @@
         <camel.version>2.22.1</camel.version>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <!-- Manage Spring-Boot and Camel -->
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring.boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <!-- Comment this if you need an embedded Tomcat -->
-            <artifactId>spring-boot-starter</artifactId>
-            <!-- Uncomment this if you need an embedded Tomcat -->
-            <!-- <artifactId>spring-boot-starter-web</artifactId> -->
-        </dependency>
-
-        <!--Other-->
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
@@ -73,8 +51,9 @@
 
         <!--Tests-->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
             <scope>test</scope>
         </dependency>
 
@@ -121,18 +100,10 @@
 
             <!-- Allows the routes to be run via 'mvn spring-boot:run' -->
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring.boot.version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
                 <configuration>
-                    <finalName>${project.artifactId}</finalName>
                     <mainClass>camel.enigma.App</mainClass>
                 </configuration>
             </plugin>

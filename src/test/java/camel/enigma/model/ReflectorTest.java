@@ -1,12 +1,7 @@
 package camel.enigma.model;
 
 import org.junit.Test;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 
-// TODO figure out if needed
-@TestPropertySource("classpath:application.properties")
-@ActiveProfiles("test")
 public class ReflectorTest {
 
     @Test

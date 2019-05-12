@@ -3,14 +3,9 @@ package camel.enigma.model;
 import camel.enigma.exception.ScramblerSettingException;
 import camel.enigma.util.ScrambleResult;
 import org.junit.Test;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 
 import static org.junit.Assert.assertEquals;
 
-// TODO figure out if needed
-@TestPropertySource("classpath:application.properties")
-@ActiveProfiles("test")
 public class PlugBoardTest {
 
     @Test

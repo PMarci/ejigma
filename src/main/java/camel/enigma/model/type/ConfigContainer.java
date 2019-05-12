@@ -3,44 +3,37 @@ package camel.enigma.model.type;
 import camel.enigma.model.historic.HistoricEntryWheelType;
 import camel.enigma.model.historic.HistoricReflectorType;
 import camel.enigma.model.historic.HistoricRotorType;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Component;
+import camel.enigma.util.TypeLoader;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-@Component
 public class ConfigContainer {
 
     private List<RotorType> rotorTypes;
     private List<ReflectorType> reflectorTypes;
     private List<EntryWheelType> entryWheelTypes;
 
-    @Autowired
-    public ConfigContainer(List<HistoricRotorType> hRotorTypes,
-                           @Nullable List<RotorType> rotorTypes,
-                           List<HistoricReflectorType> hReflectorTypes,
-                           @Nullable List<ReflectorType> reflectorTypes,
-                           List<HistoricEntryWheelType> hEntryWheelTypes,
-                           @Nullable List<EntryWheelType> entryWheelTypes) {
+    public ConfigContainer() {
         this.rotorTypes = new ArrayList<>();
-        this.rotorTypes.addAll(hRotorTypes);
-        if (rotorTypes != null) {
-            this.rotorTypes.addAll(rotorTypes);
+        this.rotorTypes.addAll(getHRotorTypes());
+        List<RotorType> cRotorTypes = TypeLoader.loadCustomRotorTypes();
+        if (cRotorTypes != null && !cRotorTypes.isEmpty()) {
+            this.rotorTypes.addAll(cRotorTypes);
         }
         this.reflectorTypes = new ArrayList<>();
-        this.reflectorTypes.addAll(hReflectorTypes);
-        if (reflectorTypes != null) {
-            this.reflectorTypes.addAll(reflectorTypes);
+        this.reflectorTypes.addAll(getHReflectorTypes());
+        List<ReflectorType> cReflectorTypes = TypeLoader.loadCustomReflectorTypes();
+        if (cReflectorTypes != null && !cReflectorTypes.isEmpty()) {
+            this.reflectorTypes.addAll(cReflectorTypes);
         }
-        this.entryWheelTypes =  new ArrayList<>();
-        this.entryWheelTypes.addAll(hEntryWheelTypes);
-        if (entryWheelTypes != null) {
-            this.entryWheelTypes.addAll(entryWheelTypes);
+        this.entryWheelTypes = new ArrayList<>();
+        this.entryWheelTypes.addAll(getHEntryWheelTypes());
+        List<EntryWheelType> cEntryWheelTypes = TypeLoader.loadCustomEntryWheelTypes();
+        if (cEntryWheelTypes != null && !cEntryWheelTypes.isEmpty()) {
+            this.entryWheelTypes.addAll(cEntryWheelTypes);
         }
     }
 
@@ -80,17 +73,14 @@ public class ConfigContainer {
         this.entryWheelTypes = entryWheelTypes;
     }
 
-    @Bean
     public static List<HistoricRotorType> getHRotorTypes() {
         return getEnumConstants(HistoricRotorType.class);
     }
 
-    @Bean
     public static List<HistoricReflectorType> getHReflectorTypes() {
         return getEnumConstants(HistoricReflectorType.class);
     }
 
-    @Bean
     public static List<HistoricEntryWheelType> getHEntryWheelTypes() {
         return getEnumConstants(HistoricEntryWheelType.class);
     }

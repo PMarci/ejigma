@@ -9,14 +9,12 @@ import camel.enigma.model.type.ReflectorType;
 import camel.enigma.model.type.RotorType;
 import camel.enigma.model.type.ScramblerType;
 import camel.enigma.util.ScrambleResult;
-import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@Component
 public class Armature {
 
     public static final String UNFIT_ROTORTYPES_MSG = "RotorTypes don't fit other scramblers in armature";

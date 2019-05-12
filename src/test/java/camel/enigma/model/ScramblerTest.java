@@ -4,11 +4,6 @@ import camel.enigma.util.ScrambleResult;
 import org.fusesource.jansi.Ansi;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -19,15 +14,9 @@ import java.util.List;
 
 import static org.fusesource.jansi.Ansi.ansi;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@TestPropertySource("classpath:application.properties")
-@ActiveProfiles("test")
 public class ScramblerTest {
 
 //    private Rotor errorRotor;
-
-    @Value("${spring.output.ansi.enabled}")
-    private String springAnsiEnabled;
 
     @Before
     public void setUp() throws Exception {
@@ -42,7 +31,6 @@ public class ScramblerTest {
         BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out, charset));
         System.out.printf("%nAnsi detected: %b%n", Ansi.isDetected());
         System.out.printf("Ansi enabled: %b%n", Ansi.isEnabled());
-        System.out.printf("Spring ansi enabled: %s%n", springAnsiEnabled);
         String linesString;
         List<String> lines = ScrambleResult.HistoryEntry.loadLetter(4, "letters.txt");
         List<String> lines2 = ScrambleResult.HistoryEntry.loadLetter(26, "letters.txt");

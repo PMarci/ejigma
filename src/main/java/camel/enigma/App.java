@@ -1,31 +1,33 @@
 package camel.enigma;
 
+import camel.enigma.exception.ArmatureInitException;
 import camel.enigma.io.KeyBoard;
+import camel.enigma.io.LightBoard;
+import camel.enigma.model.Armature;
 import camel.enigma.model.type.ConfigContainer;
+import camel.enigma.util.TerminalProvider;
 import org.jline.terminal.Terminal;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
-public class App implements CommandLineRunner {
+import java.io.IOException;
 
-    @Autowired
-    private KeyBoard keyBoard;
-
-    @Autowired
-    private Terminal terminal;
-
-    @Autowired
-    private ConfigContainer configContainer;
+public class App {
 
     public static void main(String[] args) {
-        SpringApplication.run(App.class, args);
-    }
-
-    @Override
-    public void run(String... args) throws Exception {
+        Terminal terminal = null;
+        try {
+            terminal = TerminalProvider.initTerminal();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        ConfigContainer configContainer = new ConfigContainer();
+        Armature armature = null;
+        try {
+            armature = new Armature();
+        } catch (ArmatureInitException e) {
+            e.printStackTrace();
+        }
+        LightBoard ligthBoard = new LightBoard(terminal, armature);
+        KeyBoard keyBoard = new KeyBoard(terminal, configContainer, armature, ligthBoard);
         terminal.writer().write(
                 String.format("Welcome to the camel-enigma cli, your terminal type is: %s%n", terminal.getClass()
                         .getSimpleName()));

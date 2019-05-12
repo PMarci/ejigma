@@ -1,12 +1,7 @@
 package camel.enigma.util;
 
-import camel.enigma.model.type.CustomEntryWheelType;
-import camel.enigma.model.type.CustomReflectorType;
-import camel.enigma.model.type.CustomRotorType;
-import camel.enigma.model.type.RotorType;
+import camel.enigma.model.type.*;
 import org.eclipse.persistence.jaxb.UnmarshallerProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -25,14 +20,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Configuration
 public class TypeLoader {
 
     private static JAXBContext jaxbContext = initJaxbContext();
 
     private static String path = getPath();
 
-    @Bean
+    public TypeLoader() {
+
+    }
+
     public static List<RotorType> loadCustomRotorTypes() {
         List<RotorType> rotorTypes = Collections.emptyList();
         List<File> sourceFiles = listFiles();
@@ -42,6 +39,16 @@ public class TypeLoader {
             e.printStackTrace();
         }
         return rotorTypes;
+    }
+
+    public static List<ReflectorType> loadCustomReflectorTypes() {
+        // TODO
+        return Collections.emptyList();
+    }
+
+    public static List<EntryWheelType> loadCustomEntryWheelTypes() {
+        // TODO
+        return Collections.emptyList();
     }
 
     private static List<File> listFiles() {

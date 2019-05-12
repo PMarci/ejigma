@@ -11,10 +11,6 @@ import org.jline.keymap.KeyMap;
 import org.jline.reader.*;
 import org.jline.terminal.Terminal;
 import org.jline.utils.InfoCmp;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.*;
@@ -30,10 +26,8 @@ import java.util.stream.IntStream;
 import static org.jline.keymap.KeyMap.ctrl;
 import static org.jline.keymap.KeyMap.key;
 
-@Component
 public class KeyBoard implements Runnable {
 
-    private static final Logger logger = LoggerFactory.getLogger(KeyBoard.class);
     private static final String FILTER_COMPLETION = "filterCompletion";
     private static final String SWITCH_PROMPT = ", change them as well? (y/n): ";
     private static final Pattern TYPE_SUFFIX_PATTERN = Pattern.compile("^(.*)Type$");
@@ -59,11 +53,10 @@ public class KeyBoard implements Runnable {
 
     private final ConfigContainer configContainer;
 
-    @Autowired
-    KeyBoard(Terminal terminal,
-             ConfigContainer configContainer,
-             Armature armature,
-             LightBoard lightBoard) {
+    public KeyBoard(Terminal terminal,
+                    ConfigContainer configContainer,
+                    Armature armature,
+                    LightBoard lightBoard) {
         setAlphabet(Scrambler.DEFAULT_ALPHABET_STRING);
         this.terminal = terminal;
         this.lightBoard = lightBoard;
@@ -109,8 +102,7 @@ public class KeyBoard implements Runnable {
     private void doStop() throws IOException {
         shuttingDown.set(true);
         terminal.puts(InfoCmp.Capability.newline);
-        // TODO investigate not quitting all the way outside CMD
-        logger.info("Stopping...");
+//        logger.info("Stopping...");
         terminal.close();
 
         if (executor != null) {
@@ -127,12 +119,13 @@ public class KeyBoard implements Runnable {
         try {
             readFromStream();
         } catch (Exception e) {
-            logger.error("big oof", e);
+            e.printStackTrace();
         }
     }
 
     public enum Op {
         ENTER_CHAR,
+        NEWLINE,
         SELECT_ENTRY,
         SELECT_ROTOR,
         SELECT_REFLECTOR,
@@ -155,6 +148,9 @@ public class KeyBoard implements Runnable {
                     case ENTER_CHAR:
                         inputChar = bindingReader.getLastBinding().charAt(0);
                         processInput(inputChar);
+                        break;
+                    case NEWLINE:
+                        processNewline();
                         break;
                     case SELECT_ENTRY:
                         processSelectEntryIgnoreInterrupt();
@@ -453,6 +449,7 @@ public class KeyBoard implements Runnable {
         Set<String> alphabetChars = getUpperAndLower(alphabetString.toCharArray(), Locale.ROOT);
         bind(keyMap, Op.ENTER_CHAR, alphabetChars);
         keyMap.setUnicode(Op.ENTER_CHAR);
+        bind(keyMap, Op.NEWLINE, ctrl('M'));
         bind(keyMap, Op.RESET_OFFSETS, ctrl('R'));
         bind(keyMap, Op.DETAIL_MODE_TOGGLE, ctrl('B'));
         bind(keyMap, Op.SELECT_ROTOR, ctrl('I'));
@@ -514,21 +511,23 @@ public class KeyBoard implements Runnable {
         lightBoard.process(armatureResult);
     }
 
+    private void processNewline() {
+        lightBoard.process('\n');
+    }
+
     private void processControl(Op input) {
         if (input == Op.LEFT) {
-            lightBoard.getBuffer().move(-1);
-        }
-        if (input == Op.RIGHT) {
-            lightBoard.getBuffer().move(1);
+            lightBoard.getBuffer().moveLeft(1);
+        } else if (input == Op.RIGHT) {
+            lightBoard.getBuffer().moveRight(1);
         }
         lightBoard.redisplay();
 
     }
 
     private void processResetOffsets() {
-        terminal.puts(InfoCmp.Capability.newline);
-        logger.info("\nReceived Ctrl+R, resetting offsets...");
         armature.resetOffsets();
+        lightBoard.statusMsg("Received Ctrl+R, resetting offsets...");
     }
 
     private void processClearBuffer() {
@@ -547,7 +546,8 @@ public class KeyBoard implements Runnable {
 //            TODO maybe take some functionality from camel lifecycle management
             doStop();
         } catch (Exception e) {
-            logger.error("An exception occurred while stopping: ", e);
+//            logger.error("An exception occurred while stopping: ", e);
+            e.printStackTrace();
         }
     }
 
