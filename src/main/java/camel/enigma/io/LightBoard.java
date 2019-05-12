@@ -86,7 +86,7 @@ public class LightBoard {
         this.oldLines = toDisplay;
     }
 
-    void resetDisplay() {
+    private void resetDisplay() {
         display.clear();
         display.resize(size.getRows(), size.getColumns());
     }

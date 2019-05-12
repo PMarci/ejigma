@@ -159,8 +159,7 @@ public class EnigmaBuffer {
     }
 
     public int absCursorPos() {
-        int sizeColumns = size.getColumns();
-        return sizeColumns * absRowPos() + absColPos();
+        return size.cursorPos(absRowPos(), absColPos());
     }
 
     private int brokenHeight(int lineNo) {

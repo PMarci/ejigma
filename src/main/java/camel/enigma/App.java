@@ -38,6 +38,8 @@ public class App {
         terminal.writer().write(
                 String.format("The following entry wheel types are available: %n%s%n", configContainer.getEntryWheelTypes().toString()));
         terminal.flush();
+        // TODO change
+        ligthBoard.redisplay();
         keyBoard.doStart();
     }
 }
