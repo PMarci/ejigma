@@ -9,6 +9,10 @@ import java.nio.charset.StandardCharsets;
 
 public class TerminalProvider {
 
+    private TerminalProvider() {
+        // hiding constructor
+    }
+
     public static Terminal initTerminal() throws IOException {
         Terminal terminal;
         terminal = TerminalBuilder.builder()

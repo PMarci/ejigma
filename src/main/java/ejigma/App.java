@@ -5,6 +5,7 @@ import ejigma.io.KeyBoard;
 import ejigma.io.LightBoard;
 import ejigma.model.Armature;
 import ejigma.model.type.ConfigContainer;
+import ejigma.util.ScrambleResult;
 import ejigma.util.TerminalProvider;
 import org.jline.terminal.Terminal;
 
@@ -21,6 +22,7 @@ public class App {
             LightBoard lightBoard = new LightBoard(terminal, armature);
             KeyBoard keyBoard = new KeyBoard(terminal, configContainer, armature, lightBoard);
             if (args.length == 0) {
+                ScrambleResult.HistoryEntry.printBanner(terminal.writer());
                 terminal.writer().write(
                         String.format(
                                 "Welcome to the camel-enigma cli, your terminal type is: %s%n",
@@ -41,7 +43,7 @@ public class App {
             } else if (args.length == 1) {
                 String input = readAll(args[0], terminal);
                 String output = armature.scramble(input);
-                terminal.writer().write(output);
+                terminal.writer().write(output + "\n");
                 terminal.flush();
             }
         } catch (IOException | ArmatureInitException e) {

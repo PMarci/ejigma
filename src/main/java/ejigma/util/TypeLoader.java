@@ -1,5 +1,6 @@
 package ejigma.util;
 
+import ejigma.exception.TypeLoaderError;
 import ejigma.model.type.*;
 import org.eclipse.persistence.jaxb.UnmarshallerProperties;
 
@@ -12,27 +13,31 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 public class TypeLoader {
 
-    private static JAXBContext jaxbContext = initJaxbContext();
+    private static final JAXBContext jaxbContext = initJaxbContext();
 
-    private static String path = getPath();
+    private static final String PATH = getPath();
 
-    public TypeLoader() {
-
+    private TypeLoader() {
+        // hiding
     }
 
     public static List<RotorType> loadCustomRotorTypes() {
         List<RotorType> rotorTypes = Collections.emptyList();
-        List<File> sourceFiles = listFiles();
         try {
+        List<File> sourceFiles = listFiles();
             rotorTypes = getCustomRotorTypes(sourceFiles);
-        } catch (JAXBException | FileNotFoundException e) {
+        } catch (JAXBException | FileNotFoundException | URISyntaxException e) {
             e.printStackTrace();
         }
         return rotorTypes;
@@ -48,14 +53,17 @@ public class TypeLoader {
         return Collections.emptyList();
     }
 
-    private static List<File> listFiles() {
-        File dir = new File(path);
+    private static List<File> listFiles() throws URISyntaxException {
+        File dir = new File(new URI(PATH));
         List<File> sourceFiles = Collections.emptyList();
         String[] jsons = dir.list((dir1, name) -> name.endsWith(".json"));
         if (jsons != null) {
-            sourceFiles = Arrays.stream(jsons)
-                .map(s -> new File(path + File.separator + s))
-                .collect(Collectors.toList());
+            List<File> list = new ArrayList<>();
+            for (String s : jsons) {
+                File file = new File(PATH.substring(PATH.indexOf(':') + 1) + File.separator + s);
+                    list.add(file);
+            }
+            sourceFiles = list;
         }
         return sourceFiles;
     }
@@ -82,8 +90,11 @@ public class TypeLoader {
         Class<TypeLoader> typeLoaderClass = TypeLoader.class;
         Optional<URL> resourceOpt = Optional.ofNullable(typeLoaderClass.getResource("./"));
         return resourceOpt
-                .map(URL::toExternalForm)
-                .orElse(typeLoaderClass.getResource("/" + typeLoaderClass.getPackageName().replace(".", "/")).toExternalForm());
+                .map(url1 -> url1.toExternalForm())
+                .map(s -> typeLoaderClass.getResource(
+                        "/" + typeLoaderClass.getPackageName().replace(".", "/")))
+                .map(url -> url.toExternalForm())
+                .orElseThrow(() -> new TypeLoaderError("Couldn't init TypeLoader!"));
     }
 
     private static Unmarshaller getUnmarshaller() throws JAXBException {
@@ -96,7 +107,12 @@ public class TypeLoader {
     private static JAXBContext initJaxbContext() {
         JAXBContext result = null;
         try {
-            result = JAXBContext.newInstance(CustomRotorType.class, CustomReflectorType.class, CustomEntryWheelType.class);
+            result = JAXBContext.newInstance(
+                    CustomRotorType.class,
+                    CustomReflectorType.class,
+                    CustomEntryWheelType.class
+//                    "ejigma.model.type", TypeLoader.class.getClassLoader()
+                    );
         } catch (JAXBException e) {
             e.printStackTrace();
         }

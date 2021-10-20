@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import static org.fusesource.jansi.Ansi.ansi;
 
@@ -31,19 +30,7 @@ public class ScramblerTest {
         BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out, charset));
         System.out.printf("%nAnsi detected: %b%n", Ansi.isDetected());
         System.out.printf("Ansi enabled: %b%n", Ansi.isEnabled());
-        String linesString;
-        List<String> lines = ScrambleResult.HistoryEntry.loadLetter(4, "letters.txt");
-        List<String> lines2 = ScrambleResult.HistoryEntry.loadLetter(26, "letters.txt");
-        int linesSize = lines.size();
-        int linesSize2 = lines2.size();
-        for (int i = 0; i < linesSize || i < linesSize2; i++) {
-            String line = (linesString = (i < linesSize) ? lines.get(i) : "") +
-                    ScrambleResult.HistoryEntry.getPadding(linesString, 22) +
-                    ((i < linesSize2) ? ansi().fg(Ansi.Color.RED).render(lines2.get(i)).reset().toString() : "");
-            bw.write(line);
-            bw.write(System.lineSeparator());
-            bw.flush();
-        }
+        ScrambleResult.HistoryEntry.printBanner(bw);
         bw.write("╔══╦══╗");
         bw.write(System.lineSeparator());
         bw.flush();
@@ -55,4 +42,5 @@ public class ScramblerTest {
         bw.write(System.lineSeparator());
         bw.flush();
     }
+
 }

@@ -1,19 +1,19 @@
 package ejigma.util;
 
+import org.fusesource.jansi.Ansi;
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.fusesource.jansi.Ansi.ansi;
 
 public class ScrambleResult {
 
@@ -274,6 +274,22 @@ public class ScrambleResult {
             this.stationId = stationId;
             this.alphabet = alphabet;
             passNo = 1;
+        }
+
+        public static void printBanner(Writer bw) throws IOException {
+            String linesString;
+            List<String> lines = loadLetter(4, "letters.txt");
+            List<String> lines2 = loadLetter(26, "letters.txt");
+            int linesSize = lines.size();
+            int linesSize2 = lines2.size();
+            for (int i = 0; i < linesSize || i < linesSize2; i++) {
+                String line = (linesString = (i < linesSize) ? lines.get(i) : "") +
+                        getPadding(linesString, 22) +
+                        ((i < linesSize2) ? ansi().fg(Ansi.Color.RED).render(lines2.get(i)).reset().toString() : "");
+                bw.write(line);
+                bw.write(System.lineSeparator());
+                bw.flush();
+            }
         }
 
         @Override
