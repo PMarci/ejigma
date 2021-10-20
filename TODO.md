@@ -32,7 +32,6 @@
 
 ### general
 
-1. submit bug with tmux and Curses.java:78
 1. fully implement PlugBoard
     1. implement interactive setting of plugboard
 1. get new name (rotor stream cypher something something, YARSCE?)
@@ -49,3 +48,9 @@
     1. compatibility considerations beyond alphabetString
 1. cryptanalysis features
 1. think about delivery, installation (man pages?)
+
+### issues
+
+* in windows terminal WSL2, switching anything using the selectionreader
+breaks arrow key navigation at the `readBinding() - getBound()` level  
+* works in CMD, presumably PS

@@ -21,6 +21,10 @@ public class ScramblerMounting {
         return !reverseWired ? scrambler.scramble(input) : scrambler.reverseScramble(input);
     }
 
+    char scramble(char input) {
+        return !reverseWired ? scrambler.scramble(input) : scrambler.reverseScramble(input);
+    }
+
     public Scrambler getScrambler() {
         return scrambler;
     }

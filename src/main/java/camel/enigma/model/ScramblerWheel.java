@@ -10,8 +10,13 @@ public abstract class ScramblerWheel extends Scrambler {
     char offsetAsChar;
     private final boolean staticc;
 
-    ScramblerWheel(String alphabetString, String wiringString, boolean staticc, ScramblerType<? extends ScramblerWheel> scramblerType)
+    ScramblerWheel(
+            String alphabetString,
+            String wiringString,
+            boolean staticc,
+            ScramblerType<? extends ScramblerWheel> scramblerType)
         throws ScramblerSettingException {
+
         super(alphabetString, wiringString, scramblerType);
         setWiring(getAlphabetString(), this.wiringString);
         offset = 0;
@@ -30,6 +35,16 @@ public abstract class ScramblerWheel extends Scrambler {
         char wiringOutput = alphabet[link];
         int outputPos = (link - offset + alphabet.length) % alphabet.length;
         return input.putResult(outputPos, wiringInput, wiringOutput, wiringOutput, type.getName(), offset, offsetAsChar);
+    }
+
+    @Override
+    protected char scrambleInput(char input, int[] links) {
+        int inputPos = alphabetString.indexOf(input);
+        int wrappedOffsetPos = (inputPos + offset) % alphabet.length;
+        char wiringInput = alphabet[wrappedOffsetPos];
+        int link = links[alphabetString.indexOf(wiringInput)];
+
+        return alphabet[(link - offset + alphabet.length ) % alphabet.length];
     }
 
     boolean click() {
@@ -75,7 +90,17 @@ public abstract class ScramblerWheel extends Scrambler {
     }
 
     @Override
+    char scramble(char input) {
+        return scrambleInput(input, forwardLinks);
+    }
+
+    @Override
     ScrambleResult reverseScramble(ScrambleResult input) {
+        return scrambleInput(input, reverseLinks);
+    }
+
+    @Override
+    char reverseScramble(char input) {
         return scrambleInput(input, reverseLinks);
     }
 

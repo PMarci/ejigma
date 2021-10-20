@@ -92,9 +92,21 @@ public class PlugBoard extends Scrambler {
         return input.putResult(link, wiringInput, wiringOutput, wiringOutput, type.getName());
     }
 
+    @Override
+    protected char scrambleInput(char input, int[] links) {
+        int inputPos = this.alphabetString.indexOf(input);
+        int link = links[inputPos];
+        return alphabet[link];
+    }
+
 
     @Override
     ScrambleResult scramble(ScrambleResult input) {
+        return scrambleInput(input, forwardLinks);
+    }
+
+    @Override
+    char scramble(char input) {
         return scrambleInput(input, forwardLinks);
     }
 
@@ -103,9 +115,14 @@ public class PlugBoard extends Scrambler {
         return scramble(input);
     }
 
+    @Override
+    char reverseScramble(char input) {
+        return scramble(input);
+    }
+
 
     private static ScramblerType<PlugBoard> getPlugBoardType(String alphabetString) {
-        return new ScramblerType<>() {
+        return new ScramblerType<PlugBoard>() {
             @Override
             public String getName() {
                 return "PLUGBOARD";

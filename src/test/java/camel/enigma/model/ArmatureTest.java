@@ -27,6 +27,15 @@ public class ArmatureTest {
     }
 
     @Test
+    public void testScramble() {
+
+        String inputString = thirtyAs.substring(0, 5);
+        String output = wikiArmature.scramble(inputString);
+
+        assertEquals(wikiResult30.substring(0, 5), output);
+    }
+
+    @Test
     public void testHandleABitLonger() {
 
         String output = encryptString(thirtyAs, wikiArmature);

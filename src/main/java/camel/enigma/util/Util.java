@@ -70,4 +70,8 @@ public class Util {
         }
         return new String(outputArray, 0, outputArray.length);
     }
+
+    public static int indexOf(int[] arr, int val) {
+        return IntStream.range(0, arr.length).filter(i -> arr[i] == val).findFirst().orElse(-1);
+    }
 }

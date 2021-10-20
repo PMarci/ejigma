@@ -9,9 +9,11 @@ import camel.enigma.model.type.ReflectorType;
 import camel.enigma.model.type.RotorType;
 import camel.enigma.model.type.ScramblerType;
 import camel.enigma.util.ScrambleResult;
+import camel.enigma.util.Util;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -51,6 +53,29 @@ public class Armature {
         return encrypt(scrambleResult);
     }
 
+    public String scramble(String input) {
+        return input.chars()
+                .mapToObj(i -> (char) i)
+                .map(c -> {
+                    // ??
+                    String alphabetString = entryWheel.alphabetString;
+                    if (!Util.containsChar(alphabetString, c)) {
+                        char upperCase = Character.toUpperCase(c);
+                        if (Util.containsChar(alphabetString, upperCase)) {
+                            c = upperCase;
+                        }
+                    }
+                    click();
+                    c = encrypt(c);
+                    return c;
+                })
+                .collect(Collector.of(
+                        StringBuilder::new,
+                        StringBuilder::append,
+                        StringBuilder::append,
+                        StringBuilder::toString));
+    }
+
     private ScrambleResult encrypt(ScrambleResult current) {
         for (int i = 0; i < scramblerWiring.size(); i++) {
             ScramblerMounting scramblerMounting = scramblerWiring.get(i);
@@ -62,6 +87,13 @@ public class Armature {
         return current;
     }
 
+    private char encrypt(char c) {
+        for (ScramblerMounting scramblerMounting : scramblerWiring) {
+            c = scramblerMounting.scramble(c);
+        }
+        return c;
+    }
+
     private void click() {
         boolean previousNotchEngaged = true;
         for (Rotor rotor : rotors) {
@@ -71,7 +103,7 @@ public class Armature {
         }
     }
 
-    public <T extends ScramblerType> void validateWithCurrent(T scramblerType) throws ArmatureInitException {
+    public <T extends ScramblerType<?>> void validateWithCurrent(T scramblerType) throws ArmatureInitException {
         if (scramblerType instanceof EntryWheelType) {
             validateWithCurrent((EntryWheelType) scramblerType);
         } else if (scramblerType instanceof ReflectorType) {
@@ -114,10 +146,8 @@ public class Armature {
     private void validateAllTypes(EntryWheelType entryWheelType, RotorType[] rotorTypes, ReflectorType reflectorType)
             throws ArmatureInitException {
 
-        ScramblerType[] allTypes = new ScramblerType[rotorTypes.length + 2];
-        for (int i = 0, rotorTypesLength = rotorTypes.length; i < rotorTypesLength; i++) {
-            allTypes[i] = rotorTypes[i];
-        }
+        ScramblerType<?>[] allTypes = new ScramblerType[rotorTypes.length + 2];
+        System.arraycopy(rotorTypes, 0, allTypes, 0 ,rotorTypes.length);
         allTypes[rotorTypes.length] = entryWheelType;
         allTypes[rotorTypes.length + 1] = reflectorType;
         validateAlphabetStrings(allTypes);
@@ -197,16 +227,16 @@ public class Armature {
         return sb.toString();
     }
 
-    private static void validateAlphabetStrings(ScramblerType[] scramblerTypes) throws ArmatureInitException {
+    private static void validateAlphabetStrings(ScramblerType<?>[] scramblerTypes) throws ArmatureInitException {
         // TODO extract class name of type and format into message
         String prevAlphabetString = null;
-        for (ScramblerType scramblerType : scramblerTypes) {
+        for (ScramblerType<?> scramblerType : scramblerTypes) {
             prevAlphabetString = validateAlphabetString(prevAlphabetString, scramblerType);
         }
     }
 
     private static String validateAlphabetString(String prevAlphabetString,
-                                                 ScramblerType scramblerType) throws ArmatureInitException {
+                                                 ScramblerType<?> scramblerType) throws ArmatureInitException {
         if (scramblerType != null) {
             String currentAlphabetString = scramblerType.getAlphabetString();
             if (prevAlphabetString != null && !prevAlphabetString.equals(currentAlphabetString)) {

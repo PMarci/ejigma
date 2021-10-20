@@ -18,11 +18,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static camel.enigma.model.historic.HistoricEntryWheelType.REICHSBAHN;
 import static org.jline.keymap.KeyMap.ctrl;
 import static org.jline.keymap.KeyMap.key;
 
@@ -34,7 +36,7 @@ public class KeyBoard implements Runnable {
     private static final Pattern NUMBERS_PATTERN = Pattern.compile("[^0-9]*([0-9]+)[^0-9]*");
 
     private final Terminal terminal;
-    private final LineReader selectionReader;
+    private LineReader selectionReader;
     private final BindingReader bindingReader;
     private final KeyMap<Op> keyMap;
 
@@ -61,7 +63,7 @@ public class KeyBoard implements Runnable {
         this.terminal = terminal;
         this.lightBoard = lightBoard;
         terminal.handle(Terminal.Signal.INT, signal -> processQuit());
-        this.selectionReader = initSelectionReader(terminal);
+        initSelectionReader(terminal);
         this.bindingReader = new BindingReader(terminal.reader());
         this.keyMap = initKeyMap(new KeyMap<>());
 
@@ -69,7 +71,7 @@ public class KeyBoard implements Runnable {
         this.configContainer = configContainer;
     }
 
-    private LineReader initSelectionReader(Terminal terminal) {
+    private void initSelectionReader(Terminal terminal) {
         selectCompleter = new SelectCompleter();
         LineReader result = LineReaderBuilder.builder()
                 .terminal(terminal)
@@ -80,9 +82,10 @@ public class KeyBoard implements Runnable {
         result.setOpt(LineReader.Option.DISABLE_EVENT_EXPANSION);
         result.setOpt(LineReader.Option.COMPLETE_IN_WORD);
         result.setOpt(LineReader.Option.DISABLE_HIGHLIGHTER);
+        result.setOpt(LineReader.Option.MOUSE);
         result.setVariable(LineReader.DISABLE_HISTORY, true);
         result.setVariable(FILTER_COMPLETION, false);
-        return result;
+        selectionReader = result;
     }
 
     public void doStart() {
@@ -101,13 +104,10 @@ public class KeyBoard implements Runnable {
 
     private void doStop() throws IOException {
         shuttingDown.set(true);
-        terminal.puts(InfoCmp.Capability.newline);
-//        logger.info("Stopping...");
+        terminal.puts(InfoCmp.Capability.clear_screen);
         terminal.close();
 
         if (executor != null) {
-//            endpoint.getCamelContext().getExecutorServiceManager().shutdownGraceful(executor, 300);
-//            TODO maybe implement awaitTermination
             executor.shutdown();
             shutdown.set(true);
             executor = null;
@@ -140,14 +140,13 @@ public class KeyBoard implements Runnable {
 
     private void readFromStream() {
         Op input;
-        char inputChar;
         while (isRunAllowed()) {
-            input = bindingReader.readBinding(keyMap, null, false);
+            // TODO trying blocking
+            input = bindingReader.readBinding(keyMap, keyMap, true);
             if (input != null) {
                 switch (input) {
                     case ENTER_CHAR:
-                        inputChar = bindingReader.getLastBinding().charAt(0);
-                        processInput(inputChar);
+                        processInput(bindingReader.getLastBinding().charAt(0));
                         break;
                     case NEWLINE:
                         processNewline();
@@ -178,6 +177,9 @@ public class KeyBoard implements Runnable {
                         break;
                 }
             }
+//            breaks arrows outright
+//            bindingReader = new BindingReader(terminal.reader());
+//            rebindKeyMap(alphabetString);
         }
     }
 
@@ -186,12 +188,14 @@ public class KeyBoard implements Runnable {
             processSelectEntry();
         } catch (UserInterruptException ignored) {
             //ignored
+            lightBoard.redisplay();
         }
     }
 
     private void processSelectEntry() {
         ScramblerSelectResponse<EntryWheelType> newEntryWheelTypeResponse;
-        newEntryWheelTypeResponse = promptForScramblerType(EntryWheelType.class);
+//        newEntryWheelTypeResponse = promptForScramblerType(EntryWheelType.class);
+        newEntryWheelTypeResponse = new ScramblerSelectResponse<>(REICHSBAHN, false);
         EntryWheelType newType = newEntryWheelTypeResponse.getScramblerType();
         String vNewAlphabetString = newType.getAlphabetString();
         if (newEntryWheelTypeResponse.isReselect()) {
@@ -219,6 +223,7 @@ public class KeyBoard implements Runnable {
             processSelectReflector();
         } catch (UserInterruptException ignored) {
             //ignored
+            lightBoard.redisplay();
         }
     }
 
@@ -247,7 +252,7 @@ public class KeyBoard implements Runnable {
         lightBoard.redisplay();
     }
 
-    private <T extends ScramblerType> ScramblerSelectResponse<T> promptForScramblerType(Class<T> scramblerTypeType) {
+    private <T extends ScramblerType<?>> ScramblerSelectResponse<T> promptForScramblerType(Class<T> scramblerTypeType) {
         boolean choose = true;
         boolean choose2;
         T newScramblerType;
@@ -265,7 +270,8 @@ public class KeyBoard implements Runnable {
             String tInput = selectionReader.readLine(prompt).trim();
             Optional<T> optionalScramblerType =
                     configContainer.getScramblerTypes(scramblerTypeType).stream()
-                            .filter(sType -> sType.getName().equals(tInput)).findAny();
+                            .filter(sType -> sType.getName().equals(tInput))
+                            .findAny();
             if (optionalScramblerType.isPresent()) {
                 newScramblerType = optionalScramblerType.get();
                 this.newAlphabetString = newScramblerType.getAlphabetString();
@@ -306,15 +312,18 @@ public class KeyBoard implements Runnable {
             processSelectRotors();
         } catch (UserInterruptException ignored) {
             //ignored
+            lightBoard.redisplay();
         }
     }
 
     private void processSelectRotors() {
+        // rotor no prompt
         int rotorNo;
         ScramblerSelectResponse<RotorType> newRotorResponse;
         selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
         rotorNo = promptForRotorNo();
         selectionReader.setVariable(LineReader.DISABLE_COMPLETION, false);
+        // rotor type prompt
         selectCompleter.setCompleter(RotorType.class);
         newRotorResponse = promptForRotorTypes(rotorNo);
         if (newRotorResponse != null) {
@@ -403,17 +412,14 @@ public class KeyBoard implements Runnable {
                 selectionReader.printAbove(notATypeString);
             }
         }
-        ArmatureInitException exception = null;
+        // validate with other scramblers, force reselect until compatible
         try {
             armature.validateWithCurrent(newRotorTypes);
         } catch (ArmatureInitException e) {
-            exception = e;
-        }
-        boolean choose = true;
-        if (exception != null) {
+            boolean choose = true;
             selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
             while (choose) {
-                String yn = selectionReader.readLine(exception.getMessage() + SWITCH_PROMPT).trim();
+                String yn = selectionReader.readLine(e.getMessage() + SWITCH_PROMPT).trim();
                 if ("y".equals(yn) || "Y".equals(yn)) {
                     response = new ScramblerSelectResponse<>(newRotorTypes, true);
                     choose = false;
@@ -423,8 +429,6 @@ public class KeyBoard implements Runnable {
                 }
             }
             selectionReader.setVariable(LineReader.DISABLE_COMPLETION, false);
-        } else {
-            response = new ScramblerSelectResponse<>(newRotorTypes, false);
         }
         return response;
     }
@@ -504,7 +508,11 @@ public class KeyBoard implements Runnable {
         }
         if (Util.containsChar(alphabetString, input)) {
             int initialResult = alphabetString.indexOf(input);
-            scrambleResult = new ScrambleResult((initialResult != -1) ? initialResult : 0, alphabetString, input);
+            scrambleResult = new ScrambleResult(
+                    (initialResult != -1) ? initialResult
+                                          : 0,
+                    alphabetString,
+                    input);
         }
 
         ScrambleResult armatureResult = armature.handle(scrambleResult);
@@ -516,13 +524,23 @@ public class KeyBoard implements Runnable {
     }
 
     private void processControl(Op input) {
-        if (input == Op.LEFT) {
-            lightBoard.getBuffer().moveLeft(1);
-        } else if (input == Op.RIGHT) {
-            lightBoard.getBuffer().moveRight(1);
+        switch (input) {
+            case LEFT:
+                lightBoard.getBuffer().moveLeft(1);
+                break;
+            case RIGHT:
+                lightBoard.getBuffer().moveRight(1);
+                break;
+            case UP:
+                lightBoard.getBuffer().moveUp(1);
+                break;
+            case DOWN:
+                lightBoard.getBuffer().moveDown(1);
+                break;
+            default:
+                break;
         }
         lightBoard.redisplay();
-
     }
 
     private void processResetOffsets() {
@@ -543,10 +561,9 @@ public class KeyBoard implements Runnable {
 
     private void processQuit() {
         try {
-//            TODO maybe take some functionality from camel lifecycle management
             doStop();
+            System.exit(0);
         } catch (Exception e) {
-//            logger.error("An exception occurred while stopping: ", e);
             e.printStackTrace();
         }
     }
@@ -560,11 +577,11 @@ public class KeyBoard implements Runnable {
         this.alphabet = alphabetString.toCharArray();
     }
 
-    public class ScramblerSelectResponse<T extends ScramblerType> {
+    public static class ScramblerSelectResponse<T extends ScramblerType<?>> {
 
         private T scramblerType;
         private T[] scramblerTypes;
-        private boolean reselect;
+        private final boolean reselect;
 
         ScramblerSelectResponse(T scramblerType, boolean reselect) {
             this.scramblerType = scramblerType;
@@ -574,10 +591,6 @@ public class KeyBoard implements Runnable {
         ScramblerSelectResponse(T[] scramblerTypes, boolean reselect) {
             this.scramblerTypes = scramblerTypes;
             this.reselect = reselect;
-        }
-
-        boolean isMulti() {
-            return (null == scramblerType) && (null != scramblerTypes);
         }
 
         T getScramblerType() {
@@ -596,9 +609,6 @@ public class KeyBoard implements Runnable {
     private class SelectCompleter implements Completer {
 
         Completer completer;
-        private RotorsCompleter rotorsCompleter = new RotorsCompleter();
-        private EntryWheelCompleter entryCompleter = new EntryWheelCompleter();
-        private ReflectorCompleter reflectorCompleter = new ReflectorCompleter();
 
         @Override
         public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
@@ -609,56 +619,27 @@ public class KeyBoard implements Runnable {
             this.completer = completer;
         }
 
-        <T extends ScramblerType> void setCompleter(Class<T> scramblerTypeType) {
+        <T extends ScramblerType<?>> void setCompleter(Class<T> scramblerTypeType) {
             if (scramblerTypeType.isAssignableFrom(ReflectorType.class)) {
-                setCompleter(reflectorCompleter);
+                setCompleter(completeFor(configContainer::getReflectorTypes));
             } else if (scramblerTypeType.isAssignableFrom(EntryWheelType.class)) {
-                setCompleter(entryCompleter);
+                setCompleter(completeFor(configContainer::getEntryWheelTypes));
             } else if (scramblerTypeType.isAssignableFrom(RotorType.class)) {
-                setCompleter(rotorsCompleter);
+                setCompleter(completeFor(configContainer::getRotorTypes));
             }
         }
-    }
 
-    private class RotorsCompleter implements Completer {
-        @Override
-        public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-            List<RotorType> rotorTypes = configContainer.getRotorTypes();
-            candidates.addAll(rotorTypes.stream()
-                                      .filter(rotorType ->
-                                                      !((Boolean) reader.getVariable(FILTER_COMPLETION)) ||
-                                                              (newAlphabetString != null && newAlphabetString
-                                                                      .equals(rotorType.getAlphabetString())))
-                                      .map(rotorType -> new Candidate(rotorType.getName()))
-                                      .collect(Collectors.toSet()));
-        }
-    }
-
-    private class EntryWheelCompleter implements Completer {
-        @Override
-        public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-            List<EntryWheelType> entryWheelTypes = configContainer.getEntryWheelTypes();
-            candidates.addAll(entryWheelTypes.stream()
-                                      .filter(entryWheelType ->
-                                                      !((Boolean) reader.getVariable(FILTER_COMPLETION)) ||
-                                                              (newAlphabetString != null && newAlphabetString
-                                                                      .equals(entryWheelType.getAlphabetString())))
-                                      .map(entryWheelType -> new Candidate(entryWheelType.getName()))
-                                      .collect(Collectors.toSet()));
-        }
-    }
-
-    private class ReflectorCompleter implements Completer {
-        @Override
-        public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-            List<ReflectorType> reflectorTypes = configContainer.getReflectorTypes();
-            candidates.addAll(reflectorTypes.stream()
-                                      .filter(reflectorType ->
-                                                      !((Boolean) reader.getVariable(FILTER_COMPLETION)) ||
-                                                              (newAlphabetString != null && newAlphabetString
-                                                                      .equals(reflectorType.getAlphabetString())))
-                                      .map(reflectorType -> new Candidate(reflectorType.getName()))
-                                      .collect(Collectors.toSet()));
+        private <T extends ScramblerType<?>> Completer completeFor(Supplier<List<T>> supplier) {
+            return (reader, line, candidates) -> {
+                List<T> reflectorTypes = supplier.get();
+                candidates.addAll(reflectorTypes.stream()
+                                          .filter(reflectorType ->
+                                                          !((Boolean) reader.getVariable(FILTER_COMPLETION)) ||
+                                                                  (newAlphabetString != null && newAlphabetString
+                                                                          .equals(reflectorType.getAlphabetString())))
+                                          .map(reflectorType -> new Candidate(reflectorType.getName()))
+                                          .collect(Collectors.toSet()));
+            };
         }
     }
 }

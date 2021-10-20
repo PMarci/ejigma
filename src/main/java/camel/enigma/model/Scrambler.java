@@ -37,9 +37,15 @@ public abstract class Scrambler {
 
     protected abstract ScrambleResult scrambleInput(ScrambleResult input, int[] links);
 
+    protected abstract char scrambleInput(char input, int[] links);
+
     abstract ScrambleResult scramble(ScrambleResult input);
 
+    abstract char scramble(char input);
+
     abstract ScrambleResult reverseScramble(ScrambleResult input);
+
+    abstract char reverseScramble(char input);
 
     private void validateAlphabetString(String alphabetString) throws ScramblerSettingAlphabetException {
         requireNonNull(alphabetString);

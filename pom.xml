@@ -6,11 +6,11 @@
 
     <artifactId>camel-enigma</artifactId>
     <groupId>mposa</groupId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2</version>
 
     <scm>
         <developerConnection>scm:git:https://github.com/PMarci/camel-enigma</developerConnection>
-        <tag>0.0.1</tag>
+        <tag>0.0.2</tag>
     </scm>
 
     <properties>
@@ -23,13 +23,13 @@
         <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
-            <version>5.0.0</version>
+            <version>5.9.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.moxy</artifactId>
-            <version>2.5.0</version>
+            <version>3.0.2</version>
         </dependency>
         <!--jdk 9+ fix-->
         <dependency>
@@ -41,19 +41,19 @@
         <dependency>
             <groupId>org.jline</groupId>
             <artifactId>jline</artifactId>
-            <version>3.11.0</version>
+            <version>3.20.0</version>
         </dependency>
         <dependency>
             <groupId>org.jline</groupId>
             <artifactId>jline-terminal-jansi</artifactId>
-            <version>3.11.0</version>
+            <version>3.20.0</version>
         </dependency>
 
         <!--Tests-->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
 
@@ -75,8 +75,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven.compiler.plugin.version}</version>
                 <configuration>
-                    <source>1.9</source>
-                    <target>1.9</target>
+                    <source>11</source>
+                    <target>11</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
@@ -96,9 +96,33 @@
                     <tagNameFormat>@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>camel.enigma.App</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id> <!-- this is used for inheritance merges -->
+                        <phase>package</phase> <!-- bind to the packaging phase -->
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
 
-            <!-- Allows the routes to be run via 'mvn spring-boot:run' -->
+            <!-- Allows the routes to be run via 'mvn exec:java' -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
