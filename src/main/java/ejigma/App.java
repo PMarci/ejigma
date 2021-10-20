@@ -17,30 +17,20 @@ public class App {
     public static void main(String[] args) {
         try {
             Terminal terminal = TerminalProvider.initTerminal();
+            terminal.writer().write("BONG!\n");
             ConfigContainer configContainer = new ConfigContainer();
             Armature armature = new Armature();
+            if (args.length == 0) {
             LightBoard lightBoard = new LightBoard(terminal, armature);
             KeyBoard keyBoard = new KeyBoard(terminal, configContainer, armature, lightBoard);
-            if (args.length == 0) {
-                ScrambleResult.HistoryEntry.printBanner(terminal.writer());
-                terminal.writer().write(
-                        String.format(
-                                "Welcome to the camel-enigma cli, your terminal type is: %s%n",
-                                terminal.getClass().getSimpleName()) +
-                                String.format(
-                                        "The following rotor types are available: %n%s%n",
-                                        configContainer.getRotorTypes().toString()) +
-                                String.format(
-                                        "The following reflector types are available: %n%s%n",
-                                        configContainer.getReflectorTypes().toString()) +
-                                String.format(
-                                        "The following entry wheel types are available: %n%s%n",
-                                        configContainer.getEntryWheelTypes().toString()));
+                printGreeting(terminal, configContainer);
                 anyKey(terminal);
                 terminal.flush();
                 lightBoard.display();
                 keyBoard.doStart();
             } else if (args.length == 1) {
+                terminal.writer().write("BING!\n");
+                terminal.writer().flush();
                 String input = readAll(args[0], terminal);
                 String output = armature.scramble(input);
                 terminal.writer().write(output + "\n");
@@ -49,6 +39,23 @@ public class App {
         } catch (IOException | ArmatureInitException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void printGreeting(Terminal terminal, ConfigContainer configContainer) throws IOException {
+        ScrambleResult.HistoryEntry.printBanner(terminal.writer());
+        terminal.writer().write(
+                String.format(
+                        "Welcome to the camel-enigma cli, your terminal type is: %s%n",
+                        terminal.getClass().getSimpleName()) +
+                        String.format(
+                                "The following rotor types are available: %n%s%n",
+                                configContainer.getRotorTypes().toString()) +
+                        String.format(
+                                "The following reflector types are available: %n%s%n",
+                                configContainer.getReflectorTypes().toString()) +
+                        String.format(
+                                "The following entry wheel types are available: %n%s%n",
+                                configContainer.getEntryWheelTypes().toString()));
     }
 
     private static void anyKey(Terminal terminal) {
