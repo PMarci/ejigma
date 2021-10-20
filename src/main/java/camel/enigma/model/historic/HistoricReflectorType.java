@@ -39,4 +39,9 @@ public enum HistoricReflectorType implements ReflectorType {
     public String getName() {
         return this.name();
     }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
 }

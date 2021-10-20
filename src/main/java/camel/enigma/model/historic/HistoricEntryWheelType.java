@@ -45,4 +45,9 @@ public enum HistoricEntryWheelType implements EntryWheelType {
     public String getAlphabetString() {
         return alphabetString;
     }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
 }

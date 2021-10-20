@@ -1,6 +1,7 @@
 package camel.enigma.util;
 
 import org.jline.utils.AttributedString;
+import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 
 import java.io.BufferedReader;
@@ -76,8 +77,9 @@ public class ScrambleResult {
             int offset,
             char offsetAsChar) {
 
-        this.result = result;
-        this.resultAsChar = resultAsChar;
+        setResult(result);
+
+        setResultAsChar(resultAsChar);
         this.offsetAsChar = offsetAsChar;
         addHistoryEntry(wiringInput, wiringOutput, stationId, offset, offsetAsChar);
         return this;
@@ -90,8 +92,8 @@ public class ScrambleResult {
             char resultAsChar,
             String stationId) {
 
-        this.result = result;
-        this.resultAsChar = resultAsChar;
+        setResult(result);
+        setResultAsChar(resultAsChar);
         addHistoryEntry(wiringInput, wiringOutput, stationId);
         return this;
     }
@@ -133,12 +135,12 @@ public class ScrambleResult {
                 OUTPUT_STRING,
                 alphabet);
         newEntry.setOffset(lastOffset);
-        this.resultAsChar = wiringOutput;
+        setResultAsChar(wiringOutput);
         history.add(newEntry);
     }
 
-    public List<String> printHistory() {
-        List<String> resultList = new ArrayList<>();
+    public List<AttributedString> printHistory() {
+        List<AttributedString> resultList = new ArrayList<>();
         int historySize = history.size();
         int lastOutputIndex = (historySize > 0) ?
                               alphabetString.indexOf(history.get(historySize - 1).getWiringOutput()) :
@@ -150,25 +152,25 @@ public class ScrambleResult {
         Iterator<String> letterLineIterator = letterLines.iterator();
         for (int i = 0; fitsInHeight(historySize, i); i++) {
             HistoryEntry historyEntry;
-            List<String> historyEntryBlock;
-            String letterLine1 = null;
-            String letterLine2 = null;
+            List<AttributedString> historyEntryBlock;
+            AttributedString letterLine1 = null;
+            AttributedString letterLine2 = null;
             if (i < historySize) {
                 historyEntry = history.get(i);
                 if (letterLineIterator.hasNext()) {
-                    letterLine1 = new AttributedString(letterLineIterator.next(), redStyle).toAnsi();
+                    letterLine1 = new AttributedString(letterLineIterator.next(), redStyle);
                 }
                 if (letterLineIterator.hasNext()) {
-                    letterLine2 = new AttributedString(letterLineIterator.next(), redStyle).toAnsi();
+                    letterLine2 = new AttributedString(letterLineIterator.next(), redStyle);
                 }
                 historyEntryBlock = historyEntry.toDetailString(letterLine1, letterLine2);
                 resultList.addAll(historyEntryBlock);
             }
             if (!fitsInHeight(historySize, i + 1)) {
                 if (blink()) {
-                    resultList.add(new AttributedString("SUP", whiteOnBlackStyle).toAnsi());
+                    resultList.add(new AttributedString("SUP", whiteOnBlackStyle));
                 } else {
-                    resultList.add(new AttributedString("SUP", blackOnWhiteStyle).toAnsi());
+                    resultList.add(new AttributedString("SUP", blackOnWhiteStyle));
                 }
             }
         }
@@ -277,27 +279,27 @@ public class ScrambleResult {
         @Override
         public String toString() {
             int firstMidLast = getFirstMidLast();
-            String firstLine = getWiringFirstLine(firstMidLast);
-            String secondLine = getWiringSecondLine(firstMidLast);
+            String firstLine = getWiringFirstLine(firstMidLast).toAnsi();
+            String secondLine = getWiringSecondLine(firstMidLast).toAnsi();
             return String.join("\n", firstLine, secondLine);
         }
 
-        List<String> toDetailString(String letterLine1, String letterLine2) {
-            List<String> resultList = new ArrayList<>();
+        List<AttributedString> toDetailString(AttributedString letterLine1, AttributedString letterLine2) {
+            List<AttributedString> resultList = new ArrayList<>();
             int firstMidLast = getFirstMidLast();
-            String firstLine = getWiringFirstLine(letterLine1, firstMidLast);
+            AttributedString firstLine = getWiringFirstLine(letterLine1, firstMidLast);
             resultList.add(firstLine);
-            String secondLine = getWiringSecondLine(letterLine2, firstMidLast);
+            AttributedString secondLine = getWiringSecondLine(letterLine2, firstMidLast);
             resultList.add(secondLine);
             return resultList;
         }
 
-        private String getWiringFirstLine(int firstMidLast) {
+        private AttributedString getWiringFirstLine(int firstMidLast) {
             return getWiringFirstLine(null, firstMidLast);
         }
 
-        private String getWiringFirstLine(String letterLine1, int firstMidLast) {
-            StringBuilder firstLine = new StringBuilder();
+        private AttributedString getWiringFirstLine(AttributedString letterLine1, int firstMidLast) {
+            AttributedStringBuilder firstLine = new AttributedStringBuilder();
             firstLine.append(pad(getStepIdString())).append(" : ");
             String wiringFirstPart;
             if (firstMidLast == -1) {
@@ -324,15 +326,15 @@ public class ScrambleResult {
             if (letterLine1 != null) {
                 firstLine.append(getPadding(firstLineLength, SECOND_PADDING)).append(letterLine1);
             }
-            return firstLine.toString();
+            return firstLine.toAttributedString();
         }
 
-        private String getWiringSecondLine(int firstMidLast) {
+        private AttributedString getWiringSecondLine(int firstMidLast) {
             return getWiringSecondLine(null, firstMidLast);
         }
 
-        private String getWiringSecondLine(String letterLine2, int firstMidLast) {
-            StringBuilder secondLine = new StringBuilder();
+        private AttributedString getWiringSecondLine(AttributedString letterLine2, int firstMidLast) {
+            AttributedStringBuilder secondLine = new AttributedStringBuilder();
             if (firstMidLast != 1) {
                 secondLine.append(getPadding("")).append("   ╔════[").append(alphabet[result]).append("]═════╝");
             }
@@ -343,7 +345,7 @@ public class ScrambleResult {
             if (letterLine2 != null) {
                 secondLine.append(getPadding(secondLineLength, SECOND_PADDING)).append(letterLine2);
             }
-            return secondLine.toString();
+            return secondLine.toAttributedString();
         }
 
         private int getFirstMidLast() {

@@ -14,10 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TypeLoader {
@@ -83,8 +80,10 @@ public class TypeLoader {
 
     private static String getPath() {
         Class<TypeLoader> typeLoaderClass = TypeLoader.class;
-        URL resource = typeLoaderClass.getResource("./");
-        return resource.getPath();
+        Optional<URL> resourceOpt = Optional.ofNullable(typeLoaderClass.getResource("./"));
+        return resourceOpt
+                .map(URL::toExternalForm)
+                .orElse(typeLoaderClass.getResource("/" + typeLoaderClass.getPackageName().replace(".", "/")).toExternalForm());
     }
 
     private static Unmarshaller getUnmarshaller() throws JAXBException {
