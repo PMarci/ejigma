@@ -6,11 +6,11 @@
 
     <artifactId>ejigma</artifactId>
     <groupId>mposa</groupId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
 
     <scm>
         <developerConnection>scm:git:https://github.com/PMarci/ejigma</developerConnection>
-        <tag>0.0.2</tag>
+        <tag>${project.version}</tag>
     </scm>
 
     <properties>
@@ -27,7 +27,8 @@
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.moxy</artifactId>
-            <version>3.0.2</version>
+            <!-- don't upgrade to 3.X.X -->
+            <version>2.5.0</version>
         </dependency>
         <!--jdk 9+ fix-->
         <dependency>
@@ -107,6 +108,7 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
+                    <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
                 <executions>
                     <execution>

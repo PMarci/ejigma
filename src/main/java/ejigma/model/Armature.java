@@ -21,12 +21,12 @@ public class Armature {
 
     public static final String UNFIT_ROTORTYPES_MSG = "RotorTypes don't fit other scramblers in armature";
     // R to L
-    private static final RotorType[] DEFAULT_ROTOR_TYPES = new RotorType[]{
+    public static final RotorType[] DEFAULT_ROTOR_TYPES = new RotorType[]{
             HistoricRotorType.III,
             HistoricRotorType.II,
             HistoricRotorType.I};
-    private static final ReflectorType DEFAULT_REFLECTOR_TYPE = HistoricReflectorType.B;
-    private static final EntryWheelType DEFAULT_ENTRY_WHEEL_TYPE = HistoricEntryWheelType.ENIGMA_I;
+    public static final ReflectorType DEFAULT_REFLECTOR_TYPE = HistoricReflectorType.B;
+    public static final EntryWheelType DEFAULT_ENTRY_WHEEL_TYPE = HistoricEntryWheelType.ENIGMA_I;
 
     private EntryWheel entryWheel;
     private Rotor[] rotors;
@@ -65,6 +65,10 @@ public class Armature {
                             c = upperCase;
                         }
                     }
+                    return c;
+                })
+                .filter(c -> entryWheel.alphabetString.indexOf(c) != -1)
+                .map(c -> {
                     click();
                     c = encrypt(c);
                     return c;
@@ -147,7 +151,7 @@ public class Armature {
             throws ArmatureInitException {
 
         ScramblerType<?>[] allTypes = new ScramblerType[rotorTypes.length + 2];
-        System.arraycopy(rotorTypes, 0, allTypes, 0 ,rotorTypes.length);
+        System.arraycopy(rotorTypes, 0, allTypes, 0, rotorTypes.length);
         allTypes[rotorTypes.length] = entryWheelType;
         allTypes[rotorTypes.length + 1] = reflectorType;
         validateAlphabetStrings(allTypes);

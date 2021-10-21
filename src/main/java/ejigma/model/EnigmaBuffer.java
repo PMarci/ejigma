@@ -128,41 +128,42 @@ public class EnigmaBuffer {
         return sb.toString();
     }
 
-    public void insert(String insert) {
-        String text = lines.get(line);
+    public void insert(String insertString) {
+        StringBuilder text = new StringBuilder(lines.get(line));
         int pos = charPosition(offsetInLine + column);
-        insert = insert.replaceAll("\r\n", "\n");
-        insert = insert.replaceAll("\r", "\n");
+        insertString = insertString.replace("\r\n", "\n");
+        insertString = insertString.replace("\r", "\n");
+        StringBuilder insert = new StringBuilder(insertString);
         if (tabsToSpaces && insert.length() == 1 && insert.charAt(0) == '\t') {
-            int len = pos == text.length() ? length(text + insert) : length(text.substring(0, pos) + insert);
-            insert = blanks(len - offsetInLine - column);
+            int len = pos == text.length() ? length(text.append(insert).toString()) : length(text.substring(0, pos) + insert);
+            insert = new StringBuilder(blanks(len - offsetInLine - column));
         }
         if (autoIndent && insert.length() == 1 && insert.charAt(0) == '\n') {
             for (char c : lines.get(line).toCharArray()) {
                 if (c == ' ') {
-                    insert += c;
+                    insert.append(c);
                 } else if (c == '\t') {
-                    insert += c;
+                    insert.append(c);
                 } else {
                     break;
                 }
             }
         }
-        String mod;
+        StringBuilder mod;
         String tail = "";
         if (pos == text.length()) {
-            mod = text + insert;
+            mod = text.append(insert);
         } else {
-            mod = text.substring(0, pos) + insert;
+            mod = new StringBuilder(text.substring(0, pos) + insert);
             tail = text.substring(pos);
         }
         List<String> ins = new ArrayList<>();
         int last = 0;
-        int idx = mod.indexOf('\n', last);
+        int idx = mod.indexOf("\n", last);
         while (idx >= 0) {
             ins.add(mod.substring(last, idx));
             last = idx + 1;
-            idx = mod.indexOf('\n', last);
+            idx = mod.indexOf("\n", last);
         }
         ins.add(mod.substring(last) + tail);
         int curPos = length(mod.substring(last));
@@ -188,8 +189,8 @@ public class EnigmaBuffer {
     LinkedList<Integer> computeOffsets(String line) {
         String text = new AttributedStringBuilder().tabs(tabs).append(line).toString();
         int width = size.getColumns() - (printLineNumbers ? 8 : 0);
-        LinkedList<Integer> offsets = new LinkedList<>();
-        offsets.add(0);
+        LinkedList<Integer> vOffsets = new LinkedList<>();
+        vOffsets.add(0);
         if (wrapping) {
             int last = 0;
             int prevword = 0;
@@ -205,12 +206,12 @@ public class EnigmaBuffer {
                     if (prevword == last) {
                         prevword = i;
                     }
-                    offsets.add(prevword);
+                    vOffsets.add(prevword);
                     last = prevword;
                 }
             }
         }
-        return offsets;
+        return vOffsets;
     }
 
     boolean isBreakable(char ch) {
@@ -237,21 +238,20 @@ public class EnigmaBuffer {
                 pos = length(lines.get(line));
             }
         }
-        offsetInLine = prevLineOffset(line, pos + 1).get();
+        offsetInLine = prevLineOffset(line, pos + 1).orElse(0);
         column = pos - offsetInLine;
     }
 
     void delete(int count) {
         while (--count >= 0 && moveRight(1) && backspace(1));
     }
-
+    
     boolean backspace(int count) {
         while (count > 0) {
             String text = lines.get(line);
             int pos = charPosition(offsetInLine + column);
             if (pos == 0) {
                 if (line == 0) {
-                    bof();
                     return false;
                 }
                 String prev = lines.get(--line);
@@ -285,7 +285,6 @@ public class EnigmaBuffer {
                 line--;
                 moveToChar(length(getLine(line)));
             } else {
-                bof();
                 ret = false;
                 break;
             }
@@ -321,7 +320,6 @@ public class EnigmaBuffer {
                 offsetInLine = 0;
                 column = 0;
             } else {
-                eof();
                 ret = false;
                 break;
             }
@@ -384,7 +382,6 @@ public class EnigmaBuffer {
                 }
             }
             if (getLine(lastLineToDisplay) == null) {
-                eof();
                 return;
             }
             Optional<Integer> next = nextLineOffset(firstLineToDisplay, offsetInLineToDisplay);
@@ -404,9 +401,8 @@ public class EnigmaBuffer {
                 offsetInLineToDisplay = Math.max(0, offsetInLineToDisplay - (width - 1));
             } else if (firstLineToDisplay > 0) {
                 firstLineToDisplay--;
-                offsetInLineToDisplay = prevLineOffset(firstLineToDisplay, Integer.MAX_VALUE).get();
+                offsetInLineToDisplay = prevLineOffset(firstLineToDisplay, Integer.MAX_VALUE).orElse(0);
             } else {
-                bof();
                 return;
             }
         }
@@ -422,7 +418,6 @@ public class EnigmaBuffer {
                     offsetInLine = 0;
                     column = Math.min(length(getLine(line)), wantedColumn);
                 } else {
-                    bof();
                     break;
                 }
             } else {
@@ -431,7 +426,6 @@ public class EnigmaBuffer {
                 if (off.isPresent()) {
                     offsetInLine = off.get();
                 } else if (getLine(line + 1) == null) {
-                    eof();
                     break;
                 } else {
                     line++;
@@ -453,7 +447,6 @@ public class EnigmaBuffer {
                     line--;
                     column = Math.min(length(getLine(line)) - offsetInLine, wantedColumn);
                 } else {
-                    bof();
                     break;
                 }
             } else {
@@ -462,11 +455,10 @@ public class EnigmaBuffer {
                     offsetInLine = prev.get();
                 } else if (line > 0) {
                     line--;
-                    offsetInLine = prevLineOffset(line, Integer.MAX_VALUE).get();
+                    offsetInLine = prevLineOffset(line, Integer.MAX_VALUE).orElse(0);
                     int next = nextLineOffset(line, offsetInLine).orElse(length(getLine(line)));
                     column = Math.min(wantedColumn, next - offsetInLine);
                 } else {
-                    bof();
                     break;
                 }
             }
@@ -494,12 +486,6 @@ public class EnigmaBuffer {
         }
     }
 
-    void eof() {
-    }
-
-    void bof() {
-    }
-
     void resetDisplay() {
         column = offsetInLine + column;
         moveRight(column, true);
@@ -515,76 +501,6 @@ public class EnigmaBuffer {
 
     List<AttributedString> computeHeader() {
         return Collections.emptyList();
-//        String left = Nano.this.getTitle();
-//        String middle = null;
-//        String right = dirty ? "Modified" : "        ";
-//
-//        int width = size.getColumns();
-//        int mstart = 2 + left.length() + 1;
-//        int mend = width - 2 - 8;
-//
-//        if (file == null) {
-//            middle = "New EnigmaBuffer";
-//        } else {
-//            int max = mend - mstart;
-//            String src = file;
-//            if ("File: ".length() + src.length() > max) {
-//                int lastSep = src.lastIndexOf('/');
-//                if (lastSep > 0) {
-//                    String p1 = src.substring(lastSep);
-//                    String p0 = src.substring(0, lastSep);
-//                    while (p0.startsWith(".")) {
-//                        p0 = p0.substring(1);
-//                    }
-//                    int nb = max - p1.length() - "File: ...".length();
-//                    int cut;
-//                    cut = Math.max(0, Math.min(p0.length(), p0.length() - nb));
-//                    middle = "File: ..." + p0.substring(cut) + p1;
-//                }
-//                if (middle == null || middle.length() > max) {
-//                    left = null;
-//                    max = mend - 2;
-//                    int nb = max - "File: ...".length();
-//                    int cut = Math.max(0, Math.min(src.length(), src.length() - nb));
-//                    middle = "File: ..." + src.substring(cut);
-//                    if (middle.length() > max) {
-//                        middle = middle.substring(0, max);
-//                    }
-//                }
-//            } else {
-//                middle = "File: " + src;
-//            }
-//        }
-//
-//        int pos = 0;
-//        AttributedStringBuilder sb = new AttributedStringBuilder();
-//        sb.style(AttributedStyle.INVERSE);
-//        sb.append("  ");
-//        pos += 2;
-//
-//        if (left != null) {
-//            sb.append(left);
-//            pos += left.length();
-//            sb.append(" ");
-//            pos += 1;
-//            for (int i = 1; i < (size.getColumns() - middle.length()) / 2 - left.length() - 1 - 2; i++) {
-//                sb.append(" ");
-//                pos++;
-//            }
-//        }
-//        sb.append(middle);
-//        pos += middle.length();
-//        while (pos < width - 8 - 2) {
-//            sb.append(" ");
-//            pos++;
-//        }
-//        sb.append(right);
-//        sb.append("  \n");
-//        if (oneMoreLine) {
-//            return Collections.singletonList(sb.toAttributedString());
-//        } else {
-//            return Arrays.asList(sb.toAttributedString(), new AttributedString("\n"));
-//        }
     }
 
     void highlightDisplayedLine(int curLine, int curOffset, int nextOffset, AttributedStringBuilder line) {
@@ -656,17 +572,16 @@ public class EnigmaBuffer {
         int curLine = firstLineToDisplay;
         int curOffset = offsetInLineToDisplay;
         int prevLine = -1;
-//        syntaxHighlighter.reset();
         for (int terminalLine = 0; terminalLine < nbLines; terminalLine++) {
-            AttributedStringBuilder line = new AttributedStringBuilder().tabs(tabs);
+            AttributedStringBuilder vLine = new AttributedStringBuilder().tabs(tabs);
             if (printLineNumbers && curLine < lines.size()) {
-                line.style(s);
+                vLine.style(s);
                 if (curLine != prevLine) {
-                    line.append(String.format("%7d ", curLine + 1));
+                    vLine.append(String.format("%7d ", curLine + 1));
                 } else {
-                    line.append("      ‧ ");
+                    vLine.append("      ‧ ");
                 }
-                line.style(AttributedStyle.DEFAULT);
+                vLine.style(AttributedStyle.DEFAULT);
                 prevLine = curLine;
             }
             if (curLine >= lines.size()) {
@@ -676,39 +591,39 @@ public class EnigmaBuffer {
                 if (this.line == curLine) {
                     int cutCount = 1;
                     if (firstColumnToDisplay > 0) {
-                        line.append(cut);
+                        vLine.append(cut);
                         cutCount = 2;
                     }
                     if (disp.columnLength() - firstColumnToDisplay >= width - (cutCount - 1)*cut.columnLength()) {
                         highlightDisplayedLine(curLine, firstColumnToDisplay
-                                , firstColumnToDisplay + width - cutCount*cut.columnLength(), line);
-                        line.append(cut);
+                                , firstColumnToDisplay + width - cutCount*cut.columnLength(), vLine);
+                        vLine.append(cut);
                     } else {
-                        highlightDisplayedLine(curLine, firstColumnToDisplay, disp.columnLength(), line);
+                        highlightDisplayedLine(curLine, firstColumnToDisplay, disp.columnLength(), vLine);
                     }
                 } else {
                     if (disp.columnLength() >= width) {
-                        highlightDisplayedLine(curLine, 0, width - cut.columnLength(), line);
-                        line.append(cut);
+                        highlightDisplayedLine(curLine, 0, width - cut.columnLength(), vLine);
+                        vLine.append(cut);
                     } else {
-                        highlightDisplayedLine(curLine, 0, disp.columnLength(), line);
+                        highlightDisplayedLine(curLine, 0, disp.columnLength(), vLine);
                     }
                 }
                 curLine++;
             } else {
                 Optional<Integer> nextOffset = nextLineOffset(curLine, curOffset);
                 if (nextOffset.isPresent()) {
-                    highlightDisplayedLine(curLine, curOffset, nextOffset.get(), line);
-                    line.append(ret);
+                    highlightDisplayedLine(curLine, curOffset, nextOffset.get(), vLine);
+                    vLine.append(ret);
                     curOffset = nextOffset.get();
                 } else {
-                    highlightDisplayedLine(curLine, curOffset, Integer.MAX_VALUE, line);
+                    highlightDisplayedLine(curLine, curOffset, Integer.MAX_VALUE, vLine);
                     curLine++;
                     curOffset = 0;
                 }
             }
-            line.append('\n');
-            newLines.add(line.toAttributedString());
+            vLine.append('\n');
+            newLines.add(vLine.toAttributedString());
         }
         return newLines;
     }

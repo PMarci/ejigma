@@ -31,14 +31,6 @@ public enum HistoricRotorType implements RotorType {
         this.staticc = false;
     }
 
-    HistoricRotorType(String alphabetString, String wiringString, char[] notch) {
-        this.alphabetString = alphabetString;
-        this.alphabet = alphabetString.toCharArray();
-        this.wiringString = wiringString;
-        this.notch = notch;
-        this.staticc = false;
-    }
-
     @Override
     public Rotor freshScrambler() {
         Rotor rotor = null;

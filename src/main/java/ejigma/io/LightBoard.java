@@ -16,12 +16,11 @@ import java.util.List;
 
 public class LightBoard {
 
-    private Terminal terminal;
-    private Status status;
-    private Size size;
+    private final Terminal terminal;
+    private final Status status;
+    private final Size size;
     private final EnigmaBuffer buf;
-    private Display display;
-    private int cursorPos;
+    private final Display display;
 
     private List<AttributedString> oldLines = Collections.emptyList();
     private ScrambleResult oldResult;
@@ -30,11 +29,8 @@ public class LightBoard {
 
     private boolean detailMode;
 
-    private Armature armature;
-
     public LightBoard(Terminal terminal, Armature armature) {
         this.terminal = terminal;
-        this.armature = armature;
         size = new Size();
         size.copy(terminal.getSize());
         display = new Display(terminal, true);
@@ -73,7 +69,7 @@ public class LightBoard {
         size.copy(terminal.getSize());
         resetDisplay();
         // not updated with fullscreen=false
-        this.cursorPos = buf.getDisplayedCursor();
+        int cursorPos = buf.getDisplayedCursor();
         // replacement
         List<AttributedString> header = isDetailMode() ? detailLines : Collections.emptyList();
         List<AttributedString> footer = Collections.emptyList();

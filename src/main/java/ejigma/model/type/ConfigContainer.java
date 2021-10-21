@@ -37,7 +37,8 @@ public class ConfigContainer {
         }
     }
 
-    public <T extends ScramblerType> List<T> getScramblerTypes(Class<T> scramblerType) {
+    @SuppressWarnings("unchecked")
+    public <T extends ScramblerType<?>> List<T> getScramblerTypes(Class<T> scramblerType) {
         List<T> result = null;
         if (scramblerType.isAssignableFrom(RotorType.class)) {
             result = (List<T>) getRotorTypes();
@@ -85,7 +86,7 @@ public class ConfigContainer {
         return getEnumConstants(HistoricEntryWheelType.class);
     }
 
-    private static <T extends ScramblerType> List<T> getEnumConstants(Class<? extends T> enu) {
+    private static <T extends ScramblerType<?>> List<T> getEnumConstants(Class<? extends T> enu) {
         T[] enumConstants = enu.getEnumConstants();
         List<T> result = Collections.emptyList();
         if (enumConstants != null) {
