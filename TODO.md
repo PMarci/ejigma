@@ -1,3 +1,9 @@
+## TOC
+- [interactive mode](#interactive-mode)
+- [non-interactive mode](#non-interactive-mode)
+- [general](#general)
+- [issues](#issues)
+
 ### interactive mode
 
 - [ ] reintroduce status bar
