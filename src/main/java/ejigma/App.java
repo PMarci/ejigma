@@ -5,12 +5,16 @@ import ejigma.io.KeyBoard;
 import ejigma.io.LightBoard;
 import ejigma.model.Armature;
 import ejigma.model.type.ConfigContainer;
+import ejigma.model.type.EntryWheelType;
+import ejigma.model.type.ReflectorType;
+import ejigma.model.type.RotorType;
 import ejigma.util.ScrambleResult;
 import ejigma.util.TerminalProvider;
 import org.jline.terminal.Terminal;
 
 import java.io.*;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -18,13 +22,14 @@ import java.util.stream.Collectors;
 
 public class App {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ArmatureInitException {
         try {
             Terminal terminal;
 //            terminal.writer().write("BONG!\n");
             ConfigContainer configContainer = new ConfigContainer();
-            Armature armature = new Armature();
+            Armature armature;
             if (args.length == 0) {
+                armature = new Armature();
                 terminal = TerminalProvider.initTerminal(false);
                 LightBoard lightBoard = new LightBoard(terminal, armature);
                 KeyBoard keyBoard = new KeyBoard(terminal, configContainer, armature, lightBoard);
@@ -44,6 +49,45 @@ public class App {
                                 return '\u0000';
                             }
                         }));
+                RotorType[] rotorTypes = Armature.DEFAULT_ROTOR_TYPES;
+                EntryWheelType entryWheelType = Armature.DEFAULT_ENTRY_WHEEL_TYPE;
+                ReflectorType reflectorType = Armature.DEFAULT_REFLECTOR_TYPE;
+                if (opts.containsKey('r')) {
+                    List<RotorType> list = new ArrayList<>();
+                    for (String s : opts.get('r')) {
+                        String substring = s.substring(2);
+                        RotorType type = configContainer.getRotorTypes().stream()
+                                .filter(rotorType -> rotorType.getName().equals(substring))
+                                .findAny()
+                                .orElseThrow(() -> new ArmatureInitException(
+                                        String.format(
+                                                "Couldn't find a RotorType for param %s",
+                                                substring)));
+                        list.add(type);
+                    }
+                    rotorTypes = list.toArray(new RotorType[0]);
+                }
+                if (opts.containsKey('e')) {
+                    String substring = opts.get('e').get(0).substring(2);
+                    entryWheelType = configContainer.getEntryWheelTypes().stream()
+                            .filter(entryWheelType1 -> entryWheelType1.getName().equals(substring))
+                            .findAny()
+                            .orElseThrow(() -> new ArmatureInitException(
+                                    String.format(
+                                            "Couldn't find an EntryWheelType for param %s",
+                                            substring)));
+                }
+                if (opts.containsKey('l')) {
+                    String substring = opts.get('l').get(0).substring(2);
+                    reflectorType = configContainer.getReflectorTypes().stream()
+                            .filter(reflectorType1 -> reflectorType1.getName().equals(substring))
+                            .findAny()
+                            .orElseThrow(() -> new ArmatureInitException(
+                                    String.format(
+                                            "Couldn't find an ReflectorType for param %s",
+                                            substring)));
+                }
+                armature = new Armature(entryWheelType,rotorTypes, reflectorType);
                 if (opts.containsKey('\u0000')) {
                     String line;
                     StringBuilder sb = new StringBuilder();

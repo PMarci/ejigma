@@ -21,12 +21,12 @@ public class Armature {
 
     public static final String UNFIT_ROTORTYPES_MSG = "RotorTypes don't fit other scramblers in armature";
     // R to L
-    private static final RotorType[] DEFAULT_ROTOR_TYPES = new RotorType[]{
+    public static final RotorType[] DEFAULT_ROTOR_TYPES = new RotorType[]{
             HistoricRotorType.III,
             HistoricRotorType.II,
             HistoricRotorType.I};
-    private static final ReflectorType DEFAULT_REFLECTOR_TYPE = HistoricReflectorType.B;
-    private static final EntryWheelType DEFAULT_ENTRY_WHEEL_TYPE = HistoricEntryWheelType.ENIGMA_I;
+    public static final ReflectorType DEFAULT_REFLECTOR_TYPE = HistoricReflectorType.B;
+    public static final EntryWheelType DEFAULT_ENTRY_WHEEL_TYPE = HistoricEntryWheelType.ENIGMA_I;
 
     private EntryWheel entryWheel;
     private Rotor[] rotors;
