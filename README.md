@@ -1,12 +1,21 @@
-### Debug params
+### Build and install somewhere already in path
 
 ```shell
--Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000 -Xnoagent -Djava.compiler=NONE
+mvn clean package
+./build
+install ./ejigma /usr/local/bin
 ```  
 
 ### Example commands
 
 ```shell
-echo -n "AAAAAA" | java -jar -jar ./target/ejigma-0.0.3-jar-with-dependencies.jar - -rIII
--rII -rI -eENIGMA_I -lB
+echo -n "AAAAAA" | ejigma - -rIII -rII -rI -eENIGMA_I -lB
+```  
+
+### Debug params
+
+```shell
+-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000 -Xnoagent -Djava.compiler=NONE
+# alternatively
+mvnDebug clean compile exec:java -Dmaven.surefire.debug="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005 -Xnoagent -Djava.compiler=NONE"
 ```  
