@@ -1,6 +1,5 @@
 package ejigma.model;
 
-import ejigma.util.ScrambleResult;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -10,19 +9,20 @@ public class ArmatureTest {
 
     private final String thirtyAs = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
     private final String wikiResult30 = "BDZGOWCXLTKSBTMCDLPBMUQOFXYHCX";
-    private Armature wikiArmature;
+    private Enigma wikiEnigma;
 
     @Before
     public void setUp() throws Exception {
-        Enigma enigma = new Enigma();
-        wikiArmature = new Armature(enigma);
+        wikiEnigma = new Enigma();
+        Armature armature = new Armature(wikiEnigma);
+        wikiEnigma.setArmature(armature);
     }
 
     @Test
     public void testHandle() {
 
         String inputString = thirtyAs.substring(0, 5);
-        String output = encryptString(inputString, wikiArmature);
+        String output = wikiEnigma.scramble(inputString);
 
         assertEquals(wikiResult30.substring(0, 5), output);
     }
@@ -31,7 +31,7 @@ public class ArmatureTest {
     public void testScramble() {
 
         String inputString = thirtyAs.substring(0, 5);
-        String output = wikiArmature.scramble(inputString);
+        String output = wikiEnigma.scramble(inputString);
 
         assertEquals(wikiResult30.substring(0, 5), output);
     }
@@ -39,7 +39,7 @@ public class ArmatureTest {
     @Test
     public void testHandleABitLonger() {
 
-        String output = encryptString(thirtyAs, wikiArmature);
+        String output = wikiEnigma.scramble(thirtyAs);
 
         assertEquals(wikiResult30, output);
     }
@@ -52,7 +52,7 @@ public class ArmatureTest {
         }
         String inputString = sb.toString();
 
-        String output = encryptString(inputString, wikiArmature);
+        String output = wikiEnigma.scramble(inputString);
 
         assertEquals(wikiResult30, output.substring(16250, 16280));
     }
@@ -60,19 +60,8 @@ public class ArmatureTest {
     @Test
     public void testReciprocity() {
 
-        String output = encryptString(wikiResult30, wikiArmature);
+        String output =  wikiEnigma.scramble(wikiResult30);
 
         assertEquals(thirtyAs, output);
-    }
-
-    private static String encryptString(String inputString, Armature armature) {
-        return inputString.codePoints().sequential()
-            .mapToObj(i -> new ScrambleResult(Scrambler.DEFAULT_ALPHABET_STRING, ((char) i)))
-            .mapToInt(scrambleResult -> armature.handle(scrambleResult).getResultAsChar())
-            .collect(
-                StringBuilder::new,
-                StringBuilder::appendCodePoint,
-                StringBuilder::append)
-            .toString();
     }
 }

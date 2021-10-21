@@ -1,5 +1,6 @@
 package ejigma.io;
 
+import ejigma.model.Enigma;
 import ejigma.model.EnigmaBuffer;
 import ejigma.util.ScrambleResult;
 import org.jline.terminal.Size;
@@ -15,6 +16,7 @@ import java.util.List;
 
 public class LightBoard {
 
+    private final Enigma enigma;
     private final Terminal terminal;
     private final Status status;
     private final Size size;
@@ -28,8 +30,9 @@ public class LightBoard {
 
     private boolean detailMode;
 
-    public LightBoard(Terminal terminal) {
-        this.terminal = terminal;
+    public LightBoard(Enigma enigma) {
+        this.enigma = enigma;
+        this.terminal = enigma.getTerminal();
         size = new Size();
         size.copy(terminal.getSize());
         display = new Display(terminal, true);
@@ -177,10 +180,6 @@ public class LightBoard {
 
     private void setDetailMode(boolean detailMode) {
         this.detailMode = detailMode;
-    }
-
-    public Terminal getTerminal() {
-        return terminal;
     }
 
     public EnigmaBuffer getBuffer() {

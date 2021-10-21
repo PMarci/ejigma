@@ -8,13 +8,9 @@ import ejigma.model.type.EntryWheelType;
 import ejigma.model.type.ReflectorType;
 import ejigma.model.type.RotorType;
 import ejigma.model.type.ScramblerType;
-import ejigma.util.ScrambleResult;
-import ejigma.util.Util;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -28,7 +24,9 @@ public class Armature {
             HistoricRotorType.I};
     public static final ReflectorType DEFAULT_REFLECTOR_TYPE = HistoricReflectorType.B;
     public static final EntryWheelType DEFAULT_ENTRY_WHEEL_TYPE = HistoricEntryWheelType.ENIGMA_I;
+
     private final Enigma enigma;
+    private final String alphabetString;
 
     private EntryWheel entryWheel;
     private Rotor[] rotors;
@@ -36,97 +34,25 @@ public class Armature {
     private List<ScramblerMounting> scramblerWiring;
 
     public Armature(Enigma enigma) throws ArmatureInitException {
-        this(DEFAULT_ENTRY_WHEEL_TYPE, DEFAULT_ROTOR_TYPES, DEFAULT_REFLECTOR_TYPE, enigma);
+        this(enigma, DEFAULT_ENTRY_WHEEL_TYPE, DEFAULT_ROTOR_TYPES, DEFAULT_REFLECTOR_TYPE);
     }
 
     public Armature(
+            Enigma enigma,
             EntryWheelType entryWheelType,
             RotorType[] rotorTypes,
-            ReflectorType reflectorType,
-           Enigma enigma)
-            throws ArmatureInitException {
+            ReflectorType reflectorType) throws ArmatureInitException {
 
         this.enigma = enigma;
         validateAllTypes(entryWheelType, rotorTypes, reflectorType);
-        entryWheel = initEntryWheel(entryWheelType);
-        rotors = initRotors(rotorTypes);
-        reflector = initReflector(reflectorType);
-        scramblerWiring = initWiring();
+        this.entryWheel = initEntryWheel(entryWheelType);
+        this.alphabetString = entryWheelType.getAlphabetString();
+        this.rotors = initRotors(rotorTypes);
+        this.reflector = initReflector(reflectorType);
+        this.scramblerWiring = initWiring();
     }
 
-    public ScrambleResult handle(ScrambleResult scrambleResult) {
-
-        click();
-
-        return encrypt(scrambleResult);
-    }
-
-    public String scramble(String input) {
-        return input.chars()
-                .mapToObj(i -> (char) i)
-                .map(c -> {
-                    // ??
-                    String alphabetString = entryWheel.alphabetString;
-                    if (!Util.containsChar(alphabetString, c)) {
-                        char upperCase = Character.toUpperCase(c);
-                        if (Util.containsChar(alphabetString, upperCase)) {
-                            c = upperCase;
-                        }
-                    }
-                    return c;
-                })
-                .filter(c -> entryWheel.alphabetString.indexOf(c) != -1)
-                .map(c -> {
-                    click();
-                    c = encrypt(c);
-                    return c;
-                })
-                .collect(Collector.of(
-                        StringBuilder::new,
-                        StringBuilder::append,
-                        StringBuilder::append,
-                        StringBuilder::toString));
-    }
-
-    public Optional<Character> scramble(char input) {
-        Optional<Character> result;
-        String alphabetString = entryWheel.alphabetString;
-        if (!Util.containsChar(alphabetString, input)) {
-            char upperCase = Character.toUpperCase(input);
-            if (Util.containsChar(alphabetString, upperCase)) {
-                input = upperCase;
-            }
-        }
-        if (alphabetString.indexOf(input) != -1) {
-            click();
-            input = encrypt(input);
-            result = Optional.of(input);
-        } else {
-            result = Optional.empty();
-        }
-        return result;
-    }
-
-    private ScrambleResult encrypt(ScrambleResult current) {
-        for (int i = 0; i < scramblerWiring.size(); i++) {
-            ScramblerMounting scramblerMounting = scramblerWiring.get(i);
-            current = scramblerMounting.scramble(current);
-            // TODO think about better options
-            if (enigma.getPlugBoard() == null && i == scramblerWiring.size() - 1) {
-                current.recordOutput();
-            }
-        }
-        return current;
-    }
-
-    private char encrypt(char c) {
-        for (ScramblerMounting scramblerMounting : scramblerWiring) {
-            c = scramblerMounting.scramble(c);
-        }
-        return c;
-    }
-
-    private void click() {
+    void click() {
         boolean previousNotchEngaged = true;
         for (Rotor rotor : rotors) {
             if (previousNotchEngaged || rotor.isNotchEngaged()) {
@@ -345,5 +271,13 @@ public class Armature {
 
     public ReflectorType getReflectorType() {
         return (ReflectorType) reflector.getType();
+    }
+
+    public List<ScramblerMounting> getScramblerWiring() {
+        return scramblerWiring;
+    }
+
+    public String getAlphabetString() {
+        return alphabetString;
     }
 }

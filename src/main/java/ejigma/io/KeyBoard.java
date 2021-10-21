@@ -40,7 +40,7 @@ public class KeyBoard implements Runnable {
 
     private final Terminal terminal;
     private final Enigma enigma;
-    private LineReader selectionReader;
+    private final LineReader selectionReader;
     private final BindingReader bindingReader;
     private final KeyMap<Op> keyMap;
 
@@ -54,17 +54,17 @@ public class KeyBoard implements Runnable {
     private String alphabetString;
     private char[] alphabet;
 
-    public KeyBoard(Terminal terminal, Enigma enigma) {
+    public KeyBoard(Enigma enigma) {
         setAlphabet(Scrambler.DEFAULT_ALPHABET_STRING);
         this.enigma = enigma;
-        this.terminal = terminal;
-        terminal.handle(Terminal.Signal.INT, signal -> processQuit());
-        initSelectionReader(terminal);
+        this.terminal = enigma.getTerminal();
+        this.terminal.handle(Terminal.Signal.INT, signal -> processQuit());
         this.bindingReader = new BindingReader(terminal.reader());
         this.keyMap = initKeyMap(new KeyMap<>());
+        this.selectionReader = initSelectionReader(terminal);
     }
 
-    private void initSelectionReader(Terminal terminal) {
+    private LineReader initSelectionReader(Terminal terminal) {
         selectCompleter = new SelectCompleter();
         LineReader result = LineReaderBuilder.builder()
                 .terminal(terminal)
@@ -78,7 +78,7 @@ public class KeyBoard implements Runnable {
         result.setOpt(LineReader.Option.MOUSE);
         result.setVariable(LineReader.DISABLE_HISTORY, true);
         result.setVariable(FILTER_COMPLETION, false);
-        selectionReader = result;
+        return result;
     }
 
     public void doStart() {
@@ -597,8 +597,8 @@ public class KeyBoard implements Runnable {
                     input);
         }
 
-        ScrambleResult armatureResult = enigma.handle(scrambleResult);
-        enigma.getLightBoard().process(armatureResult);
+        ScrambleResult result = enigma.handle(scrambleResult);
+        enigma.getLightBoard().process(result);
     }
 
     private void processNewline() {

@@ -26,13 +26,13 @@ public class ConfigContainer {
         this.reflectorTypes = new ArrayList<>();
         this.reflectorTypes.addAll(getHReflectorTypes());
         List<ReflectorType> cReflectorTypes = TypeLoader.loadCustomReflectorTypes();
-        if (cReflectorTypes != null && !cReflectorTypes.isEmpty()) {
+        if (!cReflectorTypes.isEmpty()) {
             this.reflectorTypes.addAll(cReflectorTypes);
         }
         this.entryWheelTypes = new ArrayList<>();
         this.entryWheelTypes.addAll(getHEntryWheelTypes());
         List<EntryWheelType> cEntryWheelTypes = TypeLoader.loadCustomEntryWheelTypes();
-        if (cEntryWheelTypes != null && !cEntryWheelTypes.isEmpty()) {
+        if (!cEntryWheelTypes.isEmpty()) {
             this.entryWheelTypes.addAll(cEntryWheelTypes);
         }
     }
