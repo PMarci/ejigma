@@ -4,81 +4,30 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>camel-enigma</artifactId>
+    <artifactId>ejigma</artifactId>
     <groupId>mposa</groupId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.3</version>
 
     <scm>
-        <developerConnection>scm:git:https://github.com/PMarci/camel-enigma</developerConnection>
-        <tag>0.0.1</tag>
+        <developerConnection>scm:git:https://github.com/PMarci/ejigma</developerConnection>
+        <tag>${project.version}</tag>
     </scm>
 
     <properties>
         <maven.compiler.plugin.version>3.6.1</maven.compiler.plugin.version>
-        <spring.boot.version>2.1.0.RELEASE</spring.boot.version>
-        <camel.version>2.22.1</camel.version>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <!-- Manage Spring-Boot and Camel -->
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring.boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.camel</groupId>
-                <artifactId>camel-spring-boot-dependencies</artifactId>
-                <version>${camel.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.camel</groupId>
-                <artifactId>camel-parent</artifactId>
-                <version>${camel.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <!-- Comment this if you need an embedded Tomcat -->
-            <artifactId>spring-boot-starter</artifactId>
-            <!-- Uncomment this if you need an embedded Tomcat -->
-            <!-- <artifactId>spring-boot-starter-web</artifactId> -->
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-spring-boot-starter</artifactId>
-        </dependency>
-
-        <!-- Camel -->
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-stream</artifactId>
-        </dependency>
-
-        <!--Other-->
-        <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
-            <version>5.0.0</version>
+            <version>5.9.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.moxy</artifactId>
+            <!-- don't upgrade to 3.X.X -->
             <version>2.5.0</version>
         </dependency>
         <!--jdk 9+ fix-->
@@ -91,23 +40,19 @@
         <dependency>
             <groupId>org.jline</groupId>
             <artifactId>jline</artifactId>
-            <version>3.9.0</version>
+            <version>3.20.0</version>
         </dependency>
         <dependency>
             <groupId>org.jline</groupId>
             <artifactId>jline-terminal-jansi</artifactId>
-            <version>3.9.0</version>
+            <version>3.20.0</version>
         </dependency>
 
         <!--Tests-->
         <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-test-spring</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
 
@@ -129,8 +74,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven.compiler.plugin.version}</version>
                 <configuration>
-                    <source>1.9</source>
-                    <target>1.9</target>
+                    <source>11</source>
+                    <target>11</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
@@ -150,23 +95,40 @@
                     <tagNameFormat>@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
-
-
-            <!-- Allows the routes to be run via 'mvn spring-boot:run' -->
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring.boot.version}</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>ejigma.App</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <appendAssemblyId>false</appendAssemblyId>
+                </configuration>
                 <executions>
                     <execution>
+                        <id>make-assembly</id> <!-- this is used for inheritance merges -->
+                        <phase>package</phase> <!-- bind to the packaging phase -->
                         <goals>
-                            <goal>repackage</goal>
+                            <goal>single</goal>
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+
+            <!-- Allows the routes to be run via 'mvn exec:java' -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
                 <configuration>
-                    <finalName>${project.artifactId}</finalName>
-                    <mainClass>camel.enigma.App</mainClass>
+                    <mainClass>ejigma.App</mainClass>
                 </configuration>
             </plugin>
         </plugins>

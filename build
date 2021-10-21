@@ -1,0 +1,3 @@
+#!/bin/sh
+
+cat ./stub.sh ./target/ejigma-*.jar > ejigma && chmod +x ejigma
