@@ -65,6 +65,10 @@ public class Armature {
                             c = upperCase;
                         }
                     }
+                    return c;
+                })
+                .filter(c -> entryWheel.alphabetString.indexOf(c) != -1)
+                .map(c -> {
                     click();
                     c = encrypt(c);
                     return c;
@@ -147,7 +151,7 @@ public class Armature {
             throws ArmatureInitException {
 
         ScramblerType<?>[] allTypes = new ScramblerType[rotorTypes.length + 2];
-        System.arraycopy(rotorTypes, 0, allTypes, 0 ,rotorTypes.length);
+        System.arraycopy(rotorTypes, 0, allTypes, 0, rotorTypes.length);
         allTypes[rotorTypes.length] = entryWheelType;
         allTypes[rotorTypes.length + 1] = reflectorType;
         validateAlphabetStrings(allTypes);

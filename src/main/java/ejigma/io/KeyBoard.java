@@ -11,8 +11,17 @@ import org.jline.keymap.KeyMap;
 import org.jline.reader.*;
 import org.jline.terminal.Terminal;
 import org.jline.utils.InfoCmp;
+import org.jline.utils.Log;
 
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -135,7 +144,8 @@ public class KeyBoard implements Runnable {
         UP,
         DOWN,
         LEFT,
-        RIGHT
+        RIGHT,
+        PASTE
     }
 
     private void readFromStream() {
@@ -150,6 +160,13 @@ public class KeyBoard implements Runnable {
                         break;
                     case NEWLINE:
                         processNewline();
+                        break;
+                    case PASTE:
+                        try {
+                            paste();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     case SELECT_ENTRY:
                         processSelectEntryIgnoreInterrupt();
@@ -449,6 +466,87 @@ public class KeyBoard implements Runnable {
         return result;
     }
 
+    public boolean paste() throws IOException {
+        Clipboard clipboard;
+        try { // May throw ugly exception on system without X
+            clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        }
+        catch (Exception e) {
+            return false;
+        }
+
+        if (clipboard == null) {
+            return false;
+        }
+
+        Transferable transferable = clipboard.getContents(null);
+
+        if (transferable == null) {
+            return false;
+        }
+
+        try {
+            @SuppressWarnings("deprecation")
+            Object content = transferable.getTransferData(DataFlavor.plainTextFlavor);
+
+            // This fix was suggested in bug #1060649 at
+            // http://sourceforge.net/tracker/index.php?func=detail&aid=1060649&group_id=64033&atid=506056
+            // to get around the deprecated DataFlavor.plainTextFlavor, but it
+            // raises a UnsupportedFlavorException on Mac OS X
+
+            if (content == null) {
+                try {
+                    content = new DataFlavor().getReaderForText(transferable);
+                }
+                catch (Exception e) {
+                    // ignore
+                }
+            }
+
+            if (content == null) {
+                return false;
+            }
+
+            String value;
+
+            if (content instanceof Reader) {
+                // TODO: we might want instead connect to the input stream
+                // so we can interpret individual lines
+                value = "";
+                String line;
+
+                BufferedReader read = new BufferedReader((Reader) content);
+                while ((line = read.readLine()) != null) {
+                    if (value.length() > 0) {
+                        value += "\n";
+                    }
+
+                    value += line;
+                }
+            }
+            else {
+                value = content.toString();
+            }
+
+            if (value == null) {
+                return true;
+            }
+
+            processInput(value);
+
+            return true;
+        }
+        catch (UnsupportedFlavorException e) {
+            Log.error("Paste failed: ", e);
+
+            return false;
+        }
+    }
+
+    private void processInput(String value) {
+        value.chars().mapToObj(i -> (char) i).forEach(this::processInput);
+    }
+
     private KeyMap<Op> initKeyMap(KeyMap<Op> keyMap) {
         Set<String> alphabetChars = getUpperAndLower(alphabetString.toCharArray(), Locale.ROOT);
         bind(keyMap, Op.ENTER_CHAR, alphabetChars);
@@ -460,6 +558,7 @@ public class KeyBoard implements Runnable {
         bind(keyMap, Op.SELECT_ENTRY, ctrl('E'));
         bind(keyMap, Op.SELECT_REFLECTOR, ctrl('F'));
         bind(keyMap, Op.CLEAR_BUFFER, ctrl('D'));
+        bind(keyMap, Op.PASTE, ctrl('V'));
         bind(keyMap, Op.UP, key(terminal, InfoCmp.Capability.key_up));
         bind(keyMap, Op.DOWN, key(terminal, InfoCmp.Capability.key_down));
         bind(keyMap, Op.LEFT, key(terminal, InfoCmp.Capability.key_left));

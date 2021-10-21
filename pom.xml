@@ -6,11 +6,11 @@
 
     <artifactId>ejigma</artifactId>
     <groupId>mposa</groupId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
 
     <scm>
         <developerConnection>scm:git:https://github.com/PMarci/ejigma</developerConnection>
-        <tag>0.0.2</tag>
+        <tag>${project.version}</tag>
     </scm>
 
     <properties>
