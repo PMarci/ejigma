@@ -1,9 +1,12 @@
 package ejigma;
 
 import ejigma.exception.ArmatureInitException;
+import ejigma.exception.ScramblerSettingException;
 import ejigma.io.KeyBoard;
 import ejigma.io.LightBoard;
 import ejigma.model.Armature;
+import ejigma.model.Enigma;
+import ejigma.model.PlugBoard;
 import ejigma.model.type.ConfigContainer;
 import ejigma.model.type.EntryWheelType;
 import ejigma.model.type.ReflectorType;
@@ -22,33 +25,35 @@ import java.util.stream.Collectors;
 
 public class App {
 
-    public static void main(String[] args) throws ArmatureInitException {
+    public static void main(String[] args) {
         try {
-            Terminal terminal;
-//            terminal.writer().write("BONG!\n");
+            Enigma enigma = new Enigma();
             ConfigContainer configContainer = new ConfigContainer();
+            enigma.setConfigContainer(configContainer);
+            Terminal terminal;
             Armature armature;
-            if (args.length == 0) {
-                armature = new Armature();
+            Map<Character, List<String>> opts = Arrays.stream(args)
+                    .filter(s -> s.length() > 0 && s.charAt(0) == '-')
+                    .collect(Collectors.groupingBy(s -> {
+                        if (s.length() > 1) {
+                            return s.charAt(1);
+                        } else {
+                            return '\u0000';
+                        }
+                    }));
+            if (!opts.containsKey('-') && !opts.containsKey('f')) {
                 terminal = TerminalProvider.initTerminal(false);
-                LightBoard lightBoard = new LightBoard(terminal, armature);
-                KeyBoard keyBoard = new KeyBoard(terminal, configContainer, armature, lightBoard);
+                enigma.setArmature(new Armature(enigma));
+                enigma.setLightBoard(new LightBoard(terminal));
+                enigma.setKeyBoard(new KeyBoard(terminal, enigma));
+                if (opts.containsKey('p')) {
+                    enigma.setPlugBoard(new PlugBoard());
+                }
                 printGreeting(terminal, configContainer);
                 anyKey(terminal);
-                terminal.flush();
-                lightBoard.display();
-                keyBoard.doStart();
+                enigma.start();
             } else {
                 terminal = TerminalProvider.initTerminal(true);
-                Map<Character, List<String>> opts = Arrays.stream(args)
-                        .filter(s -> s.length() > 0 && s.charAt(0) == '-')
-                        .collect(Collectors.groupingBy(s -> {
-                            if (s.length() > 1) {
-                                return s.charAt(1);
-                            } else {
-                                return '\u0000';
-                            }
-                        }));
                 RotorType[] rotorTypes = Armature.DEFAULT_ROTOR_TYPES;
                 EntryWheelType entryWheelType = Armature.DEFAULT_ENTRY_WHEEL_TYPE;
                 ReflectorType reflectorType = Armature.DEFAULT_REFLECTOR_TYPE;
@@ -87,7 +92,8 @@ public class App {
                                             "Couldn't find an ReflectorType for param %s",
                                             substring)));
                 }
-                armature = new Armature(entryWheelType,rotorTypes, reflectorType);
+                armature = new Armature(entryWheelType, rotorTypes, reflectorType, enigma);
+                enigma.setArmature(armature);
                 if (opts.containsKey('\u0000')) {
                     String line;
                     StringBuilder sb = new StringBuilder();
@@ -95,20 +101,19 @@ public class App {
                     while ((line = br.readLine()) != null) {
                         sb.append(line);
                     }
-                    String output = armature.scramble(sb.toString());
+                    String output = enigma.scramble(sb.toString());
                     terminal.writer().write(output);
                     terminal.flush();
                 }
                 if (opts.containsKey('f')) {
-//                    terminal.writer().write("BING!\n");
                     terminal.writer().flush();
                     String input = readAll(opts.get('f').get(0).substring(2), terminal);
-                    String output = armature.scramble(input);
+                    String output = enigma.scramble(input);
                     terminal.writer().write(output + "\n");
                     terminal.flush();
                 }
             }
-        } catch (IOException | ArmatureInitException e) {
+        } catch (IOException | ArmatureInitException | ScramblerSettingException e) {
             e.printStackTrace();
         }
     }

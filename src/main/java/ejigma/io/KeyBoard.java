@@ -2,8 +2,12 @@ package ejigma.io;
 
 import ejigma.exception.ArmatureInitException;
 import ejigma.model.Armature;
+import ejigma.model.Enigma;
 import ejigma.model.Scrambler;
-import ejigma.model.type.*;
+import ejigma.model.type.EntryWheelType;
+import ejigma.model.type.ReflectorType;
+import ejigma.model.type.RotorType;
+import ejigma.model.type.ScramblerType;
 import ejigma.util.ScrambleResult;
 import ejigma.util.Util;
 import org.jline.keymap.BindingReader;
@@ -24,7 +28,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static ejigma.model.historic.HistoricEntryWheelType.REICHSBAHN;
 import static org.jline.keymap.KeyMap.ctrl;
 import static org.jline.keymap.KeyMap.key;
 
@@ -36,6 +39,7 @@ public class KeyBoard implements Runnable {
     private static final Pattern NUMBERS_PATTERN = Pattern.compile("[^0-9]*([0-9]+)[^0-9]*");
 
     private final Terminal terminal;
+    private final Enigma enigma;
     private LineReader selectionReader;
     private final BindingReader bindingReader;
     private final KeyMap<Op> keyMap;
@@ -47,28 +51,17 @@ public class KeyBoard implements Runnable {
     private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
-    private final Armature armature;
-    private final LightBoard lightBoard;
-
     private String alphabetString;
     private char[] alphabet;
 
-    private final ConfigContainer configContainer;
-
-    public KeyBoard(Terminal terminal,
-                    ConfigContainer configContainer,
-                    Armature armature,
-                    LightBoard lightBoard) {
+    public KeyBoard(Terminal terminal, Enigma enigma) {
         setAlphabet(Scrambler.DEFAULT_ALPHABET_STRING);
+        this.enigma = enigma;
         this.terminal = terminal;
-        this.lightBoard = lightBoard;
         terminal.handle(Terminal.Signal.INT, signal -> processQuit());
         initSelectionReader(terminal);
         this.bindingReader = new BindingReader(terminal.reader());
         this.keyMap = initKeyMap(new KeyMap<>());
-
-        this.armature = armature;
-        this.configContainer = configContainer;
     }
 
     private void initSelectionReader(Terminal terminal) {
@@ -196,34 +189,33 @@ public class KeyBoard implements Runnable {
             processSelectEntry();
         } catch (UserInterruptException ignored) {
             //ignored
-            lightBoard.redisplay();
+            enigma.getLightBoard().redisplay();
         }
     }
 
     private void processSelectEntry() {
         ScramblerSelectResponse<EntryWheelType> newEntryWheelTypeResponse;
-//        newEntryWheelTypeResponse = promptForScramblerType(EntryWheelType.class);
-        newEntryWheelTypeResponse = new ScramblerSelectResponse<>(REICHSBAHN, false);
+        newEntryWheelTypeResponse = promptForScramblerType(EntryWheelType.class);
         EntryWheelType newType = newEntryWheelTypeResponse.getScramblerType();
         String vNewAlphabetString = newType.getAlphabetString();
         if (newEntryWheelTypeResponse.isReselect()) {
-            EntryWheelType oldEntryWheel = armature.getEntryWheelType();
+            EntryWheelType oldEntryWheel = enigma.getArmature().getEntryWheelType();
             try {
-                armature.forceSetEntryWheel(newType);
+                enigma.getArmature().forceSetEntryWheel(newType);
                 processSelectRotors();
                 processSelectReflector();
                 rebindKeyMap(vNewAlphabetString);
             } catch (UserInterruptException e) {
-                armature.forceSetEntryWheel(oldEntryWheel);
+                enigma.getArmature().forceSetEntryWheel(oldEntryWheel);
             }
         } else {
             try {
-                armature.setEntryWheel(newType);
+                enigma.getArmature().setEntryWheel(newType);
             } catch (ArmatureInitException e) {
                 selectionReader.printAbove("Can't change entryWheel: " + e.getMessage());
             }
         }
-        lightBoard.redisplay();
+        enigma.getLightBoard().redisplay();
     }
 
     private void processSelectReflectorIgnoreInterrupt() {
@@ -231,7 +223,7 @@ public class KeyBoard implements Runnable {
             processSelectReflector();
         } catch (UserInterruptException ignored) {
             //ignored
-            lightBoard.redisplay();
+            enigma.getLightBoard().redisplay();
         }
     }
 
@@ -241,23 +233,23 @@ public class KeyBoard implements Runnable {
         ReflectorType newType = newReflectorTypeResponse.getScramblerType();
         String vNewAlphabetString = newType.getAlphabetString();
         if (newReflectorTypeResponse.isReselect()) {
-            ReflectorType oldReflectorType = armature.getReflectorType();
+            ReflectorType oldReflectorType = enigma.getArmature().getReflectorType();
             try {
-                armature.forceSetReflector(newType);
+                enigma.getArmature().forceSetReflector(newType);
                 processSelectEntry();
                 processSelectRotors();
                 rebindKeyMap(vNewAlphabetString);
             } catch (UserInterruptException e) {
-                armature.forceSetReflector(oldReflectorType);
+                enigma.getArmature().forceSetReflector(oldReflectorType);
             }
         } else {
             try {
-                armature.setReflector(newType);
+                enigma.getArmature().setReflector(newType);
             } catch (ArmatureInitException e) {
                 selectionReader.printAbove("Can't change reflector: " + e.getMessage());
             }
         }
-        lightBoard.redisplay();
+        enigma.getLightBoard().redisplay();
     }
 
     private <T extends ScramblerType<?>> ScramblerSelectResponse<T> promptForScramblerType(Class<T> scramblerTypeType) {
@@ -277,7 +269,7 @@ public class KeyBoard implements Runnable {
             selectionReader.setVariable(FILTER_COMPLETION, false);
             String tInput = selectionReader.readLine(prompt).trim();
             Optional<T> optionalScramblerType =
-                    configContainer.getScramblerTypes(scramblerTypeType).stream()
+                    enigma.getConfigContainer().getScramblerTypes(scramblerTypeType).stream()
                             .filter(sType -> sType.getName().equals(tInput))
                             .findAny();
             if (optionalScramblerType.isPresent()) {
@@ -286,7 +278,7 @@ public class KeyBoard implements Runnable {
                 selectionReader.setVariable(FILTER_COMPLETION, false);
                 ArmatureInitException exception = null;
                 try {
-                    armature.validateWithCurrent(scramblerTypeType.cast(newScramblerType));
+                    enigma.getArmature().validateWithCurrent(scramblerTypeType.cast(newScramblerType));
                 } catch (ArmatureInitException e) {
                     exception = e;
                 }
@@ -320,7 +312,7 @@ public class KeyBoard implements Runnable {
             processSelectRotors();
         } catch (UserInterruptException ignored) {
             //ignored
-            lightBoard.redisplay();
+            enigma.getLightBoard().redisplay();
         }
     }
 
@@ -338,32 +330,32 @@ public class KeyBoard implements Runnable {
             RotorType[] newRotorTypes = newRotorResponse.getScramblerTypes();
             String vNewAlphabetString = newRotorTypes[0].getAlphabetString();
             if (newRotorResponse.isReselect()) {
-                RotorType[] oldRotorTypes = armature.getRotorTypes();
+                RotorType[] oldRotorTypes = enigma.getArmature().getRotorTypes();
                 try {
-                    armature.forceSetRotors(newRotorTypes);
+                    enigma.getArmature().forceSetRotors(newRotorTypes);
                     if (promptForAuto("EntryWheel")) {
-                        armature.setAutoEntryWheel(vNewAlphabetString);
+                        enigma.getArmature().setAutoEntryWheel(vNewAlphabetString);
                     } else {
                         processSelectEntry();
                     }
                     if (promptForAuto("Reflector")) {
-                        armature.setAutoReflector(vNewAlphabetString);
+                        enigma.getArmature().setAutoReflector(vNewAlphabetString);
                     } else {
                         processSelectReflector();
                     }
                     rebindKeyMap(vNewAlphabetString);
                 } catch (UserInterruptException e) {
-                    armature.forceSetRotors(oldRotorTypes);
+                    enigma.getArmature().forceSetRotors(oldRotorTypes);
                 }
             } else {
                 try {
-                    armature.setRotors(newRotorTypes);
+                    enigma.getArmature().setRotors(newRotorTypes);
                 } catch (ArmatureInitException e) {
                     selectionReader.printAbove("Can't change rotors: " + e.getMessage());
                 }
             }
         }
-        lightBoard.redisplay();
+        enigma.getLightBoard().redisplay();
     }
 
     private int promptForRotorNo() {
@@ -402,7 +394,7 @@ public class KeyBoard implements Runnable {
         while (i < rotorNo) {
             prompt = String.format(promptFormat, i);
             String tInput = selectionReader.readLine(prompt).trim();
-            Optional<RotorType> rotorType = configContainer.getRotorTypes().stream()
+            Optional<RotorType> rotorType = enigma.getConfigContainer().getRotorTypes().stream()
                     .filter(rotorType1 -> rotorType1.getName().equals(tInput)).findAny();
             if (rotorType.isPresent()) {
                 RotorType type = rotorType.get();
@@ -422,7 +414,7 @@ public class KeyBoard implements Runnable {
         }
         // validate with other scramblers, force reselect until compatible
         try {
-            armature.validateWithCurrent(newRotorTypes);
+            enigma.getArmature().validateWithCurrent(newRotorTypes);
         } catch (ArmatureInitException e) {
             boolean choose = true;
             selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
@@ -605,48 +597,48 @@ public class KeyBoard implements Runnable {
                     input);
         }
 
-        ScrambleResult armatureResult = armature.handle(scrambleResult);
-        lightBoard.process(armatureResult);
+        ScrambleResult armatureResult = enigma.handle(scrambleResult);
+        enigma.getLightBoard().process(armatureResult);
     }
 
     private void processNewline() {
-        lightBoard.process('\n');
+        enigma.getLightBoard().process('\n');
     }
 
     private void processControl(Op input) {
         switch (input) {
             case LEFT:
-                lightBoard.getBuffer().moveLeft(1);
+                enigma.getLightBoard().getBuffer().moveLeft(1);
                 break;
             case RIGHT:
-                lightBoard.getBuffer().moveRight(1);
+                enigma.getLightBoard().getBuffer().moveRight(1);
                 break;
             case UP:
-                lightBoard.getBuffer().moveUp(1);
+                enigma.getLightBoard().getBuffer().moveUp(1);
                 break;
             case DOWN:
-                lightBoard.getBuffer().moveDown(1);
+                enigma.getLightBoard().getBuffer().moveDown(1);
                 break;
             default:
                 break;
         }
-        lightBoard.redisplay();
+        enigma.getLightBoard().redisplay();
     }
 
     private void processResetOffsets() {
-        armature.resetOffsets();
-        lightBoard.statusMsg("Received Ctrl+R, resetting offsets...");
+        enigma.getArmature().resetOffsets();
+        enigma.getLightBoard().statusMsg("Received Ctrl+R, resetting offsets...");
     }
 
     private void processClearBuffer() {
-        lightBoard.clearBuffer();
+        enigma.getLightBoard().clearBuffer();
     }
 
     private void processDetailModeToggle() {
         terminal.puts(InfoCmp.Capability.scroll_forward);
         terminal.puts(InfoCmp.Capability.cursor_down);
         terminal.puts(InfoCmp.Capability.clear_screen);
-        lightBoard.toggleDetailMode();
+        enigma.getLightBoard().toggleDetailMode();
     }
 
     private void processQuit() {
@@ -711,11 +703,11 @@ public class KeyBoard implements Runnable {
 
         <T extends ScramblerType<?>> void setCompleter(Class<T> scramblerTypeType) {
             if (scramblerTypeType.isAssignableFrom(ReflectorType.class)) {
-                setCompleter(completeFor(configContainer::getReflectorTypes));
+                setCompleter(completeFor(enigma.getConfigContainer()::getReflectorTypes));
             } else if (scramblerTypeType.isAssignableFrom(EntryWheelType.class)) {
-                setCompleter(completeFor(configContainer::getEntryWheelTypes));
+                setCompleter(completeFor(enigma.getConfigContainer()::getEntryWheelTypes));
             } else if (scramblerTypeType.isAssignableFrom(RotorType.class)) {
-                setCompleter(completeFor(configContainer::getRotorTypes));
+                setCompleter(completeFor(enigma.getConfigContainer()::getRotorTypes));
             }
         }
 

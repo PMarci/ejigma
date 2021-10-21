@@ -1,4 +1,5 @@
 ## TOC
+
 - [interactive mode](#interactive-mode)
 - [non-interactive mode](#non-interactive-mode)
 - [general](#general)
@@ -7,10 +8,14 @@
 ### interactive mode
 
 - [ ] reintroduce status bar
+    - [ ] rotor displays
+        - [ ] maybe implement offset change on cursor move already
+            - in such a way that there's only one rotor offset for each buffer index
     - [x] remove logback as feedback source
 - [x] look into full-screen mode
 - [ ] set offsets
     - [ ] think about how to accomplish nice wheel-like UI for it
+    - [ ] which should later grow into a widget
     - [ ] multi-threaded blinking?
 - [ ] command mode instead of obscure shortcuts
     - [ ] help command
@@ -21,18 +26,19 @@
     - [ ] reloading configs from canonical sources
     - [ ] printing of current settings
     - [ ] yanking the entire buffer
-- [ ] option to pass params to interactive mode
-    - [ ] change condition for interactive mode to not having `-` or `-f` params
+- [x] option to pass params to interactive mode
+    - [x] change condition for interactive mode to not having `-` or `-f` params
 - [ ] make keymap more intuitive and flexible
     - [ ] make keymap configurable
-        - [ ] complicated, maybe not necessary
+        - complicated, maybe not necessary
     - [ ] print help that reflects current keymap config
-    - [ ] will need to deal with collisions
+    - will need to deal with collisions
 - [ ] print help at beginning
     - [ ] fix unreliable anyKey
 - [ ] option to print auto entry/reflector for portability
     - [ ] maybe do something sneaky for "security"
-    - [ ] option to print entire armature state
+        - like gpg/rsa/ssh/whatever barcode thing
+    - [ ] option to print entire machine state
 - [ ] widget system
     - [ ] facsimile widgets for
         - [ ] keyboard?
@@ -49,11 +55,13 @@
 - [x] handle WINCH and resize correctly
 - [x] ability to handle newlines in buffer
 - [x] move up and down in buffer
+- [ ] scroll display as well
+    - without moving widgets off-screen
 - [ ] taint and recalculation
     - [ ] will need highlighting
     - [ ] some sort of cache for recalculation (optionally?), depends on speed for realistic loads
     - [ ] recalculate with each keystroke or highlight invalid intervals
-    - [ ] armature state at buffer index 0 determines scrambling output for each char in buffer
+    - [ ] machine state at buffer index 0 determines scrambling output for each char in buffer
         - [ ] some sort of `offset(substring, amount)` method is needed
             - [ ] where to put it
     - [ ] handle newlines
@@ -64,13 +72,13 @@
     - [ ] pairwise handling of params instead of `java`/`sed -i` type
     - [ ] some self-documented help option
 - [ ] set offsets
-- [ ] load armature state from file
+- [ ] load machine state from file
     - [ ] basically (de)serialization
     - [ ] think about "security" implications
 
 ### general
 
-- [ ] open issue about SelectionReader and BindingReader
+- [x] open issue about SelectionReader and BindingReader
 - [ ] fully implement PlugBoard
     - [ ] implement interactive setting of PlugBoard
 - [ ] implement ring settings
@@ -82,7 +90,7 @@
         - [ ] set up search in canonical locations
             - [ ] pwd, ~/.ejigma, cli
             - [ ] precedence
-                - [ ] static files < ~/.ejigma < pwd < cli
+                - should be: static files < ~/.ejigma < pwd < cli
 - [ ] set up scrambler type loading and reloading in canonical locations
     - [ ] loading
         - [ ] on start
@@ -113,6 +121,8 @@
     - [ ] ~~develop some alternative to the bean registry~~
 - [ ] some container binding Armature and PlugBoard
     - [ ] could eventually become the common basis with other machines
+    - [ ] unify/move scramblerWiring in Armature into Enigma such that Plugboard is also connected
+    - [x] start refactoring work
 - [ ] cryptanalysis features
     - [ ] histogram and other widgets to demonstrate attack vectors
     - [ ] BOMB cracking simulation

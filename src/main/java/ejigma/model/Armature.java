@@ -13,6 +13,7 @@ import ejigma.util.Util;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -27,18 +28,25 @@ public class Armature {
             HistoricRotorType.I};
     public static final ReflectorType DEFAULT_REFLECTOR_TYPE = HistoricReflectorType.B;
     public static final EntryWheelType DEFAULT_ENTRY_WHEEL_TYPE = HistoricEntryWheelType.ENIGMA_I;
+    private final Enigma enigma;
 
     private EntryWheel entryWheel;
     private Rotor[] rotors;
     private Reflector reflector;
     private List<ScramblerMounting> scramblerWiring;
 
-    public Armature() throws ArmatureInitException {
-        this(DEFAULT_ENTRY_WHEEL_TYPE, DEFAULT_ROTOR_TYPES, DEFAULT_REFLECTOR_TYPE);
+    public Armature(Enigma enigma) throws ArmatureInitException {
+        this(DEFAULT_ENTRY_WHEEL_TYPE, DEFAULT_ROTOR_TYPES, DEFAULT_REFLECTOR_TYPE, enigma);
     }
 
-    public Armature(EntryWheelType entryWheelType, RotorType[] rotorTypes, ReflectorType reflectorType)
+    public Armature(
+            EntryWheelType entryWheelType,
+            RotorType[] rotorTypes,
+            ReflectorType reflectorType,
+           Enigma enigma)
             throws ArmatureInitException {
+
+        this.enigma = enigma;
         validateAllTypes(entryWheelType, rotorTypes, reflectorType);
         entryWheel = initEntryWheel(entryWheelType);
         rotors = initRotors(rotorTypes);
@@ -80,11 +88,31 @@ public class Armature {
                         StringBuilder::toString));
     }
 
+    public Optional<Character> scramble(char input) {
+        Optional<Character> result;
+        String alphabetString = entryWheel.alphabetString;
+        if (!Util.containsChar(alphabetString, input)) {
+            char upperCase = Character.toUpperCase(input);
+            if (Util.containsChar(alphabetString, upperCase)) {
+                input = upperCase;
+            }
+        }
+        if (alphabetString.indexOf(input) != -1) {
+            click();
+            input = encrypt(input);
+            result = Optional.of(input);
+        } else {
+            result = Optional.empty();
+        }
+        return result;
+    }
+
     private ScrambleResult encrypt(ScrambleResult current) {
         for (int i = 0; i < scramblerWiring.size(); i++) {
             ScramblerMounting scramblerMounting = scramblerWiring.get(i);
             current = scramblerMounting.scramble(current);
-            if (i == scramblerWiring.size() - 1) {
+            // TODO think about better options
+            if (enigma.getPlugBoard() == null && i == scramblerWiring.size() - 1) {
                 current.recordOutput();
             }
         }

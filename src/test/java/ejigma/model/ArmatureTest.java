@@ -14,7 +14,8 @@ public class ArmatureTest {
 
     @Before
     public void setUp() throws Exception {
-        wikiArmature = new Armature();
+        Enigma enigma = new Enigma();
+        wikiArmature = new Armature(enigma);
     }
 
     @Test

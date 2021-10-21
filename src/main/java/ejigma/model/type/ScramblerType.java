@@ -9,4 +9,6 @@ public interface ScramblerType<S extends Scrambler> {
     S freshScrambler();
 
     String getAlphabetString();
+
+    String toString();
 }

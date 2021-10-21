@@ -74,7 +74,7 @@ public abstract class Scrambler {
         return alphabetString;
     }
 
-    public ScramblerType getType() {
+    public ScramblerType<? extends Scrambler> getType() {
         return type;
     }
 }
