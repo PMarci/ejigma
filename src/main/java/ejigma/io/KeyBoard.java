@@ -1,8 +1,10 @@
 package ejigma.io;
 
 import ejigma.exception.ArmatureInitException;
+import ejigma.exception.ScramblerSettingException;
 import ejigma.model.Armature;
 import ejigma.model.Enigma;
+import ejigma.model.PlugBoard;
 import ejigma.model.Scrambler;
 import ejigma.model.type.*;
 import ejigma.util.ScrambleResult;
@@ -119,6 +121,7 @@ public class KeyBoard implements Runnable {
         SELECT_ENTRY,
         SELECT_ROTOR,
         SELECT_REFLECTOR,
+        SELECT_PLUGBOARD,
         RESET_OFFSETS,
         CLEAR_BUFFER,
         DETAIL_MODE_TOGGLE,
@@ -157,6 +160,9 @@ public class KeyBoard implements Runnable {
                         break;
                     case SELECT_REFLECTOR:
                         processSelectReflectorIgnoreInterrupt();
+                        break;
+                    case SELECT_PLUGBOARD:
+                        processSelectPlugBoard();
                         break;
                     case RESET_OFFSETS:
                         processResetOffsets();
@@ -218,7 +224,6 @@ public class KeyBoard implements Runnable {
                 selectionReader.printAbove("Can't change entryWheel: " + e.getMessage());
             }
         }
-        enigma.getLightBoard().redisplay();
     }
 
     private void processSelectReflectorIgnoreInterrupt() {
@@ -261,18 +266,17 @@ public class KeyBoard implements Runnable {
                 selectionReader.printAbove("Can't change reflector: " + e.getMessage());
             }
         }
-        enigma.getLightBoard().redisplay();
     }
 
-    private void processSelectPlugBoard() {        
+    private void processSelectPlugBoard() {
         ScramblerSelectResponse<PlugBoardType> newPlugBoardTypeResponse;
-        newPlugBoardTypeResponse = promptForScramblerType(PlugBoardType.class);
+        newPlugBoardTypeResponse = promptForPlugBoard();
         PlugBoardType newType = newPlugBoardTypeResponse.getScramblerType();
         String vNewAlphabetString = newType.getAlphabetString();
         if (newPlugBoardTypeResponse.isReselect()) {
             PlugBoardType oldPlugBoardType = (PlugBoardType) enigma.getPlugBoard().getType();
             try {
-                enigma.forceSetPlugBoard(newType);
+                enigma.forceSetPlugBoard(newType.freshScrambler());
                 if (promptForAuto("EntryWheel")) {
                     enigma.setAutoEntryWheel(vNewAlphabetString);
                 } else {
@@ -286,16 +290,15 @@ public class KeyBoard implements Runnable {
                 }
                 rebindKeyMap(vNewAlphabetString);
             } catch (UserInterruptException e) {
-                enigma.forceSetPlugBoard(oldPlugBoardType);
+                enigma.forceSetPlugBoard(oldPlugBoardType.freshScrambler());
             }
         } else {
             try {
                 enigma.setPlugBoard(newType);
-            } catch (ArmatureInitException e) {
+            } catch (ArmatureInitException | ScramblerSettingException e) {
                 selectionReader.printAbove("Can't change PlugBoard: " + e.getMessage());
             }
         }
-        enigma.getLightBoard().redisplay();
     }
 
 
@@ -354,6 +357,55 @@ public class KeyBoard implements Runnable {
         return response;
     }
 
+    // cant unify due to type erasure
+    private ScramblerSelectResponse<PlugBoardType> promptForPlugBoard() {
+        String prompt = "Enter new PlugBoard settings. Separate the source and wiring strings \n" +
+                " with a letter not contained in the alphabet: ";
+        String denyString = "Not setting PlugBoard...";
+        ScramblerSelectResponse<PlugBoardType> response = null;
+        String initString = "";
+        boolean choose = true;
+        boolean choose2 = true;
+        while (choose) {
+            ArmatureInitException aException = null;
+            ScramblerSettingException sException;
+            PlugBoardType plugBoardType = null;
+            selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
+            do {
+                initString = selectionReader.readLine(prompt).trim();
+                sException = null;
+                try {
+                    plugBoardType = PlugBoard.getPlugBoardType(alphabetString, initString);
+                    enigma.validateWithCurrent(plugBoardType);
+                } catch (ArmatureInitException e) {
+                    aException = e;
+                } catch (ScramblerSettingException e) {
+                    sException = e;
+                    selectionReader.printAbove(e.getMessage());
+                }
+            } while (sException != null);
+            if (aException != null) {
+                while (choose2) {
+                    String yn = selectionReader.readLine(aException.getMessage() + SWITCH_PROMPT).trim();
+                    if ("y".equals(yn) || "Y".equals(yn)) {
+                        response = new ScramblerSelectResponse<>(plugBoardType, true);
+                        choose = false;
+                        choose2 = false;
+                    } else if ("n".equals(yn) || "N".equals(yn)) {
+                        selectionReader.printAbove(denyString);
+                        choose2 = false;
+                    }
+                }
+            } else {
+                response = new ScramblerSelectResponse<>(plugBoardType, false);
+                choose = false;
+            }
+        }
+        // TODO maybe it needs to be disabled for the main loop
+        selectionReader.setVariable(LineReader.DISABLE_COMPLETION, false);
+        return response;
+    }
+
     private void processSelectRotorsIgnoreInterrupt() {
         try {
             processSelectRotors();
@@ -407,14 +459,6 @@ public class KeyBoard implements Runnable {
                 }
             }
         } // TODO add else error message branch
-        enigma.getLightBoard().redisplay();
-        try {
-            terminal.enterRawMode();
-            terminal.reader().read();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
     }
 
     private int promptForRotorNo() {
@@ -605,6 +649,7 @@ public class KeyBoard implements Runnable {
         bind(keyMap, Op.SELECT_ROTOR, ctrl('I'));
         bind(keyMap, Op.SELECT_ENTRY, ctrl('E'));
         bind(keyMap, Op.SELECT_REFLECTOR, ctrl('F'));
+        bind(keyMap, Op.SELECT_PLUGBOARD, ctrl('P'));
         bind(keyMap, Op.CLEAR_BUFFER, ctrl('D'));
 //        bind(keyMap, Op.PASTE, ctrl('V'));
         bind(keyMap, Op.UP, key(terminal, InfoCmp.Capability.key_up));
@@ -687,7 +732,6 @@ public class KeyBoard implements Runnable {
             default:
                 break;
         }
-        enigma.getLightBoard().redisplay();
     }
 
     private void processResetOffsets() {
@@ -729,6 +773,7 @@ public class KeyBoard implements Runnable {
         private T scramblerType;
         private T[] scramblerTypes;
         private final boolean reselect;
+        private final Map<String, Object> satelliteData = new HashMap<>();
 
         ScramblerSelectResponse(T scramblerType, boolean reselect) {
             this.scramblerType = scramblerType;

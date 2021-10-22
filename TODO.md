@@ -84,7 +84,7 @@
     - [ ] implement non-interactive setting of PlugBoard
         - source and dest will most likely have to go into two different options because we cannot guarantee essentially
           any character being out-of-band for the alphabet
-        - the first charcter not in the current alphabet could be attempted as a separator
+        - the first character not in the current alphabet could be attempted as a separator
     - [x] add auto method and reselect prompt to other prompts
 - [ ] implement ring settings
 - [ ] settings files

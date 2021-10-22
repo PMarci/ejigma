@@ -1,29 +1,40 @@
 package ejigma.model;
 
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.type.ScramblerType;
+import ejigma.model.type.PlugBoardType;
 import ejigma.util.ScrambleResult;
 import ejigma.util.Util;
 
+import java.util.AbstractMap;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class PlugBoard extends Scrambler {
 
     private static final Random RANDOM = new Random();
 
-    public PlugBoard(String alphabetString, String sourceString, String wiringString)
-            throws ScramblerSettingException {
-        super(alphabetString, wiringString, getPlugBoardType(alphabetString, sourceString, wiringString));
-        setWiring(sourceString, this.wiringString);
-    }
+    private final String sourceString;
 
     public PlugBoard() throws ScramblerSettingException {
         this(Scrambler.DEFAULT_ALPHABET_STRING, null, null);
     }
 
+    public PlugBoard(
+            String alphabetString,
+            String sourceString,
+            String wiringString) throws ScramblerSettingException {
+
+        super(alphabetString, wiringString, getPlugBoardType(alphabetString, sourceString, wiringString));
+        this.sourceString = sourceString;
+        validatePlugBoard();
+        setWiring(sourceString, this.wiringString);
+    }
+
     @Override
-    void validateWiringString(String wiringString) throws ScramblerSettingException {
+    public void validateWiringString(String wiringString) throws ScramblerSettingException {
         if (wiringString != null && wiringString.length() > alphabetString.length()) {
             throw new ScramblerSettingException(String.format(
                     "The wiringString %s is longer than the alphabetString %s of this PlugBoard!",
@@ -38,79 +49,122 @@ public class PlugBoard extends Scrambler {
         }
     }
 
+    public void validatePlugBoard() throws ScramblerSettingException {
+        validatePlugBoard(
+                (sourceString != null) ? sourceString : "",
+                (wiringString != null) ? wiringString : "");
+    }
+
+    private void validatePlugBoard(String sourceString, String wiringString) throws ScramblerSettingException {
+        int[] linksToCheck = setSomePlugs(sourceString, wiringString, noOpLinks(alphabet.length));
+        Map<Integer, Character> chainWired = IntStream.range(0, sourceString.length())
+                .mapToObj(i -> new AbstractMap.SimpleEntry<>(i, sourceString.toCharArray()[i]))
+                // we're looking for source symbols appearing in the wiring at a different index
+                .filter(entry -> {
+                    int indexInWiring = wiringString.indexOf(entry.getValue(), entry.getKey() - 1);
+                    return indexInWiring != -1 && indexInWiring != entry.getKey();
+                })
+                // when a source char points to a destination char, the destination char has to point
+                // to the source char
+                .filter(entry -> {
+                            int wiringSource = alphabetString.indexOf(entry.getValue());
+                            int wiringDest = linksToCheck[wiringSource];
+                            return alphabetString.charAt(wiringDest) != linksToCheck[wiringDest];
+                        }
+                       )
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        if (!chainWired.isEmpty()) {
+            String chainElements = chainWired.entrySet().stream()
+                    .map(entry -> {
+                        char wiringChar = wiringString.charAt(entry.getKey());
+                        char sourceChar = entry.getValue();
+                        return String.format(
+                                "Symbol %1$s maps to %2$s, but %2$s maps to %3$s instead of %1$s!",
+                                sourceChar,
+                                wiringChar,
+                                (sourceString.indexOf(wiringChar) == -1) ?
+                                wiringChar :
+                                wiringString.charAt(sourceString.indexOf(wiringChar)));
+                    })
+                    .collect(Collectors.joining("\n"));
+            throw new ScramblerSettingException(String.format(
+                    "The source and wiring strings %s -> %s for this PlugBoard has multiple plugs to a single letter!" +
+                            "%n They are as follows: %n%s",
+                    sourceString,
+                    wiringString,
+                    chainElements));
+        }
+    }
+
+    private static int[] noOpLinks(int len) {
+        return IntStream.range(0, len).toArray();
+    }
+
     @Override
     void setWiring(String sourceString, String wiringString) {
-        this.forwardLinks = new int[alphabet.length];
-        if (sourceString != null && !sourceString.isEmpty()
-                && wiringString != null && !wiringString.isEmpty()) {
-            setSomePlugs(sourceString, wiringString);
-        } else {
-            setNoPlugs();
+        int[] newLinks = noOpLinks(alphabet.length);
+        if (sourceString != null && !sourceString.isEmpty() && wiringString != null && !wiringString.isEmpty()) {
+            setSomePlugs(sourceString, wiringString, newLinks);
         }
+        this.forwardLinks = newLinks;
         this.reverseLinks = this.forwardLinks;
     }
 
-    private void setNoPlugs() {
-        for (int i = 0; i < alphabet.length; i++) {
-            forwardLinks[i] = i;
+    private int[] setSomePlugs(String sourceString, String wiringString, int[] newLinks) {
+        boolean[] touched = new boolean[alphabet.length];
+        Arrays.fill(touched, false);
+        char[] sourceArray;
+        char[] wiringArray;
+        if (sourceString != null && wiringString != null) {
+            sourceArray = sourceString.toCharArray();
+            wiringArray = wiringString.toCharArray();
+        } else {
+            sourceArray = new char[0];
+            wiringArray = new char[0];
         }
-    }
-
-    private void setSomePlugs(String sourceString, String wiringString) {
-        Arrays.fill(forwardLinks, -1);
-        char[] sourceArray = sourceString.toCharArray();
-        char[] wiringArray = wiringString.toCharArray();
         int i = 0;
         int j = 0;
         char sourceChar;
+        int sourceCharIndex;
         char wiringChar;
+        int wiringCharIndex;
+        int lastSwapInd = -1;
         char alphabetChar;
-        boolean match = false;
-        boolean lastAlpha;
-        boolean lastSource;
-        int lastSourceIndex = sourceArray.length - 1;
+        boolean sourceMatched;
+        boolean wiringMatched;
+
         int lastAlphaIndex = alphabet.length - 1;
-        // i goes from 0 to sourceArray.length - 1 and stays there
-        do {
-            // wiring source and destination chars
+        while (i < sourceArray.length) {
+            sourceCharIndex = -1;
+            wiringCharIndex = -1;
             sourceChar = sourceArray[i];
             wiringChar = wiringArray[i];
-            // j goes from 0 to alphabet.length - 1 and wraps around to 0
+            // forwardlinks at alphabetString.indexOf(sourceChar) has to be set to alphabetString.indexOf(wiringchar)
+            // forwardlinks at alphabetString.indexOf(wiringchar) has to be set to alphabetString.indexOf(sourcheChar)
             do {
-                // if the current link is either unplugged or not yet touched
-                if (forwardLinks[j] == j || forwardLinks[j] == -1) {
-                    alphabetChar = alphabet[j];
-                    // j is at the alphabet index of the sourceChar
-                    match = sourceChar == alphabetChar;
-                    // link with the wiringChar's alphabet index
-                    forwardLinks[j] = match ? getAlphabetString().indexOf(wiringChar) : j;
+                if (!touched[j]) {
+                    alphabetChar = alphabetString.charAt(j);
+                    sourceMatched = sourceChar == alphabetChar;
+                    wiringMatched = wiringChar == alphabetChar;
+                    if (sourceCharIndex == -1 && sourceMatched) {
+                        sourceCharIndex = j;
+                    }
+                    if (wiringCharIndex == -1 && wiringMatched) {
+                        wiringCharIndex = j;
+                    }
+                    if (sourceCharIndex != -1 && wiringCharIndex != -1 && (sourceMatched || wiringMatched)) {
+                        newLinks[sourceCharIndex] = wiringCharIndex;
+                        newLinks[wiringCharIndex] = sourceCharIndex;
+                        touched[sourceCharIndex] = touched[wiringCharIndex] = true;
+                        lastSwapInd = (sourceMatched) ? sourceCharIndex : wiringCharIndex;
+                    }
                 }
-                // are we at the end of either array?
-                lastAlpha = j >= lastAlphaIndex;
-                lastSource = i >= lastSourceIndex;
-                // j goes around
-                j = (lastAlpha) ? 0 : j + 1;
-                // repeat as long there was no match and we're not at the end of both
-                // break if there was either a match or we're at the end of both lists
-                //  match | lastSource | lastAlpha | result
-                //  false |    false   |   false   | true
-                //  false |    false   |   true    | true
-                //  false |    true    |   true    | false
-                //  true  |    false   |   false   | false
-                //  true  |    true    |   false   | false
-                //  true  |    true    |   true    | false
-                //  true  |    false   |   true    | false
-                //  false |    true    |   false   | false
-            } while (!match && !(lastSource && lastAlpha));
-            // i stays at the last index once reached
-            i = (lastSource) ? lastSourceIndex : i + 1;
-            // break either lastSource or both arrays are done
-            //  lastSource | lastAlpha | result
-            //     false   |   false   | true
-            //     false   |   true    | true
-            //     true    |   false   | false
-            //     true    |   true    | false
-        } while (!(lastSource && lastAlpha));
+                j = (j >= lastAlphaIndex) ? 0 : j + 1;
+            } while ((sourceCharIndex == -1 || wiringCharIndex == -1) && j != lastSwapInd);
+            i++;
+        }
+        return newLinks;
     }
 
     @Override
@@ -150,9 +204,24 @@ public class PlugBoard extends Scrambler {
         return scramble(input);
     }
 
+    public static String[] splitInitString(String alphabetString, String initString) throws ScramblerSettingException {
+        String denyStringFormat = "Not a valid initString! Reason: %s";
+        String reasonUnequal = "Source and wiring Strings are of unequal length!";
+        String reasonInvalidSeparator = "No separator character outside the current alphabet found!";
+        int splitIndex = IntStream.range(0, initString.length())
+                .filter(i -> alphabetString.indexOf(initString.charAt(i)) == -1)
+                .findFirst()
+                .orElseThrow(() -> new ScramblerSettingException(String.format(denyStringFormat, reasonInvalidSeparator)));
+        String[] result = new String[]{initString.substring(0, splitIndex), initString.substring(splitIndex + 1)};
+        if (result[0].length() != result[1].length()) {
+            throw new ScramblerSettingException(String.format(denyStringFormat, reasonUnequal));
+        }
+        return result;
+    }
+
     // TODO test
     // TODO generalize with two other very similar methods
-    public static ScramblerType<PlugBoard> auto(String alphabetString) {
+    public static PlugBoardType auto(String alphabetString) {
         int aLen = alphabetString.length();
         int noOfPairs = RANDOM.nextInt(aLen);
         int sourceIndex;
@@ -174,10 +243,16 @@ public class PlugBoard extends Scrambler {
         return getPlugBoardType(alphabetString, source, string);
     }
 
-    private static ScramblerType<PlugBoard> getPlugBoardType(String alphabetString,
-                                                             String sourceString,
-                                                             String wiringString) {
-        return new ScramblerType<PlugBoard>() {
+    public static PlugBoardType getPlugBoardType(String alphabetString,
+                                                 String initString) throws ScramblerSettingException {
+        String[] initStrings = PlugBoard.splitInitString(alphabetString, initString);
+        return getPlugBoardType(alphabetString, initStrings[0], initStrings[1]);
+    }
+
+    private static PlugBoardType getPlugBoardType(String alphabetString,
+                                                  String sourceString,
+                                                  String wiringString) {
+        return new PlugBoardType() {
 
             @Override
             public String getName() {
@@ -195,10 +270,16 @@ public class PlugBoard extends Scrambler {
                 return plugBoard;
             }
 
+            public PlugBoard unsafeScrambler() throws ScramblerSettingException {
+                return new PlugBoard(alphabetString, sourceString, wiringString);
+            }
+
+            @Override
             public String getSourceString() {
                 return sourceString;
             }
 
+            @Override
             public String getWiringString() {
                 return wiringString;
             }
@@ -206,6 +287,10 @@ public class PlugBoard extends Scrambler {
             @Override
             public String getAlphabetString() {
                 return alphabetString;
+            }
+
+            public String getInitString() {
+                return sourceString + '\u0000' + wiringString;
             }
 
             @Override

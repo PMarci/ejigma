@@ -35,7 +35,7 @@ public class PlugBoardTest {
     @Test
     public void testo5() throws ScramblerSettingException {
         PlugBoard plugBoard = new PlugBoard(Scrambler.DEFAULT_ALPHABET_STRING, "BKA", "APA");
-        assertEquals("AACDEFGHIJPLMNOPQRSTUVWXYZ", singleScramble(plugBoard));
+        assertEquals("BACDEFGHIJPLMNOKQRSTUVWXYZ", singleScramble(plugBoard));
     }
 
     @Test

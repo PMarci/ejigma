@@ -4,7 +4,6 @@ import ejigma.exception.ArmatureInitException;
 import ejigma.exception.ScramblerSettingException;
 import ejigma.model.Armature;
 import ejigma.model.Enigma;
-import ejigma.model.PlugBoard;
 import ejigma.model.type.*;
 import ejigma.util.ScrambleResult;
 import org.jline.terminal.Terminal;
@@ -42,7 +41,7 @@ public class App {
                                          Map<Character, List<String>> opts) throws ArmatureInitException, ScramblerSettingException, IOException {
         enigma.init(configContainer);
         if (opts.containsKey('p')) {
-            enigma.setPlugBoard(new PlugBoard());
+            enigma.initPlugBoard();
         }
         printGreeting(enigma.getTerminal(), configContainer);
         anyKey(enigma.getTerminal());
