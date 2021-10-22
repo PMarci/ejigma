@@ -8,13 +8,13 @@ import static org.junit.Assert.assertEquals;
 
 public class PlugBoardTest {
 
-    @Test
+    @Test(expected = ScramblerSettingException.class)
     public void testo() throws ScramblerSettingException {
         PlugBoard plugBoard = new PlugBoard(Scrambler.DEFAULT_ALPHABET_STRING, "BDK", "QBZ");
         assertEquals("AQCBEFGHIJZLMNOPQRSTUVWXYZ", singleScramble(plugBoard));
     }
 
-    @Test
+    @Test(expected = ScramblerSettingException.class)
     public void testo2() throws ScramblerSettingException {
         PlugBoard plugBoard = new PlugBoard(Scrambler.DEFAULT_ALPHABET_STRING, "BZK", "QBC");
         assertEquals("AQCDEFGHIJCLMNOPQRSTUVWXYB", singleScramble(plugBoard));
@@ -23,13 +23,13 @@ public class PlugBoardTest {
     @Test
     public void testo3() throws ScramblerSettingException {
         PlugBoard plugBoard = new PlugBoard(Scrambler.DEFAULT_ALPHABET_STRING, "BKZ", "APN");
-        assertEquals("AACDEFGHIJPLMNOPQRSTUVWXYN", singleScramble(plugBoard));
+        assertEquals("BACDEFGHIJPLMZOKQRSTUVWXYN", singleScramble(plugBoard));
     }
 
     @Test
     public void testo4() throws ScramblerSettingException {
         PlugBoard plugBoard = new PlugBoard(Scrambler.DEFAULT_ALPHABET_STRING, "BKZ", "APZ");
-        assertEquals("AACDEFGHIJPLMNOPQRSTUVWXYZ", singleScramble(plugBoard));
+        assertEquals("BACDEFGHIJPLMNOKQRSTUVWXYZ", singleScramble(plugBoard));
     }
 
     @Test
