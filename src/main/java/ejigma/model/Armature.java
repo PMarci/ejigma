@@ -52,8 +52,11 @@ public class Armature {
     void click() {
         boolean previousNotchEngaged = true;
         for (Rotor rotor : rotors) {
-            if (previousNotchEngaged || rotor.isNotchEngaged()) {
-                previousNotchEngaged = rotor.click();
+
+            boolean notchEngaged = rotor.isNotchEngaged();
+            if (previousNotchEngaged || notchEngaged) {
+                previousNotchEngaged = notchEngaged;
+                rotor.click();
             }
         }
     }

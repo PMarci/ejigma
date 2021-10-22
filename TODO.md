@@ -87,6 +87,7 @@
         - the first character not in the current alphabet could be attempted as a separator
     - [x] add auto method and reselect prompt to other prompts
 - [ ] implement ring settings
+- [ ] re-check missed details under [Turnover](https://en.wikipedia.org/wiki/Enigma_machine#Turnover)
 - [ ] settings files
     - [ ] consider using Properties API for settings
     - [ ] alternatively, just JAXB

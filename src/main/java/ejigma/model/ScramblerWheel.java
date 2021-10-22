@@ -47,14 +47,11 @@ public abstract class ScramblerWheel extends Scrambler {
         return alphabet[(link - offset + alphabet.length ) % alphabet.length];
     }
 
-    boolean click() {
-        boolean result = false;
+    void click() {
         if (!staticc) {
-            result = isNotchEngaged();
             offset = (offset == alphabet.length - 1) ? 0 : offset + 1;
             offsetAsChar = alphabet[offset];
         }
-        return result;
     }
 
     public int getOffset() {

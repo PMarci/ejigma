@@ -2,8 +2,7 @@ package ejigma;
 
 import ejigma.exception.ArmatureInitException;
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.Armature;
-import ejigma.model.Enigma;
+import ejigma.model.*;
 import ejigma.model.type.*;
 import ejigma.util.ScrambleResult;
 import org.jline.terminal.Terminal;
@@ -22,13 +21,15 @@ public class App {
     public static void main(String[] args) {
         try {
             ConfigContainer configContainer = new ConfigContainer();
-            Enigma enigma = new Enigma();
+            Enigma enigma;
             Map<Character, List<String>> opts = getOpts(args);
             // Interactive mode
             if (!opts.containsKey('-') && !opts.containsKey('f')) {
+                enigma = new Enigma(false);
                 startInteractive(configContainer, enigma, opts);
                 // Non-interactive mode
             } else {
+                enigma = new Enigma();
                 startNonInteractive(configContainer, enigma, opts);
             }
         } catch (IOException | ArmatureInitException | ScramblerSettingException e) {
@@ -50,11 +51,13 @@ public class App {
 
     private static void startNonInteractive(ConfigContainer configContainer,
                                             Enigma enigma,
-                                            Map<Character, List<String>> opts) throws ArmatureInitException, IOException {
+                                            Map<Character, List<String>> opts) throws ArmatureInitException, IOException, ScramblerSettingException {
 
         RotorType[] rotorTypes = Armature.DEFAULT_ROTOR_TYPES;
         EntryWheelType entryWheelType = Armature.DEFAULT_ENTRY_WHEEL_TYPE;
         ReflectorType reflectorType = Armature.DEFAULT_REFLECTOR_TYPE;
+        // TODO improve option for auto
+        String alphabetString = Scrambler.DEFAULT_ALPHABET_STRING;
         if (opts.containsKey('r')) {
             List<RotorType> list = new ArrayList<>();
             for (String s : opts.get('r')) {
@@ -65,6 +68,9 @@ public class App {
                 list.add(type);
             }
             rotorTypes = list.toArray(new RotorType[0]);
+            alphabetString = rotorTypes[0].getAlphabetString();
+            configContainer.getEntryWheelTypes().add(EntryWheel.auto(alphabetString));
+            configContainer.getReflectorTypes().add(Reflector.auto(alphabetString));
         }
         if (opts.containsKey('e')) {
             entryWheelType = getScramblerFromOpt(configContainer,
@@ -78,8 +84,11 @@ public class App {
                                                 ConfigContainer::getReflectorTypes,
                                                 "ReflectorType");
         }
+        if (opts.containsKey('p')) {
+            enigma.initPlugBoard();
+        }
         enigma.init(configContainer, entryWheelType, rotorTypes, reflectorType);
-        if (opts.containsKey('\u0000')) {
+        if (opts.containsKey('-')) {
             String line;
             StringBuilder sb = new StringBuilder();
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -106,27 +115,45 @@ public class App {
                     if (s.length() > 1) {
                         return s.charAt(1);
                     } else {
-                        return '\u0000';
+                        return '-';
                     }
                 }));
     }
 
-    @SuppressWarnings("unchecked")
     private static <T extends ScramblerType<?>> T getScramblerFromOpt(ConfigContainer configContainer,
                                                                       String opt,
-                                                                      Function<ConfigContainer, List<T>> get,
+                                                                      Function<ConfigContainer, List<T>> get,                                                                      String alphabetString,
                                                                       String type) throws ArmatureInitException {
 
-        EntryWheelType entryWheelType;
-        entryWheelType = (EntryWheelType) get.apply(configContainer).stream()
-                .filter(entryWheelType1 -> entryWheelType1.getName().equals(opt))
+        T scramblerType;
+        List<T> scramblerTypes = get.apply(configContainer);
+        scramblerType = scramblerTypes.stream()
+                .filter(scrType -> scrType.getName().equals(opt))
                 .findAny()
                 .orElseThrow(() -> new ArmatureInitException(
                         String.format(
                                 "Couldn't find an %s for param %s",
                                 type,
                                 opt)));
-        return (T) entryWheelType;
+        return scramblerType;
+    }
+
+    private static <T extends ScramblerType<?>> T getScramblerFromOpt(ConfigContainer configContainer,
+                                                                      String opt,
+                                                                      Function<ConfigContainer, List<T>> get,
+                                                                      String type) throws ArmatureInitException {
+
+        T scramblerType;
+        List<T> scramblers = get.apply(configContainer);
+        scramblerType = scramblers.stream()
+                .filter(scrType -> scrType.getName().equals(opt))
+                .findAny()
+                .orElseThrow(() -> new ArmatureInitException(
+                        String.format(
+                                "Couldn't find an %s for param %s",
+                                type,
+                                opt)));
+        return scramblerType;
     }
 
     private static void printGreeting(Terminal terminal, ConfigContainer configContainer) throws IOException {

@@ -4,6 +4,8 @@ import ejigma.exception.ScramblerSettingException;
 import ejigma.model.type.RotorType;
 import ejigma.util.Util;
 
+import java.util.stream.IntStream;
+
 public class Rotor extends ScramblerWheel {
 
     private int ringSetting;
@@ -18,19 +20,28 @@ public class Rotor extends ScramblerWheel {
             RotorType rotorType) throws ScramblerSettingException {
 
         super(alphabetString, wiringString, staticc, rotorType);
-        // TODO validate whether alphabetString contains it + set last if null maybe
-        this.notch = notch;
+        if (notchValid(notch)) {
+            this.notch = notch;
+        } else {
+            this.notch = new char[]{alphabet[alphabet.length - 1]};
+        }
+    }
+
+    private boolean notchValid(char[] notch) {
+        return IntStream.range(0, notch.length)
+                .mapToObj(i -> notch[i])
+                .allMatch(c -> Util.containsChar(alphabet, c));
     }
 
     // TODO update
-//    void setRing(int ringSetting) {
+    void setRing(int ringSetting) {
 //        for (int i = 0, wiringsLength = wirings.length; i < wiringsLength; i++) {
 //            Wiring wiring = wirings[i];
 //            int offsetPos = (i + ringSetting) % wiringsLength;
 //            Wiring offsetWiring = wirings[offsetPos];
 //            wiring.setTarget(offsetWiring.getTarget());
 //        }
-//    }
+    }
 
     public int getRingSetting() {
         return ringSetting;

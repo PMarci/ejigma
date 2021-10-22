@@ -1,5 +1,6 @@
 package ejigma.model;
 
+import ejigma.model.type.CustomRotorType;
 import ejigma.util.ScrambleResult;
 import org.fusesource.jansi.Ansi;
 import org.junit.Before;
@@ -15,12 +16,17 @@ import static org.fusesource.jansi.Ansi.ansi;
 
 public class ScramblerTest {
 
-//    private Rotor errorRotor;
+    private Rotor errorRotor;
 
     @Before
     public void setUp() throws Exception {
-//        String incorrectWiringsString = "A@CDEFGHIJKLMNOPQRSTUVWXYZ";
-//        errorRotor = new Rotor(incorrectWiringsString);
+        String incorrectWiringsString = "A@CDEFGHIJKLMNOPQRSTUVWXYZ";
+        errorRotor = new CustomRotorType(
+                "error",
+                Scrambler.DEFAULT_ALPHABET_STRING,
+                incorrectWiringsString,
+                new char[]{'Q'},
+                false).freshScrambler();
     }
     // TODO fix
 
