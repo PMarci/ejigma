@@ -57,6 +57,7 @@ public class EntryWheel extends ScramblerWheel {
             public EntryWheel freshScrambler() {
                 EntryWheel entryWheel = null;
                 try {
+                    // TODO random option
                     entryWheel = new EntryWheel(alphabetString, alphabetString, this);
                 } catch (ScramblerSettingException e) {
                     e.printStackTrace();

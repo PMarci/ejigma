@@ -4,10 +4,7 @@ import ejigma.exception.ArmatureInitException;
 import ejigma.model.Armature;
 import ejigma.model.Enigma;
 import ejigma.model.Scrambler;
-import ejigma.model.type.EntryWheelType;
-import ejigma.model.type.ReflectorType;
-import ejigma.model.type.RotorType;
-import ejigma.model.type.ScramblerType;
+import ejigma.model.type.*;
 import ejigma.util.ScrambleResult;
 import ejigma.util.Util;
 import org.jline.keymap.BindingReader;
@@ -178,9 +175,6 @@ public class KeyBoard implements Runnable {
                         break;
                 }
             }
-//            breaks arrows outright
-//            bindingReader = new BindingReader(terminal.reader());
-//            rebindKeyMap(alphabetString);
         }
     }
 
@@ -203,7 +197,16 @@ public class KeyBoard implements Runnable {
             try {
                 enigma.forceSetEntryWheel(newType);
                 processSelectRotors();
-                processSelectReflector();
+                if (promptForAuto("Reflector")) {
+                    enigma.setAutoReflector(vNewAlphabetString);
+                } else {
+                    processSelectReflector();
+                }
+                if (promptForAuto("PlugBoard")) {
+                    enigma.setAutoPlugBoard(vNewAlphabetString);
+                } else {
+                    processSelectPlugBoard();
+                }
                 rebindKeyMap(vNewAlphabetString);
             } catch (UserInterruptException e) {
                 enigma.forceSetEntryWheel(oldEntryWheel);
@@ -236,8 +239,17 @@ public class KeyBoard implements Runnable {
             ReflectorType oldReflectorType = enigma.getArmature().getReflectorType();
             try {
                 enigma.forceSetReflector(newType);
-                processSelectEntry();
+                if (promptForAuto("EntryWheel")) {
+                    enigma.setAutoEntryWheel(vNewAlphabetString);
+                } else {
+                    processSelectEntry();
+                }
                 processSelectRotors();
+                if (promptForAuto("PlugBoard")) {
+                    enigma.setAutoPlugBoard(vNewAlphabetString);
+                } else {
+                    processSelectPlugBoard();
+                }
                 rebindKeyMap(vNewAlphabetString);
             } catch (UserInterruptException e) {
                 enigma.forceSetReflector(oldReflectorType);
@@ -251,6 +263,41 @@ public class KeyBoard implements Runnable {
         }
         enigma.getLightBoard().redisplay();
     }
+
+    private void processSelectPlugBoard() {        
+        ScramblerSelectResponse<PlugBoardType> newPlugBoardTypeResponse;
+        newPlugBoardTypeResponse = promptForScramblerType(PlugBoardType.class);
+        PlugBoardType newType = newPlugBoardTypeResponse.getScramblerType();
+        String vNewAlphabetString = newType.getAlphabetString();
+        if (newPlugBoardTypeResponse.isReselect()) {
+            PlugBoardType oldPlugBoardType = (PlugBoardType) enigma.getPlugBoard().getType();
+            try {
+                enigma.forceSetPlugBoard(newType);
+                if (promptForAuto("EntryWheel")) {
+                    enigma.setAutoEntryWheel(vNewAlphabetString);
+                } else {
+                    processSelectEntry();
+                }
+                processSelectRotors();
+                if (promptForAuto("Reflector")) {
+                    enigma.setAutoReflector(vNewAlphabetString);
+                } else {
+                    processSelectReflector();
+                }
+                rebindKeyMap(vNewAlphabetString);
+            } catch (UserInterruptException e) {
+                enigma.forceSetPlugBoard(oldPlugBoardType);
+            }
+        } else {
+            try {
+                enigma.setPlugBoard(newType);
+            } catch (ArmatureInitException e) {
+                selectionReader.printAbove("Can't change PlugBoard: " + e.getMessage());
+            }
+        }
+        enigma.getLightBoard().redisplay();
+    }
+
 
     private <T extends ScramblerType<?>> ScramblerSelectResponse<T> promptForScramblerType(Class<T> scramblerTypeType) {
         boolean choose = true;
@@ -342,6 +389,11 @@ public class KeyBoard implements Runnable {
                         enigma.setAutoReflector(vNewAlphabetString);
                     } else {
                         processSelectReflector();
+                    }
+                    if (promptForAuto("PlugBoard")) {
+                        enigma.setAutoPlugBoard(vNewAlphabetString);
+                    } else {
+                        processSelectPlugBoard();
                     }
                     rebindKeyMap(vNewAlphabetString);
                 } catch (UserInterruptException e) {
@@ -460,6 +512,7 @@ public class KeyBoard implements Runnable {
         }
         return result;
     }
+
 
 //    public boolean paste() throws IOException {
 //        Clipboard clipboard;

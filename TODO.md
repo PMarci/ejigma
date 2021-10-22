@@ -81,6 +81,11 @@
 - [x] open issue about SelectionReader and BindingReader
 - [ ] fully implement PlugBoard
     - [ ] implement interactive setting of PlugBoard
+    - [ ] implement non-interactive setting of PlugBoard
+        - source and dest will most likely have to go into two different options because we cannot guarantee essentially
+          any character being out-of-band for the alphabet
+        - the first charcter not in the current alphabet could be attempted as a separator
+    - [x] add auto method and reselect prompt to other prompts
 - [ ] implement ring settings
 - [ ] settings files
     - [ ] consider using Properties API for settings
@@ -130,7 +135,7 @@
     - [x] maybe with single top level object like so many others
 - [ ] think about delivery, installation
     - [x] single file executable
-         - doesn't work on Windows, maybe try BAT equivalent
+        - doesn't work on Windows, maybe try BAT equivalent
     - [ ] launch4j
         - Minecraft uses it, must be good enough
     - [ ] if all else fails, look into installers

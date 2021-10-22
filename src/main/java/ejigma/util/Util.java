@@ -64,6 +64,7 @@ public class Util {
             i -= 2;
         }
         // for odd numbers of letters
+        // avoided historically due to mechanical limitations
         if (!unswappedIndexList.isEmpty()) {
             int a = unswappedIndexList.remove(0);
             outputArray[a] = alphabetString.charAt(a);

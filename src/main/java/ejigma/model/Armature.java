@@ -4,10 +4,7 @@ import ejigma.exception.ArmatureInitException;
 import ejigma.model.historic.HistoricEntryWheelType;
 import ejigma.model.historic.HistoricReflectorType;
 import ejigma.model.historic.HistoricRotorType;
-import ejigma.model.type.EntryWheelType;
-import ejigma.model.type.ReflectorType;
-import ejigma.model.type.RotorType;
-import ejigma.model.type.ScramblerType;
+import ejigma.model.type.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -101,13 +98,30 @@ public class Armature {
         }
     }
 
-    private void validateAllTypes(EntryWheelType entryWheelType, RotorType[] rotorTypes, ReflectorType reflectorType)
-            throws ArmatureInitException {
+    public static void validateAllTypes(
+        EntryWheelType entryWheelType,
+        RotorType[] rotorTypes,
+        ReflectorType reflectorType) throws ArmatureInitException {
 
         ScramblerType<?>[] allTypes = new ScramblerType[rotorTypes.length + 2];
         System.arraycopy(rotorTypes, 0, allTypes, 0, rotorTypes.length);
         allTypes[rotorTypes.length] = entryWheelType;
         allTypes[rotorTypes.length + 1] = reflectorType;
+        validateAlphabetStrings(allTypes);
+
+    }
+
+    public static void validateAllTypes(
+            EntryWheelType entryWheelType,
+            RotorType[] rotorTypes,
+            ReflectorType reflectorType,
+            PlugBoardType plugBoardType) throws ArmatureInitException {
+
+        ScramblerType<?>[] allTypes = new ScramblerType[rotorTypes.length + 3];
+        System.arraycopy(rotorTypes, 0, allTypes, 0, rotorTypes.length);
+        allTypes[rotorTypes.length] = entryWheelType;
+        allTypes[rotorTypes.length + 1] = reflectorType;
+        allTypes[rotorTypes.length + 2] = plugBoardType;
         validateAlphabetStrings(allTypes);
     }
 
@@ -146,7 +160,7 @@ public class Armature {
         forceSetRotors(types);
     }
 
-    void forceSetRotors(RotorType[] types) {
+    public void forceSetRotors(RotorType[] types) {
         Rotor[] newRotors = initRotors(types);
         tryAndCopyOffsets(newRotors);
         this.rotors = newRotors;

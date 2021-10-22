@@ -3,14 +3,18 @@ package ejigma.model;
 import ejigma.exception.ScramblerSettingException;
 import ejigma.model.type.ScramblerType;
 import ejigma.util.ScrambleResult;
+import ejigma.util.Util;
 
 import java.util.Arrays;
+import java.util.Random;
 
 public class PlugBoard extends Scrambler {
 
+    private static final Random RANDOM = new Random();
+
     public PlugBoard(String alphabetString, String sourceString, String wiringString)
             throws ScramblerSettingException {
-        super(alphabetString, wiringString, getPlugBoardType(alphabetString));
+        super(alphabetString, wiringString, getPlugBoardType(alphabetString, sourceString, wiringString));
         setWiring(sourceString, this.wiringString);
     }
 
@@ -146,9 +150,35 @@ public class PlugBoard extends Scrambler {
         return scramble(input);
     }
 
+    // TODO test
+    // TODO generalize with two other very similar methods
+    public static ScramblerType<PlugBoard> auto(String alphabetString) {
+        int aLen = alphabetString.length();
+        int noOfPairs = RANDOM.nextInt(aLen);
+        int sourceIndex;
+        boolean[] sourceDrawn = new boolean[aLen];
+        Arrays.fill(sourceDrawn, false);
+        StringBuilder sourceBuilder = new StringBuilder();
 
-    private static ScramblerType<PlugBoard> getPlugBoardType(String alphabetString) {
-        return new ScramblerType<>() {
+        if (aLen > 2) {
+            for (int i = 0; i < noOfPairs; i++) {
+                do {
+                    sourceIndex = RANDOM.nextInt(aLen);
+                } while (sourceDrawn[sourceIndex]);
+                sourceDrawn[sourceIndex] = true;
+                sourceBuilder.append(alphabetString.charAt(sourceIndex));
+            }
+        }
+        String source = sourceBuilder.toString();
+        String string = Util.generate2Cycles(source);
+        return getPlugBoardType(alphabetString, source, string);
+    }
+
+    private static ScramblerType<PlugBoard> getPlugBoardType(String alphabetString,
+                                                             String sourceString,
+                                                             String wiringString) {
+        return new ScramblerType<PlugBoard>() {
+
             @Override
             public String getName() {
                 return "PLUGBOARD";
@@ -158,11 +188,19 @@ public class PlugBoard extends Scrambler {
             public PlugBoard freshScrambler() {
                 PlugBoard plugBoard = null;
                 try {
-                    plugBoard = new PlugBoard();
+                    plugBoard = new PlugBoard(alphabetString, sourceString, wiringString);
                 } catch (ScramblerSettingException e) {
                     e.printStackTrace();
                 }
                 return plugBoard;
+            }
+
+            public String getSourceString() {
+                return sourceString;
+            }
+
+            public String getWiringString() {
+                return wiringString;
             }
 
             @Override

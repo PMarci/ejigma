@@ -24,7 +24,7 @@ public abstract class Scrambler {
     int[] forwardLinks;
     int[] reverseLinks;
 
-    Scrambler(String alphabetString, String wiringString, ScramblerType<? extends Scrambler> scramblerType) throws ScramblerSettingException {
+    protected Scrambler(String alphabetString, String wiringString, ScramblerType<? extends Scrambler> scramblerType) throws ScramblerSettingException {
         this.type = scramblerType;
         validateAlphabetString(alphabetString);
         this.alphabetString = alphabetString;
