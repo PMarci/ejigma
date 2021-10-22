@@ -12,19 +12,19 @@ import java.util.*;
 // TODO eventually throw out extension
 public class EnigmaBuffer {
 
-    private boolean tabsToSpaces = true;
-    private boolean autoIndent = false;
-    private boolean wrapping = true;
-    private boolean printLineNumbers = false;
-    private int tabs = 4;
-    private boolean smoothScrolling = true;
-    private boolean mark = false;
-    private boolean searchToReplace = false;
+    private final boolean tabsToSpaces = true;
+    private final boolean autoIndent = false;
+    private final boolean wrapping = true;
+    private final boolean printLineNumbers = false;
+    private final int tabs = 4;
+    private final boolean smoothScrolling = true;
+    private final boolean mark = false;
+    private final boolean searchToReplace = false;
     public final boolean windowsTerminal;
 
     protected int matchedLength = -1;
-    private boolean atBlanks = false;
-    private Size size;
+    private final boolean atBlanks = false;
+    private final Size size;
 
     protected enum CursorMovement {
         RIGHT,

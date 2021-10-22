@@ -332,7 +332,7 @@ public class ScrambleResult {
             } else if (firstMidLast == 1) {
                 wiringThirdPart = String.valueOf(wiringOutput);
             } else {
-                wiringThirdPart = String.valueOf(wiringOutput) + " ═╗";
+                wiringThirdPart = wiringOutput + " ═╗";
             }
             firstLine.append(wiringFirstPart)
                 .append(wiringSecondPart)
