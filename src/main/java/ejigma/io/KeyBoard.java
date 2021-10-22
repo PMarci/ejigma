@@ -201,16 +201,16 @@ public class KeyBoard implements Runnable {
         if (newEntryWheelTypeResponse.isReselect()) {
             EntryWheelType oldEntryWheel = enigma.getArmature().getEntryWheelType();
             try {
-                enigma.getArmature().forceSetEntryWheel(newType);
+                enigma.forceSetEntryWheel(newType);
                 processSelectRotors();
                 processSelectReflector();
                 rebindKeyMap(vNewAlphabetString);
             } catch (UserInterruptException e) {
-                enigma.getArmature().forceSetEntryWheel(oldEntryWheel);
+                enigma.forceSetEntryWheel(oldEntryWheel);
             }
         } else {
             try {
-                enigma.getArmature().setEntryWheel(newType);
+                enigma.setEntryWheel(newType);
             } catch (ArmatureInitException e) {
                 selectionReader.printAbove("Can't change entryWheel: " + e.getMessage());
             }
@@ -235,16 +235,16 @@ public class KeyBoard implements Runnable {
         if (newReflectorTypeResponse.isReselect()) {
             ReflectorType oldReflectorType = enigma.getArmature().getReflectorType();
             try {
-                enigma.getArmature().forceSetReflector(newType);
+                enigma.forceSetReflector(newType);
                 processSelectEntry();
                 processSelectRotors();
                 rebindKeyMap(vNewAlphabetString);
             } catch (UserInterruptException e) {
-                enigma.getArmature().forceSetReflector(oldReflectorType);
+                enigma.forceSetReflector(oldReflectorType);
             }
         } else {
             try {
-                enigma.getArmature().setReflector(newType);
+                enigma.setReflector(newType);
             } catch (ArmatureInitException e) {
                 selectionReader.printAbove("Can't change reflector: " + e.getMessage());
             }
@@ -332,30 +332,37 @@ public class KeyBoard implements Runnable {
             if (newRotorResponse.isReselect()) {
                 RotorType[] oldRotorTypes = enigma.getArmature().getRotorTypes();
                 try {
-                    enigma.getArmature().forceSetRotors(newRotorTypes);
+                    enigma.forceSetRotors(newRotorTypes);
                     if (promptForAuto("EntryWheel")) {
-                        enigma.getArmature().setAutoEntryWheel(vNewAlphabetString);
+                        enigma.setAutoEntryWheel(vNewAlphabetString);
                     } else {
                         processSelectEntry();
                     }
                     if (promptForAuto("Reflector")) {
-                        enigma.getArmature().setAutoReflector(vNewAlphabetString);
+                        enigma.setAutoReflector(vNewAlphabetString);
                     } else {
                         processSelectReflector();
                     }
                     rebindKeyMap(vNewAlphabetString);
                 } catch (UserInterruptException e) {
-                    enigma.getArmature().forceSetRotors(oldRotorTypes);
+                    enigma.forceSetRotors(oldRotorTypes);
                 }
             } else {
                 try {
-                    enigma.getArmature().setRotors(newRotorTypes);
+                    enigma.setRotors(newRotorTypes);
                 } catch (ArmatureInitException e) {
                     selectionReader.printAbove("Can't change rotors: " + e.getMessage());
                 }
             }
-        }
+        } // TODO add else error message branch
         enigma.getLightBoard().redisplay();
+        try {
+            terminal.enterRawMode();
+            terminal.reader().read();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     private int promptForRotorNo() {
@@ -413,9 +420,11 @@ public class KeyBoard implements Runnable {
             }
         }
         // validate with other scramblers, force reselect until compatible
+        Exception exception = null;
         try {
             enigma.getArmature().validateWithCurrent(newRotorTypes);
         } catch (ArmatureInitException e) {
+            exception = e;
             boolean choose = true;
             selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
             while (choose) {
@@ -429,6 +438,9 @@ public class KeyBoard implements Runnable {
                 }
             }
             selectionReader.setVariable(LineReader.DISABLE_COMPLETION, false);
+        }
+        if (exception == null) {
+            response = new ScramblerSelectResponse<>(newRotorTypes, false);
         }
         return response;
     }

@@ -29,15 +29,17 @@ public class App {
             if (!opts.containsKey('-') && !opts.containsKey('f')) {
                 startInteractive(configContainer, enigma, opts);
                 // Non-interactive mode
-            } else startNonInteractive(configContainer, enigma, opts);
+            } else {
+                startNonInteractive(configContainer, enigma, opts);
+            }
         } catch (IOException | ArmatureInitException | ScramblerSettingException e) {
             e.printStackTrace();
         }
     }
 
     private static void startInteractive(ConfigContainer configContainer,
-                                  Enigma enigma,
-                                  Map<Character, List<String>> opts) throws ArmatureInitException, ScramblerSettingException, IOException {
+                                         Enigma enigma,
+                                         Map<Character, List<String>> opts) throws ArmatureInitException, ScramblerSettingException, IOException {
         enigma.init(configContainer);
         if (opts.containsKey('p')) {
             enigma.setPlugBoard(new PlugBoard());
@@ -143,13 +145,15 @@ public class App {
                         String.format(
                                 "The following entry wheel types are available: %n%s%n",
                                 configContainer.getEntryWheelTypes().toString()));
+        terminal.writer().flush();
     }
 
     private static void anyKey(Terminal terminal) {
-        BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
         terminal.writer().write("Press any key to continue");
+        terminal.flush();
         try {
-            input.readLine();
+            terminal.enterRawMode();
+            terminal.reader().read();
         } catch (Exception e) {
             e.printStackTrace();
         }

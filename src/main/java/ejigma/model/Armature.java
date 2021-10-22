@@ -49,7 +49,7 @@ public class Armature {
         this.alphabetString = entryWheelType.getAlphabetString();
         this.rotors = initRotors(rotorTypes);
         this.reflector = initReflector(reflectorType);
-        this.scramblerWiring = initWiring();
+        initWiring();
     }
 
     void click() {
@@ -118,12 +118,12 @@ public class Armature {
 
     public void forceSetEntryWheel(EntryWheelType entryWheelType) {
         this.entryWheel = initEntryWheel(entryWheelType);
-        this.scramblerWiring = initWiring();
+        initWiring();
     }
 
     public void setAutoEntryWheel(String alphabetString) {
         this.entryWheel = EntryWheel.auto(alphabetString).freshScrambler();
-        this.scramblerWiring = initWiring();
+        initWiring();
     }
 
     public void setReflector(ReflectorType reflectorType) throws ArmatureInitException {
@@ -133,12 +133,12 @@ public class Armature {
 
     public void forceSetReflector(ReflectorType reflectorType) {
         this.reflector = initReflector(reflectorType);
-        this.scramblerWiring = initWiring();
+        initWiring();
     }
 
     public void setAutoReflector(String alphabetString) {
         this.reflector = Reflector.auto(alphabetString).freshScrambler();
-        this.scramblerWiring = initWiring();
+        initWiring();
     }
 
     public void setRotors(RotorType[] types) throws ArmatureInitException {
@@ -146,11 +146,11 @@ public class Armature {
         forceSetRotors(types);
     }
 
-    public void forceSetRotors(RotorType[] types) {
+    void forceSetRotors(RotorType[] types) {
         Rotor[] newRotors = initRotors(types);
         tryAndCopyOffsets(newRotors);
         this.rotors = newRotors;
-        this.scramblerWiring = initWiring();
+        initWiring();
     }
 
     private void tryAndCopyOffsets(Rotor[] newRotors) {
@@ -222,15 +222,11 @@ public class Armature {
         return reflectorType.freshScrambler();
     }
 
-    private List<ScramblerMounting> initWiring() {
-        return initWiring(entryWheel, rotors, reflector);
-    }
-
-    private static List<ScramblerMounting> initWiring(EntryWheel entryWheel, Rotor[] rotors, Reflector reflector) {
+    private void initWiring() {
         // + 1 for exclusive
         // + 2 for 2x entryWheel
         int endExclusive = rotors.length * 2 + 3;
-        return IntStream.range(0, endExclusive).sequential()
+        this.scramblerWiring = IntStream.range(0, endExclusive).sequential()
                 .mapToObj(value -> {
                     ScramblerMounting result;
                     if (value == 0) {
