@@ -360,7 +360,7 @@ public class KeyBoard implements Runnable {
     // cant unify due to type erasure
     private ScramblerSelectResponse<PlugBoardType> promptForPlugBoard() {
         String prompt = "Enter new PlugBoard settings. Separate the source and wiring strings \n" +
-                " with a letter not contained in the alphabet: ";
+                " with a letter not contained in the current alphabet: ";
         String denyString = "Not setting PlugBoard...";
         ScramblerSelectResponse<PlugBoardType> response = null;
         String initString = "";

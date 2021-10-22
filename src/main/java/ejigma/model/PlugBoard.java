@@ -74,6 +74,7 @@ public class PlugBoard extends Scrambler {
                        )
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
+        // Do something about the message in situations like PlugBoardTest.testo5
         if (!chainWired.isEmpty()) {
             String chainElements = chainWired.entrySet().stream()
                     .map(entry -> {
@@ -204,15 +205,21 @@ public class PlugBoard extends Scrambler {
         return scramble(input);
     }
 
+    // TODO document reset via empty
     public static String[] splitInitString(String alphabetString, String initString) throws ScramblerSettingException {
         String denyStringFormat = "Not a valid initString! Reason: %s";
         String reasonUnequal = "Source and wiring Strings are of unequal length!";
         String reasonInvalidSeparator = "No separator character outside the current alphabet found!";
-        int splitIndex = IntStream.range(0, initString.length())
-                .filter(i -> alphabetString.indexOf(initString.charAt(i)) == -1)
-                .findFirst()
-                .orElseThrow(() -> new ScramblerSettingException(String.format(denyStringFormat, reasonInvalidSeparator)));
-        String[] result = new String[]{initString.substring(0, splitIndex), initString.substring(splitIndex + 1)};
+        String[] result;
+        if (!initString.isEmpty()) {
+            int splitIndex = IntStream.range(0, initString.length())
+                    .filter(i -> alphabetString.indexOf(initString.charAt(i)) == -1)
+                    .findFirst()
+                    .orElseThrow(() -> new ScramblerSettingException(String.format(denyStringFormat, reasonInvalidSeparator)));
+            result = new String[]{initString.substring(0, splitIndex), initString.substring(splitIndex + 1)};
+        } else {
+            result = new String[]{"", ""};
+        }
         if (result[0].length() != result[1].length()) {
             throw new ScramblerSettingException(String.format(denyStringFormat, reasonUnequal));
         }
