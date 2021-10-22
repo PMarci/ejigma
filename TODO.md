@@ -34,7 +34,7 @@
     - [ ] print help that reflects current keymap config
     - will need to deal with collisions
 - [ ] print help at beginning
-    - [ ] fix unreliable anyKey
+    - [x] fix unreliable anyKey
 - [ ] option to print auto entry/reflector for portability
     - [ ] maybe do something sneaky for "security"
         - like gpg/rsa/ssh/whatever barcode thing
@@ -127,13 +127,12 @@
     - [ ] histogram and other widgets to demonstrate attack vectors
     - [ ] BOMB cracking simulation
 - [ ] create an API-like version for use in a web service for example
-    - [ ] maybe with single top level object like so many others
+    - [x] maybe with single top level object like so many others
 - [ ] think about delivery, installation
     - [x] single file executable
-        - [ ] doesn't work on Windows
-            - [ ] maybe try BAT equivalent
+         - doesn't work on Windows, maybe try BAT equivalent
     - [ ] launch4j
-        - [ ] Minecraft uses it, must be good enough
+        - Minecraft uses it, must be good enough
     - [ ] if all else fails, look into installers
 - [ ] Generalize across rotary cypher machines
     - [ ] what's an Uhr?
