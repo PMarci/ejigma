@@ -30,6 +30,7 @@
             <!-- don't upgrade to 3.X.X -->
             <version>2.5.0</version>
         </dependency>
+
         <!--jdk 9+ fix-->
         <dependency>
             <groupId>javax.xml.bind</groupId>
@@ -42,6 +43,7 @@
             <artifactId>jline</artifactId>
             <version>3.20.0</version>
         </dependency>
+
         <dependency>
             <groupId>org.jline</groupId>
             <artifactId>jline-terminal-jansi</artifactId>

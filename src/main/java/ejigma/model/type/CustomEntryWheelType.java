@@ -10,7 +10,7 @@ import java.io.Serializable;
 
 @XmlRootElement(name = "customEntryWheelType")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class CustomEntryWheelType implements EntryWheelType, Serializable {
+public class CustomEntryWheelType implements CustomScramblerType<EntryWheel>, EntryWheelType, Serializable {
 
     private String name;
     private String alphabetString;

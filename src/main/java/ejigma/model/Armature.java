@@ -145,13 +145,13 @@ public class Armature {
             EntryWheelType entryWheelType,
             RotorType[] rotorTypes,
             ReflectorType reflectorType,
-            PlugBoardType plugBoardType) throws ArmatureInitException {
+            PlugBoardConfig plugBoardConfig) throws ArmatureInitException {
 
         ScramblerType<?>[] allTypes = new ScramblerType[rotorTypes.length + 3];
         System.arraycopy(rotorTypes, 0, allTypes, 0, rotorTypes.length);
         allTypes[rotorTypes.length] = entryWheelType;
         allTypes[rotorTypes.length + 1] = reflectorType;
-        allTypes[rotorTypes.length + 2] = plugBoardType;
+        allTypes[rotorTypes.length + 2] = plugBoardConfig;
         validateAlphabetStrings(allTypes);
     }
 
@@ -329,5 +329,9 @@ public class Armature {
 
     public String getAlphabetString() {
         return alphabetString;
+    }
+
+    public Rotor[] getRotors() {
+        return rotors;
     }
 }

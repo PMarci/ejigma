@@ -67,7 +67,6 @@ public class LightBoard {
     }
 
     public void display(List<AttributedString> toDisplay) {
-        // TODO needed?
         size.copy(terminal.getSize());
         resetDisplay();
         // not updated with fullscreen=false
@@ -89,7 +88,7 @@ public class LightBoard {
 //            resetDisplay();
 //        }
         // status needs to be drawn over display if fullscreen=false
-        // TODO see if any downside to forcing update every time with reset
+        // TORDO see if any downside to forcing update every time with reset
 //        status.reset();
 //        status.update(Arrays.asList(createStatusStringL1(), createStatusStringL2()));
         this.oldLines = toDisplay;
@@ -161,7 +160,7 @@ public class LightBoard {
 
     public void handleWinch(Signal signal) {
         size.copy(terminal.getSize());
-//            TODO here's what jline Nano does with WINCH
+//            here's what jline Nano does with WINCH
 //            buffer.computeAllOffsets();
 //            buffer.moveToChar(buffer.offsetInLine + buffer.column);
         resetDisplay();

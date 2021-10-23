@@ -6,10 +6,11 @@ import ejigma.model.Reflector;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 
 @XmlRootElement(name = "customReflectorType")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class CustomReflectorType implements ReflectorType {
+public class CustomReflectorType implements CustomScramblerType<Reflector>, ReflectorType, Serializable {
 
 
     private String name;

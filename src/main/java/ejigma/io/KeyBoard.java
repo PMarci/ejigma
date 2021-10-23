@@ -2,10 +2,7 @@ package ejigma.io;
 
 import ejigma.exception.ArmatureInitException;
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.Armature;
-import ejigma.model.Enigma;
-import ejigma.model.PlugBoard;
-import ejigma.model.Scrambler;
+import ejigma.model.*;
 import ejigma.model.type.*;
 import ejigma.util.ScrambleResult;
 import ejigma.util.Util;
@@ -125,6 +122,7 @@ public class KeyBoard implements Runnable {
         RESET_OFFSETS,
         CLEAR_BUFFER,
         DETAIL_MODE_TOGGLE,
+        PRINT_ROTORS,
         UP,
         DOWN,
         LEFT,
@@ -172,6 +170,9 @@ public class KeyBoard implements Runnable {
                         break;
                     case DETAIL_MODE_TOGGLE:
                         processDetailModeToggle();
+                        break;
+                    case PRINT_ROTORS:
+                        processPrintRotors();
                         break;
                     case UP:
                     case DOWN:
@@ -269,12 +270,12 @@ public class KeyBoard implements Runnable {
     }
 
     private void processSelectPlugBoard() {
-        ScramblerSelectResponse<PlugBoardType> newPlugBoardTypeResponse;
+        ScramblerSelectResponse<PlugBoardConfig> newPlugBoardTypeResponse;
         newPlugBoardTypeResponse = promptForPlugBoard();
-        PlugBoardType newType = newPlugBoardTypeResponse.getScramblerType();
+        PlugBoardConfig newType = newPlugBoardTypeResponse.getScramblerType();
         String vNewAlphabetString = newType.getAlphabetString();
         if (newPlugBoardTypeResponse.isReselect()) {
-            PlugBoardType oldPlugBoardType = (PlugBoardType) enigma.getPlugBoard().getType();
+            PlugBoardConfig oldPlugBoardConfig = (PlugBoardConfig) enigma.getPlugBoard().getType();
             try {
                 enigma.forceSetPlugBoard(newType.freshScrambler());
                 if (promptForAuto("EntryWheel")) {
@@ -290,7 +291,7 @@ public class KeyBoard implements Runnable {
                 }
                 rebindKeyMap(vNewAlphabetString);
             } catch (UserInterruptException e) {
-                enigma.forceSetPlugBoard(oldPlugBoardType.freshScrambler());
+                enigma.forceSetPlugBoard(oldPlugBoardConfig.freshScrambler());
             }
         } else {
             try {
@@ -357,26 +358,26 @@ public class KeyBoard implements Runnable {
         return response;
     }
 
-    // cant unify due to type erasure
-    private ScramblerSelectResponse<PlugBoardType> promptForPlugBoard() {
+    // can't unify due to type erasure
+    private ScramblerSelectResponse<PlugBoardConfig> promptForPlugBoard() {
         String prompt = "Enter new PlugBoard settings. Separate the source and wiring strings \n" +
                 " with a letter not contained in the current alphabet: ";
         String denyString = "Not setting PlugBoard...";
-        ScramblerSelectResponse<PlugBoardType> response = null;
+        ScramblerSelectResponse<PlugBoardConfig> response = null;
         String initString = "";
         boolean choose = true;
         boolean choose2 = true;
         while (choose) {
             ArmatureInitException aException = null;
             ScramblerSettingException sException;
-            PlugBoardType plugBoardType = null;
+            PlugBoardConfig plugBoardConfig = null;
             selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
             do {
                 initString = selectionReader.readLine(prompt).trim();
                 sException = null;
                 try {
-                    plugBoardType = PlugBoard.getPlugBoardType(alphabetString, initString);
-                    enigma.validateWithCurrent(plugBoardType);
+                    plugBoardConfig = PlugBoard.getPlugBoardType(alphabetString, initString);
+                    enigma.validateWithCurrent(plugBoardConfig);
                 } catch (ArmatureInitException e) {
                     aException = e;
                 } catch (ScramblerSettingException e) {
@@ -388,7 +389,7 @@ public class KeyBoard implements Runnable {
                 while (choose2) {
                     String yn = selectionReader.readLine(aException.getMessage() + SWITCH_PROMPT).trim();
                     if ("y".equals(yn) || "Y".equals(yn)) {
-                        response = new ScramblerSelectResponse<>(plugBoardType, true);
+                        response = new ScramblerSelectResponse<>(plugBoardConfig, true);
                         choose = false;
                         choose2 = false;
                     } else if ("n".equals(yn) || "N".equals(yn)) {
@@ -397,11 +398,10 @@ public class KeyBoard implements Runnable {
                     }
                 }
             } else {
-                response = new ScramblerSelectResponse<>(plugBoardType, false);
+                response = new ScramblerSelectResponse<>(plugBoardConfig, false);
                 choose = false;
             }
         }
-        // TODO maybe it needs to be disabled for the main loop
         selectionReader.setVariable(LineReader.DISABLE_COMPLETION, false);
         return response;
     }
@@ -418,13 +418,12 @@ public class KeyBoard implements Runnable {
     private void processSelectRotors() {
         // rotor no prompt
         int rotorNo;
-        ScramblerSelectResponse<RotorType> newRotorResponse;
         selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
         rotorNo = promptForRotorNo();
         selectionReader.setVariable(LineReader.DISABLE_COMPLETION, false);
         // rotor type prompt
         selectCompleter.setCompleter(RotorType.class);
-        newRotorResponse = promptForRotorTypes(rotorNo);
+        ScramblerSelectResponse<RotorType> newRotorResponse = promptForRotorTypes(rotorNo);
         if (newRotorResponse != null) {
             RotorType[] newRotorTypes = newRotorResponse.getScramblerTypes();
             String vNewAlphabetString = newRotorTypes[0].getAlphabetString();
@@ -458,7 +457,7 @@ public class KeyBoard implements Runnable {
                     selectionReader.printAbove("Can't change rotors: " + e.getMessage());
                 }
             }
-        } // TODO add else error message branch
+        }
     }
 
     private int promptForRotorNo() {
@@ -602,7 +601,7 @@ public class KeyBoard implements Runnable {
 //            String value;
 //
 //            if (content instanceof Reader) {
-//                // TODO: we might want instead connect to the input stream
+//                // TORDO: we might want instead connect to the input stream
 //                // so we can interpret individual lines
 //                value = "";
 //                String line;
@@ -748,6 +747,14 @@ public class KeyBoard implements Runnable {
         terminal.puts(InfoCmp.Capability.cursor_down);
         terminal.puts(InfoCmp.Capability.clear_screen);
         enigma.getLightBoard().toggleDetailMode();
+    }
+
+    private void processPrintRotors() {
+        Rotor[] rotors = enigma.getArmature().getRotors();
+        for (int i = 0; i < rotors.length; i++) {
+            Rotor rotor = rotors[i];
+
+        }
     }
 
     private void processQuit() {

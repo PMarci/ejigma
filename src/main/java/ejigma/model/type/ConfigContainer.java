@@ -1,40 +1,76 @@
 package ejigma.model.type;
 
+import ejigma.model.Scrambler;
 import ejigma.model.historic.HistoricEntryWheelType;
+import ejigma.model.historic.HistoricPlugBoardConfig;
 import ejigma.model.historic.HistoricReflectorType;
 import ejigma.model.historic.HistoricRotorType;
 import ejigma.util.TypeLoader;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
+@SuppressWarnings("unused")
 public class ConfigContainer {
 
+    private final JAXBContext jaxbContext = initJaxbContext();
     private List<RotorType> rotorTypes;
     private List<ReflectorType> reflectorTypes;
     private List<EntryWheelType> entryWheelTypes;
+    private List<PlugBoardConfig> customPlugBoardConfigs;
+    TypeLoader typeLoader = new TypeLoader(jaxbContext);
 
     public ConfigContainer() {
-        this.rotorTypes = new ArrayList<>();
-        this.rotorTypes.addAll(getHRotorTypes());
-        List<RotorType> cRotorTypes = TypeLoader.loadCustomRotorTypes();
-        if (cRotorTypes != null && !cRotorTypes.isEmpty()) {
-            this.rotorTypes.addAll(cRotorTypes);
+        this.entryWheelTypes = initScramblerTypes(
+                CustomEntryWheelType.class,
+                ConfigContainer::getHEntryWheelTypes,
+                TypeLoader.ENTRYWHEEL_TYPES_FOLDER);
+        this.rotorTypes = initScramblerTypes(
+                CustomRotorType.class,
+                ConfigContainer::getHRotorTypes,
+                TypeLoader.ROTOR_TYPES_FOLDER);
+        this.reflectorTypes = initScramblerTypes(
+                CustomReflectorType.class,
+                ConfigContainer::getHReflectorTypes,
+                TypeLoader.REFLECTOR_TYPES_FOLDER);
+        this.customPlugBoardConfigs = initScramblerTypes(
+                CustomPlugBoardConfig.class,
+                ConfigContainer::getHPlugBoardConfigs,
+                TypeLoader.ENTRYWHEEL_TYPES_FOLDER);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <C extends T, T extends ScramblerType<S>, S extends Scrambler> List<T> initScramblerTypes(
+            Class<? extends CustomScramblerType<S>> customScramblerTypeClass,
+            Supplier<List<C>> historicSupplier,
+            String subFolder) {
+
+        List<ScramblerType<S>> scramblerTypes = new ArrayList<>(historicSupplier.get());
+        List<? extends CustomScramblerType<S>> cScramblerTypes =
+                typeLoader.loadCustomScramblerTypes(customScramblerTypeClass, subFolder);
+        if (!cScramblerTypes.isEmpty()) {
+            scramblerTypes.addAll(cScramblerTypes);
         }
-        this.reflectorTypes = new ArrayList<>();
-        this.reflectorTypes.addAll(getHReflectorTypes());
-        List<ReflectorType> cReflectorTypes = TypeLoader.loadCustomReflectorTypes();
-        if (!cReflectorTypes.isEmpty()) {
-            this.reflectorTypes.addAll(cReflectorTypes);
+        return (List<T>) scramblerTypes;
+    }
+
+    private static JAXBContext initJaxbContext() {
+        JAXBContext result = null;
+        try {
+            result = JAXBContext.newInstance(
+                    CustomRotorType.class,
+                    CustomReflectorType.class,
+                    CustomEntryWheelType.class,
+                    CustomPlugBoardConfig.class);
+        } catch (JAXBException e) {
+            e.printStackTrace();
         }
-        this.entryWheelTypes = new ArrayList<>();
-        this.entryWheelTypes.addAll(getHEntryWheelTypes());
-        List<EntryWheelType> cEntryWheelTypes = TypeLoader.loadCustomEntryWheelTypes();
-        if (!cEntryWheelTypes.isEmpty()) {
-            this.entryWheelTypes.addAll(cEntryWheelTypes);
-        }
+        return result;
     }
 
     @SuppressWarnings("unchecked")
@@ -48,6 +84,10 @@ public class ConfigContainer {
             result = (List<T>) getEntryWheelTypes();
         }
         return result;
+    }
+
+    public JAXBContext getJaxbContext() {
+        return jaxbContext;
     }
 
     public List<RotorType> getRotorTypes() {
@@ -74,6 +114,14 @@ public class ConfigContainer {
         this.entryWheelTypes = entryWheelTypes;
     }
 
+    public List<PlugBoardConfig> getCustomPlugBoardConfigs() {
+        return customPlugBoardConfigs;
+    }
+
+    public void setCustomPlugBoardConfigs(List<PlugBoardConfig> customPlugBoardConfigs) {
+        this.customPlugBoardConfigs = customPlugBoardConfigs;
+    }
+
     public static List<HistoricRotorType> getHRotorTypes() {
         return getEnumConstants(HistoricRotorType.class);
     }
@@ -86,7 +134,11 @@ public class ConfigContainer {
         return getEnumConstants(HistoricEntryWheelType.class);
     }
 
-    private static <T extends ScramblerType<?>> List<T> getEnumConstants(Class<? extends T> enu) {
+    public static List<HistoricPlugBoardConfig> getHPlugBoardConfigs() {
+        return getEnumConstants(HistoricPlugBoardConfig.class);
+    }
+
+    private static <S extends Scrambler, T extends ScramblerType<S>> List<T> getEnumConstants(Class<? extends T> enu) {
         T[] enumConstants = enu.getEnumConstants();
         List<T> result = Collections.emptyList();
         if (enumConstants != null) {

@@ -1,7 +1,7 @@
 package ejigma.model;
 
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.type.PlugBoardType;
+import ejigma.model.type.PlugBoardConfig;
 import ejigma.util.ScrambleResult;
 import ejigma.util.Util;
 
@@ -228,7 +228,7 @@ public class PlugBoard extends Scrambler {
 
     // TODO test
     // TODO generalize with two other very similar methods
-    public static PlugBoardType auto(String alphabetString) {
+    public static PlugBoardConfig auto(String alphabetString) {
         int aLen = alphabetString.length();
         int noOfPairs = RANDOM.nextInt(aLen);
         int sourceIndex;
@@ -250,35 +250,20 @@ public class PlugBoard extends Scrambler {
         return getPlugBoardType(alphabetString, source, string);
     }
 
-    public static PlugBoardType getPlugBoardType(String alphabetString,
-                                                 String initString) throws ScramblerSettingException {
+    public static PlugBoardConfig getPlugBoardType(String alphabetString,
+                                                   String initString) throws ScramblerSettingException {
         String[] initStrings = PlugBoard.splitInitString(alphabetString, initString);
         return getPlugBoardType(alphabetString, initStrings[0], initStrings[1]);
     }
 
-    private static PlugBoardType getPlugBoardType(String alphabetString,
-                                                  String sourceString,
-                                                  String wiringString) {
-        return new PlugBoardType() {
+    private static PlugBoardConfig getPlugBoardType(String alphabetString,
+                                                    String sourceString,
+                                                    String wiringString) {
+        return new PlugBoardConfig() {
 
             @Override
             public String getName() {
                 return "PLUGBOARD";
-            }
-
-            @Override
-            public PlugBoard freshScrambler() {
-                PlugBoard plugBoard = null;
-                try {
-                    plugBoard = new PlugBoard(alphabetString, sourceString, wiringString);
-                } catch (ScramblerSettingException e) {
-                    e.printStackTrace();
-                }
-                return plugBoard;
-            }
-
-            public PlugBoard unsafeScrambler() throws ScramblerSettingException {
-                return new PlugBoard(alphabetString, sourceString, wiringString);
             }
 
             @Override

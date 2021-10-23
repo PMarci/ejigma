@@ -64,7 +64,7 @@ public class ArmatureTest {
 
     @Test
     public void testDoubleStep() throws ScramblerSettingException {
-        // TODO pdf with ADO
+        // TODO pdf with ADO and wiki example with ADV but with the third notch aligned as well (PDV)
 //        wikiEnigma.forceSetRotors(new RotorType[]{HistoricRotorType.I, HistoricRotorType.II, HistoricRotorType.III});
         wikiEnigma.setOffsets("PDV");
         String output = wikiEnigma.scramble(thirtyAs + thirtyAs + thirtyAs);

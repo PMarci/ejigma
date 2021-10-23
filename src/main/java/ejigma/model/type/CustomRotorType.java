@@ -10,7 +10,7 @@ import java.io.Serializable;
 
 @XmlRootElement(name = "customRotorType")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class CustomRotorType implements RotorType, Serializable {
+public class CustomRotorType implements CustomScramblerType<Rotor>, RotorType, Serializable {
 
     private String name;
     private String alphabetString;

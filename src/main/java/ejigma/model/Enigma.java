@@ -149,7 +149,7 @@ public class Enigma {
         initWiring();
     }
 
-    public void setPlugBoard(PlugBoardType newType) throws ArmatureInitException, ScramblerSettingException {
+    public void setPlugBoard(PlugBoardConfig newType) throws ArmatureInitException, ScramblerSettingException {
         validateWithCurrent(newType);
         // TODO more elegant handling
         PlugBoard plugBoard = newType.unsafeScrambler();
@@ -168,12 +168,12 @@ public class Enigma {
         initWiring();
     }
 
-    public void validateWithCurrent(PlugBoardType plugBoardType) throws ArmatureInitException {
+    public void validateWithCurrent(PlugBoardConfig plugBoardConfig) throws ArmatureInitException {
             Armature.validateAllTypes(
                     armature.getEntryWheelType(),
                     armature.getRotorTypes(),
                     armature.getReflectorType(),
-                    plugBoardType);
+                    plugBoardConfig);
     }
 
     private void initWiring() {

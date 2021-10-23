@@ -679,6 +679,7 @@ public class EnigmaBuffer {
                 cursor += column - firstColumnToDisplay + (firstColumnToDisplay > 0 ? 1 : 0);
                 break;
             } else {
+                // TODO gets thrown when a dumb terminal is opened in IntelliJ and some other situations
                 throw new IllegalStateException();
             }
         }

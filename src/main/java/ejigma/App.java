@@ -2,7 +2,10 @@ package ejigma;
 
 import ejigma.exception.ArmatureInitException;
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.*;
+import ejigma.model.Armature;
+import ejigma.model.Enigma;
+import ejigma.model.EntryWheel;
+import ejigma.model.Reflector;
 import ejigma.model.type.*;
 import ejigma.util.ScrambleResult;
 import org.jline.terminal.Terminal;
@@ -57,7 +60,7 @@ public class App {
         EntryWheelType entryWheelType = Armature.DEFAULT_ENTRY_WHEEL_TYPE;
         ReflectorType reflectorType = Armature.DEFAULT_REFLECTOR_TYPE;
         // TODO improve option for auto
-        String alphabetString = Scrambler.DEFAULT_ALPHABET_STRING;
+        String alphabetString;
         if (opts.containsKey('r')) {
             List<RotorType> list = new ArrayList<>();
             for (String s : opts.get('r')) {
@@ -122,24 +125,6 @@ public class App {
 
     private static <T extends ScramblerType<?>> T getScramblerFromOpt(ConfigContainer configContainer,
                                                                       String opt,
-                                                                      Function<ConfigContainer, List<T>> get,                                                                      String alphabetString,
-                                                                      String type) throws ArmatureInitException {
-
-        T scramblerType;
-        List<T> scramblerTypes = get.apply(configContainer);
-        scramblerType = scramblerTypes.stream()
-                .filter(scrType -> scrType.getName().equals(opt))
-                .findAny()
-                .orElseThrow(() -> new ArmatureInitException(
-                        String.format(
-                                "Couldn't find an %s for param %s",
-                                type,
-                                opt)));
-        return scramblerType;
-    }
-
-    private static <T extends ScramblerType<?>> T getScramblerFromOpt(ConfigContainer configContainer,
-                                                                      String opt,
                                                                       Function<ConfigContainer, List<T>> get,
                                                                       String type) throws ArmatureInitException {
 
@@ -170,7 +155,10 @@ public class App {
                                 configContainer.getReflectorTypes().toString()) +
                         String.format(
                                 "The following entry wheel types are available: %n%s%n",
-                                configContainer.getEntryWheelTypes().toString()));
+                                configContainer.getEntryWheelTypes().toString()) +
+                        String.format(
+                                "The following plugboard configs are available: %n%s%n",
+                                configContainer.getCustomPlugBoardConfigs().toString()));
         terminal.writer().flush();
     }
 

@@ -1,6 +1,7 @@
 package ejigma.util;
 
 import ejigma.exception.TypeLoaderError;
+import ejigma.model.Scrambler;
 import ejigma.model.type.*;
 import org.eclipse.persistence.jaxb.UnmarshallerProperties;
 
@@ -27,50 +28,69 @@ import java.util.stream.Stream;
 
 public class TypeLoader {
 
-    private static final JAXBContext jaxbContext = initJaxbContext();
+    private final JAXBContext jaxbContext;
 
-    private static final String PATH = getPath();
+    private static final String STATIC_PATH = getStaticPath();
+    public static final String ENTRYWHEEL_TYPES_FOLDER = "entrywheels";
+    public static final String ROTOR_TYPES_FOLDER = "rotors";
+    public static final String REFLECTOR_TYPES_FOLDER = "reflectors";
+    public static final String PLUGBOARD_CONFIGS_FOLDER = "plugboardconfigs";
 
-    private TypeLoader() {
-        // hiding
+    public TypeLoader(JAXBContext jaxbContext) {
+        this.jaxbContext = jaxbContext;
     }
 
-    public static List<RotorType> loadCustomRotorTypes() {
-        List<RotorType> rotorTypes = Collections.emptyList();
+    public List<CustomEntryWheelType> loadCustomEntryWheelTypes() {
+        return loadCustomScramblerTypes(
+                CustomEntryWheelType.class,
+                ENTRYWHEEL_TYPES_FOLDER);
+    }
+
+    public List<CustomRotorType> loadCustomRotorTypes() {
+        return loadCustomScramblerTypes(CustomRotorType.class, ROTOR_TYPES_FOLDER);
+    }
+
+    public List<CustomReflectorType> loadCustomReflectorTypes() {
+        return loadCustomScramblerTypes(CustomReflectorType.class, REFLECTOR_TYPES_FOLDER);
+    }
+
+    public List<CustomPlugBoardConfig> loadCustomPlugBoardConfigs() {
+        return loadCustomScramblerTypes(CustomPlugBoardConfig.class, PLUGBOARD_CONFIGS_FOLDER);
+    }
+
+    public <C extends CustomScramblerType<S>, S extends Scrambler> List<C> loadCustomScramblerTypes(
+            Class<C> customScramblerTypeClass,
+            String subFolder) {
+        List<C> scramblerTypes = Collections.emptyList();
         try {
-            rotorTypes = getCustomRotorTypes();
+            scramblerTypes = getCustomScramblerTypes(customScramblerTypeClass, subFolder);
         } catch (JAXBException | URISyntaxException | IOException e) {
             e.printStackTrace();
         }
-        return rotorTypes;
+        return scramblerTypes;
     }
 
-    public static List<ReflectorType> loadCustomReflectorTypes() {
-        // TODO
-        return Collections.emptyList();
-    }
+    private <C extends CustomScramblerType<S>, S extends Scrambler> List<C> getCustomScramblerTypes(
+            Class<C> customScramblerTypeClass,
+            String subFolder) throws JAXBException, IOException, URISyntaxException {
 
-    public static List<EntryWheelType> loadCustomEntryWheelTypes() {
-        // TODO
-        return Collections.emptyList();
-    }
-
-    private static List<RotorType> getCustomRotorTypes() throws JAXBException, IOException, URISyntaxException {
-        List<RotorType> result;
-        URI uri = new URI(PATH);
+        List<C> result;
+        URI uri = new URI(STATIC_PATH + subFolder);
 
         if (uri.getScheme().equals("jar")) {
-            result = getJarFiles(uri);
+            result = getJarScramblerTypes(customScramblerTypeClass, uri);
         } else {
-            result = getFSFiles(uri);
+            result = getFSScramblerTypes(customScramblerTypeClass, uri);
 
         }
         return result;
     }
 
-    private static List<RotorType> getFSFiles(URI uri) throws JAXBException, IOException {
-        List<RotorType> result = new ArrayList<>();
-        CustomRotorType customRotorType;
+    private <C extends CustomScramblerType<S>, S extends Scrambler> List<C> getFSScramblerTypes(
+            Class<C> customScramblerTypeClass,
+            URI uri) throws JAXBException, IOException {
+        List<C> result = new ArrayList<>();
+        C scramblerType;
         List<Path> sourceFiles = Collections.emptyList();
         try (Stream<Path> paths = Files.walk(Paths.get(uri), 1)) {
             if (paths != null) {
@@ -84,24 +104,30 @@ public class TypeLoader {
             InputStreamReader reader =
                     new InputStreamReader(new FileInputStream(sourcePath.toFile()), StandardCharsets.UTF_8);
             StreamSource source = new StreamSource(reader);
-            JAXBElement<CustomRotorType> customRotorTypeElem = unmarshaller.unmarshal(source, CustomRotorType.class);
+            JAXBElement<C> customRotorTypeElem =
+                    unmarshaller.unmarshal(source, customScramblerTypeClass);
             if (customRotorTypeElem != null) {
-                customRotorType = customRotorTypeElem.getValue();
-                if (customRotorType != null) {
-                    result.add(customRotorType);
+                scramblerType = customRotorTypeElem.getValue();
+                if (scramblerType != null) {
+                    result.add(scramblerType);
                 }
             }
         }
         return result;
     }
 
-    private static List<RotorType> getJarFiles(URI uri) throws IOException, JAXBException {
-        List<RotorType> result = new ArrayList<>();
-        CustomRotorType customRotorType;
+
+    private <C extends CustomScramblerType<S>, S extends Scrambler> List<C> getJarScramblerTypes(
+            Class<C> customScramblerClass,
+            URI uri) throws IOException, JAXBException {
+
+        List<C> result = new ArrayList<>();
+        C scramblerType;
         List<Path> sourceFiles;
         Path myPath;
         try (FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.emptyMap())) {
-            myPath = fileSystem.getPath(PATH.substring(PATH.indexOf('!') + 1));
+            String uriExtPath = uri.toString();
+            myPath = fileSystem.getPath(uriExtPath.substring(uriExtPath.indexOf('!') + 1));
             sourceFiles = Collections.emptyList();
             try (Stream<Path> paths = Files.walk(myPath, 1)) {
                 if (paths != null) {
@@ -118,22 +144,31 @@ public class TypeLoader {
                             reader = new InputStreamReader(ins);
                         }
                         source = new StreamSource(reader);
-                        JAXBElement<CustomRotorType> customRotorTypeElem =
-                                unmarshaller.unmarshal(source, CustomRotorType.class);
+                        JAXBElement<C> customRotorTypeElem =
+                                unmarshaller.unmarshal(source, customScramblerClass);
                         if (customRotorTypeElem != null) {
-                            customRotorType = customRotorTypeElem.getValue();
-                            if (customRotorType != null) {
-                                result.add(customRotorType);
+                            scramblerType = customRotorTypeElem.getValue();
+                            if (scramblerType != null) {
+                                result.add(scramblerType);
                             }
                         }
                     }
                 }
+            } catch (NoSuchFileException e) {
+                // ignored, msg
             }
         }
         return result;
     }
 
-    private static String getPath() {
+    private Unmarshaller getUnmarshaller() throws JAXBException {
+        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        unmarshaller.setProperty(UnmarshallerProperties.MEDIA_TYPE, "application/json");
+        unmarshaller.setProperty(UnmarshallerProperties.JSON_INCLUDE_ROOT, false);
+        return unmarshaller;
+    }
+
+    private static String getStaticPath() {
         Class<TypeLoader> typeLoaderClass = TypeLoader.class;
         URL result = typeLoaderClass.getResource("");
         Optional<URL> resourceOpt = Optional.ofNullable(result);
@@ -145,24 +180,4 @@ public class TypeLoader {
         return result.toExternalForm();
     }
 
-    private static Unmarshaller getUnmarshaller() throws JAXBException {
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-        unmarshaller.setProperty(UnmarshallerProperties.MEDIA_TYPE, "application/json");
-        unmarshaller.setProperty(UnmarshallerProperties.JSON_INCLUDE_ROOT, false);
-        return unmarshaller;
-    }
-
-    private static JAXBContext initJaxbContext() {
-        JAXBContext result = null;
-        try {
-            result = JAXBContext.newInstance(
-                    CustomRotorType.class,
-                    CustomReflectorType.class,
-                    CustomEntryWheelType.class
-                                            );
-        } catch (JAXBException e) {
-            e.printStackTrace();
-        }
-        return result;
-    }
 }
