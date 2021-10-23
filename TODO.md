@@ -26,6 +26,11 @@
     - [ ] reloading configs from canonical sources
     - [ ] printing of current settings
     - [ ] yanking the entire buffer
+- [ ] explore and fix selection loop issues
+    - when one does incompatible ewheel, reselect, incompatible rotors, reselect, the process seems to be incorrect
+    - also when backing out one has to press Ctrl+C once for every call site layered on top
+    - also exiting out of plugboard selection prints UserInterruptedException
+    - could also use a good refactoring
 - [x] option to pass params to interactive mode
     - [x] change condition for interactive mode to not having `-` or `-f` params
 - [ ] make keymap more intuitive and flexible

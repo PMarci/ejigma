@@ -4,6 +4,8 @@ import ejigma.exception.ScramblerSettingException;
 import ejigma.model.PlugBoard;
 import ejigma.model.type.PlugBoardConfig;
 
+import java.util.Locale;
+
 import static ejigma.model.Scrambler.DEFAULT_ALPHABET_STRING;
 
 @SuppressWarnings("unused")
@@ -26,10 +28,10 @@ public enum HistoricPlugBoardConfig implements PlugBoardConfig {
 
         this.alphabetString = alphabetString;
         this.alphabet = alphabet;
-        this.initString = initString;
+        this.initString = initString.toUpperCase(Locale.ROOT);
         String[] splitInit = new String[0];
         try {
-            splitInit = PlugBoard.splitInitString(alphabetString, initString);
+            splitInit = PlugBoard.splitInitString(alphabetString, this.initString);
         } catch (ScramblerSettingException e) {
             // ignored, this is an enum
         }

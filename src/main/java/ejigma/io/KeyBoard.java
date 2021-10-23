@@ -373,6 +373,7 @@ public class KeyBoard implements Runnable {
             PlugBoardConfig plugBoardConfig = null;
             selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
             do {
+                // forced uppercase conversion
                 initString = selectionReader.readLine(prompt).trim();
                 sException = null;
                 try {
@@ -382,7 +383,6 @@ public class KeyBoard implements Runnable {
                     aException = e;
                 } catch (ScramblerSettingException e) {
                     sException = e;
-                    selectionReader.printAbove(e.getMessage());
                 }
             } while (sException != null);
             if (aException != null) {

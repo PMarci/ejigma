@@ -5,10 +5,7 @@ import ejigma.model.type.PlugBoardConfig;
 import ejigma.util.ScrambleResult;
 import ejigma.util.Util;
 
-import java.util.AbstractMap;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -210,10 +207,11 @@ public class PlugBoard extends Scrambler {
         String denyStringFormat = "Not a valid initString! Reason: %s";
         String reasonUnequal = "Source and wiring Strings are of unequal length!";
         String reasonInvalidSeparator = "No separator character outside the current alphabet found!";
+        String upperCaseString = initString.toUpperCase(Locale.ROOT);
         String[] result;
         if (!initString.isEmpty()) {
             int splitIndex = IntStream.range(0, initString.length())
-                    .filter(i -> alphabetString.indexOf(initString.charAt(i)) == -1)
+                    .filter(i -> alphabetString.indexOf(upperCaseString.charAt(i)) == -1)
                     .findFirst()
                     .orElseThrow(() -> new ScramblerSettingException(String.format(denyStringFormat, reasonInvalidSeparator)));
             result = new String[]{initString.substring(0, splitIndex), initString.substring(splitIndex + 1)};
@@ -252,7 +250,9 @@ public class PlugBoard extends Scrambler {
 
     public static PlugBoardConfig getPlugBoardType(String alphabetString,
                                                    String initString) throws ScramblerSettingException {
-        String[] initStrings = PlugBoard.splitInitString(alphabetString, initString);
+        String[] initStrings = PlugBoard.splitInitString(
+                alphabetString,
+                initString.toUpperCase(Locale.ROOT));
         return getPlugBoardType(alphabetString, initStrings[0], initStrings[1]);
     }
 
