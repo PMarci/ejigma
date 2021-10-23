@@ -79,9 +79,9 @@
 ### general
 
 - [x] open issue about SelectionReader and BindingReader
-- [ ] fully implement PlugBoard
-    - [ ] implement interactive setting of PlugBoard
-    - [ ] implement non-interactive setting of PlugBoard
+- [x] fully implement PlugBoard
+    - [x] implement interactive setting of PlugBoard
+    - [x] implement non-interactive setting of PlugBoard
         - source and dest will most likely have to go into two different options because we cannot guarantee essentially
           any character being out-of-band for the alphabet
         - the first character not in the current alphabet could be attempted as a separator
@@ -99,7 +99,9 @@
                 - should be: static files < ~/.ejigma < pwd < cli
 - [ ] set up scrambler type loading and reloading in canonical locations
     - [ ] loading
-        - [ ] on start
+        - [x] on start
+        - [ ] from FS
+        - [ ] precedence, overwriting
         - [ ] using shortcut
         - [ ] from cli param
     - [ ] reloading (interactive)
