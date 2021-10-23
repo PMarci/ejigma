@@ -185,6 +185,10 @@ public class Enigma {
         this.scramblerWiring = wiring;
     }
 
+    public void setOffsets(String offsetString) throws ScramblerSettingException {
+        armature.setOffsets(offsetString);
+    }
+
     public LightBoard getLightBoard() {
         return lightBoard;
     }

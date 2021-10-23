@@ -1,6 +1,7 @@
 package ejigma.model;
 
 import ejigma.exception.ArmatureInitException;
+import ejigma.exception.ScramblerSettingException;
 import ejigma.model.historic.HistoricEntryWheelType;
 import ejigma.model.historic.HistoricReflectorType;
 import ejigma.model.historic.HistoricRotorType;
@@ -51,14 +52,40 @@ public class Armature {
 
     void click() {
         boolean previousNotchEngaged = true;
-        for (Rotor rotor : rotors) {
+        // TODO setting to enable moving of all rotors
+        // TODO test and verify 16900 vs 16250
+        if (rotors.length <= 3) {
+            for (int i = 0, rotorsLength = rotors.length; i < rotorsLength; i++) {
+                Rotor rotor = rotors[i];
 
-            boolean notchEngaged = rotor.isNotchEngaged();
-            if (previousNotchEngaged || notchEngaged) {
-                previousNotchEngaged = notchEngaged;
-                rotor.click();
+                boolean notchEngaged = rotor.isNotchEngaged();
+                if (previousNotchEngaged || notchEngaged) {
+                    // prevent rotor 3 from double-stepping due to its notch being aligned to pall 4
+                    // there's no pall 4 on a 3 rotor enigma
+                    if (i == 2) {
+                        if (previousNotchEngaged) {
+                            rotor.click();
+                        }
+                    } else {
+                        rotor.click();
+                    }
+                    previousNotchEngaged = notchEngaged;
+                }
             }
-        }
+        } else if (rotors.length == 4) {
+            for (int i = 0, rotorsLength = rotors.length; i < rotorsLength; i++) {
+                Rotor rotor = rotors[i];
+
+                boolean notchEngaged = rotor.isNotchEngaged();
+                if (previousNotchEngaged || notchEngaged) {
+                    previousNotchEngaged = notchEngaged;
+                    // the fourth pall on the 4-rotor navy type doesn't move at all
+                    if (i < 3) {
+                        rotor.click();
+                    }
+                }
+            }
+        } // else relevant when setting available
     }
 
     public <T extends ScramblerType<?>> void validateWithCurrent(T scramblerType) throws ArmatureInitException {
@@ -102,9 +129,9 @@ public class Armature {
     }
 
     public static void validateAllTypes(
-        EntryWheelType entryWheelType,
-        RotorType[] rotorTypes,
-        ReflectorType reflectorType) throws ArmatureInitException {
+            EntryWheelType entryWheelType,
+            RotorType[] rotorTypes,
+            ReflectorType reflectorType) throws ArmatureInitException {
 
         ScramblerType<?>[] allTypes = new ScramblerType[rotorTypes.length + 2];
         System.arraycopy(rotorTypes, 0, allTypes, 0, rotorTypes.length);
@@ -196,10 +223,20 @@ public class Armature {
 
     public String getOffsetString() {
         StringBuilder sb = new StringBuilder();
-        for (Rotor rotor : rotors) {
+        for (int i = rotors.length - 1; i > -1; i--) {
+            Rotor rotor = rotors[i];
             sb.append(rotor.offsetAsChar);
         }
         return sb.toString();
+    }
+
+    public void setOffsets(String offsetString) throws ScramblerSettingException {
+        if (offsetString.length() != rotors.length) {
+            throw new ScramblerSettingException("Offset String length and rotor numbers differ");
+        } else {
+            IntStream.range(0, rotors.length)
+                    .forEach(i -> rotors[i].setOffset(offsetString.charAt(rotors.length - 1 - i)));
+        }
     }
 
     private static void validateAlphabetStrings(ScramblerType<?>[] scramblerTypes) throws ArmatureInitException {

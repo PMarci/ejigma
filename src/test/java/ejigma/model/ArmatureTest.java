@@ -1,5 +1,6 @@
 package ejigma.model;
 
+import ejigma.exception.ScramblerSettingException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -46,22 +47,26 @@ public class ArmatureTest {
 
     @Test
     public void testHandleTooLong() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 16280; i++) {
-            sb.append('A');
-        }
-        String inputString = sb.toString();
+        String inputString = "A".repeat(16930);
 
         String output = wikiEnigma.scramble(inputString);
 
-        assertEquals(wikiResult30, output.substring(16250, 16280));
+        assertEquals(wikiResult30, output.substring(16900, 16930));
     }
 
     @Test
     public void testReciprocity() {
 
-        String output =  wikiEnigma.scramble(wikiResult30);
+        String output = wikiEnigma.scramble(wikiResult30);
 
         assertEquals(thirtyAs, output);
+    }
+
+    @Test
+    public void testDoubleStep() throws ScramblerSettingException {
+        // TODO pdf with ADO
+//        wikiEnigma.forceSetRotors(new RotorType[]{HistoricRotorType.I, HistoricRotorType.II, HistoricRotorType.III});
+        wikiEnigma.setOffsets("PDV");
+        String output = wikiEnigma.scramble(thirtyAs + thirtyAs + thirtyAs);
     }
 }
