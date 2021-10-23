@@ -41,7 +41,7 @@ public class ConfigContainer {
         this.customPlugBoardConfigs = initScramblerTypes(
                 CustomPlugBoardConfig.class,
                 ConfigContainer::getHPlugBoardConfigs,
-                TypeLoader.ENTRYWHEEL_TYPES_FOLDER);
+                TypeLoader.PLUGBOARD_CONFIGS_FOLDER);
     }
 
     @SuppressWarnings("unchecked")
