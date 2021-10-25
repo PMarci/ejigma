@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 public interface ScramblerType<S extends Scrambler> {
 
-    Pattern TYPE_SUFFIX_PATTERN = Pattern.compile("^(?:Custom|Historic)(.*?)(?:Type|Config)$");
+    Pattern TYPE_SUFFIX_PATTERN = Pattern.compile("^(?:Custom|Historic)?(.*?)(?:Type|Config)$");
 
     String getName();
 

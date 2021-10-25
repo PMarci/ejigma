@@ -146,13 +146,6 @@ public class KeyBoard implements Runnable {
                     case NEWLINE:
                         processNewline();
                         break;
-//                    case PASTE:
-//                        try {
-//                            paste();
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                        break;
                     case SELECT_ENTRY:
                         processSelectEntryIgnoreInterrupt();
                         break;
@@ -207,12 +200,12 @@ public class KeyBoard implements Runnable {
             try {
                 enigma.forceSetEntryWheel(newType);
                 processSelectRotors();
-                if (promptForAuto(EntryWheel.class.getSimpleName(), "Reflector")) {
+                if (promptForAuto(EntryWheel.class.getSimpleName(), Reflector.class.getSimpleName())) {
                     enigma.setAutoReflector(vNewAlphabetString);
                 } else {
                     processSelectReflector();
                 }
-                if (promptForAuto(PlugBoard.class.getSimpleName(), "PlugBoard")) {
+                if (promptForAuto(PlugBoard.class.getSimpleName(), PlugBoard.class.getSimpleName())) {
                     enigma.setAutoPlugBoard(vNewAlphabetString);
                 } else {
                     processSelectPlugBoard();
@@ -248,13 +241,13 @@ public class KeyBoard implements Runnable {
             ReflectorType oldReflectorType = enigma.getArmature().getReflectorType();
             try {
                 enigma.forceSetReflector(newType);
-                if (promptForAuto(Reflector.class.getSimpleName(), "EntryWheel")) {
+                if (promptForAuto(Reflector.class.getSimpleName(), EntryWheel.class.getSimpleName())) {
                     enigma.setAutoEntryWheel(vNewAlphabetString);
                 } else {
                     processSelectEntry();
                 }
                 processSelectRotors();
-                if (promptForAuto(Reflector.class.getSimpleName(), "PlugBoard")) {
+                if (promptForAuto(Reflector.class.getSimpleName(), PlugBoard.class.getSimpleName())) {
                     enigma.setAutoPlugBoard(vNewAlphabetString);
                 } else {
                     processSelectPlugBoard();
@@ -317,9 +310,9 @@ public class KeyBoard implements Runnable {
     @SuppressWarnings("unchecked")
     private <S extends Scrambler, T extends ScramblerType<S>> ScramblerSelectResponse<S, T> promptForScramblerType(Class<T> scramblerTypeClass) {
         ReselectHelper<S, T> helper = new ReselectHelper<>();
-        String scramblerTypeTypeName = scramblerTypeClass.getSimpleName();
-        String scramblerName = getScramblerName(scramblerTypeTypeName);
-        String notATypeString = String.format("Not a valid %s", scramblerTypeTypeName);
+        String scramblerTypeClassName = scramblerTypeClass.getSimpleName();
+        String scramblerName = getScramblerName(scramblerTypeClassName);
+        String notATypeString = String.format("Not a valid %s", scramblerTypeClassName);
         String prompt = String.format("Enter a type for the %s: ", scramblerName);
         String plugPrompt = "Enter a wiring for the PlugBoard: ";
         String denyString = String.format("Not setting %s...", scramblerName);
@@ -500,87 +493,6 @@ public class KeyBoard implements Runnable {
         return result;
     }
 
-
-    //    public boolean paste() throws IOException {
-//        Clipboard clipboard;
-//        try { // May throw ugly exception on system without X
-//            clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-//        }
-//        catch (Exception e) {
-//            return false;
-//        }
-//
-//        if (clipboard == null) {
-//            return false;
-//        }
-//
-//        Transferable transferable = clipboard.getContents(null);
-//
-//        if (transferable == null) {
-//            return false;
-//        }
-//
-//        try {
-//            @SuppressWarnings("deprecation")
-//            Object content = transferable.getTransferData(DataFlavor.plainTextFlavor);
-//
-//            // This fix was suggested in bug #1060649 at
-//            // http://sourceforge.net/tracker/index.php?func=detail&aid=1060649&group_id=64033&atid=506056
-//            // to get around the deprecated DataFlavor.plainTextFlavor, but it
-//            // raises a UnsupportedFlavorException on Mac OS X
-//
-//            if (content == null) {
-//                try {
-//                    content = new DataFlavor().getReaderForText(transferable);
-//                }
-//                catch (Exception e) {
-//                    // ignore
-//                }
-//            }
-//
-//            if (content == null) {
-//                return false;
-//            }
-//
-//            String value;
-//
-//            if (content instanceof Reader) {
-//                // TORDO: we might want instead connect to the input stream
-//                // so we can interpret individual lines
-//                value = "";
-//                String line;
-//
-//                BufferedReader read = new BufferedReader((Reader) content);
-//                while ((line = read.readLine()) != null) {
-//                    if (value.length() > 0) {
-//                        value += "\n";
-//                    }
-//
-//                    value += line;
-//                }
-//            }
-//            else {
-//                value = content.toString();
-//            }
-//
-//            if (value == null) {
-//                return true;
-//            }
-//
-//            processInput(value);
-//
-//            return true;
-//        }
-//        catch (UnsupportedFlavorException e) {
-//            Log.error("Paste failed: ", e);
-//
-//            return false;
-//        }
-//    }
-//    private void processInput(String value) {
-//        value.chars().mapToObj(i -> (char) i).forEach(this::processInput);
-//    }
-
     private KeyMap<Op> initKeyMap(KeyMap<Op> keyMap) {
         Set<String> alphabetChars = getUpperAndLower(alphabetString.toCharArray(), Locale.ROOT);
         bind(keyMap, Op.ENTER_CHAR, alphabetChars);
@@ -593,7 +505,6 @@ public class KeyBoard implements Runnable {
         bind(keyMap, Op.SELECT_REFLECTOR, ctrl('F'));
         bind(keyMap, Op.SELECT_PLUGBOARD, ctrl('P'));
         bind(keyMap, Op.CLEAR_BUFFER, ctrl('D'));
-//        bind(keyMap, Op.PASTE, ctrl('V'));
         bind(keyMap, Op.UP, key(terminal, InfoCmp.Capability.key_up));
         bind(keyMap, Op.DOWN, key(terminal, InfoCmp.Capability.key_down));
         bind(keyMap, Op.LEFT, key(terminal, InfoCmp.Capability.key_left));
