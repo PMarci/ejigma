@@ -27,8 +27,12 @@
     - [ ] printing of current settings
     - [ ] yanking the entire buffer
 - [ ] explore and fix selection loop issues
-    - [ ] KeyBoard TODOs
-    - when one does incompatible ewheel, reselect, incompatible rotors, reselect, the process seems to be incorrect
+    - [ ] finish KeyBoard TODOs
+    - [ ] add alphabet string as parameter for reselect to get rid of unnecessary reselect loop
+    - [ ] or another exception and message printing
+    - or limit completion and entry to the alphabetString entered in the first round and add a message when a different
+      one is attempted to be used
+    - when one does incompatible eWheel, reselect, incompatible rotors, reselect, the process seems to be incorrect
     - also when backing out one has to press Ctrl+C once for every call site layered on top
     - also exiting out of plugboard selection prints UserInterruptedException
     - could also use a good refactoring

@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 
 public class Armature {
 
-    public static final String UNFIT_ROTORTYPES_MSG = "RotorTypes don't fit other scramblers in armature";
+    public static final String UNFIT_SCRAMBLER_MSG_FORMAT = "Selected %s doesn't fit other scramblers in armature";
     // R to L
     public static final RotorType[] DEFAULT_ROTOR_TYPES = new RotorType[]{
             HistoricRotorType.III,
@@ -100,7 +100,7 @@ public class Armature {
         try {
             validateAllTypes(entryWheelType, getRotorTypes(), (ReflectorType) reflector.type);
         } catch (ArmatureInitException e) {
-            throw new ArmatureInitException("EntryWheel doesn't fit other scramblers in armature", e);
+            throw new ArmatureInitException(String.format(UNFIT_SCRAMBLER_MSG_FORMAT, entryWheelType.getClass().getSimpleName()), e);
         }
     }
 
@@ -108,7 +108,7 @@ public class Armature {
         try {
             validateAllTypes((EntryWheelType) entryWheel.type, rotorTypes, (ReflectorType) reflector.type);
         } catch (ArmatureInitException e) {
-            throw new ArmatureInitException(UNFIT_ROTORTYPES_MSG, e);
+            throw new ArmatureInitException(String.format(UNFIT_SCRAMBLER_MSG_FORMAT, rotorTypes[0].getClass().getSimpleName()), e);
         }
     }
 

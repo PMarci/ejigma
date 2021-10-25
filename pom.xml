@@ -6,7 +6,7 @@
 
     <artifactId>ejigma</artifactId>
     <groupId>mposa</groupId>
-    <version>0.0.5</version>
+    <version>0.0.6</version>
 
     <scm>
         <developerConnection>scm:git:https://github.com/PMarci/ejigma</developerConnection>
