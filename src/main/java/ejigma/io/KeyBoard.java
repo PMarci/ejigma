@@ -196,7 +196,7 @@ public class KeyBoard implements Runnable {
 
     private void processSelectEntry() {
         ScramblerSelectResponse<EntryWheelType> newEntryWheelTypeResponse;
-        newEntryWheelTypeResponse = promptForScramblerType(EntryWheelType.class);
+        newEntryWheelTypeResponse = promptForScramblerType(EntryWheelType.class, EntryWheel.class);
         EntryWheelType newType = newEntryWheelTypeResponse.getScramblerType();
         String vNewAlphabetString = newType.getAlphabetString();
         if (newEntryWheelTypeResponse.isReselect()) {
@@ -238,7 +238,7 @@ public class KeyBoard implements Runnable {
 
     private void processSelectReflector() {
         ScramblerSelectResponse<ReflectorType> newReflectorTypeResponse;
-        newReflectorTypeResponse = promptForScramblerType(ReflectorType.class);
+        newReflectorTypeResponse = promptForScramblerType(ReflectorType.class, Reflector.class);
         ReflectorType newType = newReflectorTypeResponse.getScramblerType();
         String vNewAlphabetString = newType.getAlphabetString();
         if (newReflectorTypeResponse.isReselect()) {
@@ -271,7 +271,7 @@ public class KeyBoard implements Runnable {
 
     private void processSelectPlugBoard() {
         ScramblerSelectResponse<PlugBoardConfig> newPlugBoardTypeResponse;
-        newPlugBoardTypeResponse = promptForPlugBoard();
+        newPlugBoardTypeResponse = promptForScramblerType(PlugBoardConfig.class, PlugBoard.class);
         PlugBoardConfig newType = newPlugBoardTypeResponse.getScramblerType();
         String vNewAlphabetString = newType.getAlphabetString();
         if (newPlugBoardTypeResponse.isReselect()) {
@@ -302,41 +302,61 @@ public class KeyBoard implements Runnable {
         }
     }
 
-
-    private <T extends ScramblerType<?>> ScramblerSelectResponse<T> promptForScramblerType(Class<T> scramblerTypeType) {
+    @SuppressWarnings("unchecked")
+    private <S extends Scrambler, T extends ScramblerType<S>> ScramblerSelectResponse<T> promptForScramblerType(Class<T> scramblerTypeClass,
+                                                                                                                Class<S> scramblerClass) {
         boolean choose = true;
         boolean choose2;
         T newScramblerType;
         ScramblerSelectResponse<T> response = null;
-        String scramblerTypeTypeName = scramblerTypeType.getSimpleName();
+        String scramblerTypeTypeName = scramblerTypeClass.getSimpleName();
         Matcher typeMatcher = TYPE_SUFFIX_PATTERN.matcher(scramblerTypeTypeName);
         String scramblerName = (typeMatcher.find()) ? typeMatcher.group(1) : "Scrambler";
         String notATypeString = String.format("Not a valid %s", scramblerTypeTypeName);
         String prompt = String.format("Enter a type for the %s: ", scramblerName);
         String denyString = String.format("Not setting %s...", scramblerName);
-        selectCompleter.setCompleter(scramblerTypeType);
+        selectCompleter.setCompleter(scramblerTypeClass);
+        Optional<T> scramblerTypeOptional = Optional.empty();
         while (choose) {
+            ArmatureInitException aException = null;
+            ScramblerSettingException sException = null;
             choose2 = true;
             selectionReader.setVariable(FILTER_COMPLETION, false);
-            String tInput = selectionReader.readLine(prompt).trim();
-            Optional<T> optionalScramblerType =
-                    enigma.getConfigContainer().getScramblerTypes(scramblerTypeType).stream()
-                            .filter(sType -> sType.getName().equals(tInput))
-                            .findAny();
-            if (optionalScramblerType.isPresent()) {
-                newScramblerType = optionalScramblerType.get();
+            if (scramblerTypeClass.isAssignableFrom(PlugBoardConfig.class)) {
+                // forced uppercase conversion
+                String initString = selectionReader.readLine(prompt).trim();
+                try {
+                    PlugBoardConfig plugBoardConfig = PlugBoard.getPlugBoardType(alphabetString, initString);
+                    scramblerTypeOptional = (Optional<T>) Optional.of(plugBoardConfig);
+                    enigma.validateWithCurrent(plugBoardConfig);
+                } catch (ArmatureInitException e) {
+                    aException = e;
+                } catch (ScramblerSettingException e) {
+                    sException = e;
+                }
+            } else {
+                String tInput = selectionReader.readLine(prompt).trim();
+                scramblerTypeOptional = enigma.getConfigContainer().getScramblerTypes(scramblerTypeClass).stream()
+                        .filter(sType -> sType.getName().equals(tInput))
+                        .findAny();
+            }
+            if (scramblerTypeOptional.isPresent()) {
+                newScramblerType = scramblerTypeOptional.get();
                 this.newAlphabetString = newScramblerType.getAlphabetString();
                 selectionReader.setVariable(FILTER_COMPLETION, false);
-                ArmatureInitException exception = null;
                 try {
-                    enigma.getArmature().validateWithCurrent(scramblerTypeType.cast(newScramblerType));
+                    enigma.getArmature().validateWithCurrent(scramblerTypeClass.cast(newScramblerType));
                 } catch (ArmatureInitException e) {
-                    exception = e;
+                    aException = e;
                 }
-                if (exception != null) {
+                if (aException != null || sException != null) {
                     selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
+                    // TODO n at this point should break out to the main loop using an exception
                     while (choose2) {
-                        String yn = selectionReader.readLine(exception.getMessage() + SWITCH_PROMPT).trim();
+                        String yn = selectionReader.readLine(
+                                ((aException != null) ?
+                                 aException :
+                                 sException).getMessage() + SWITCH_PROMPT).trim();
                         if ("y".equals(yn) || "Y".equals(yn)) {
                             response = new ScramblerSelectResponse<>(newScramblerType, true);
                             choose = false;
@@ -355,54 +375,6 @@ public class KeyBoard implements Runnable {
                 selectionReader.printAbove(notATypeString);
             }
         }
-        return response;
-    }
-
-    // can't unify due to type erasure
-    private ScramblerSelectResponse<PlugBoardConfig> promptForPlugBoard() {
-        String prompt = "Enter new PlugBoard settings. Separate the source and wiring strings \n" +
-                " with a letter not contained in the current alphabet: ";
-        String denyString = "Not setting PlugBoard...";
-        ScramblerSelectResponse<PlugBoardConfig> response = null;
-        String initString = "";
-        boolean choose = true;
-        boolean choose2 = true;
-        while (choose) {
-            ArmatureInitException aException = null;
-            ScramblerSettingException sException;
-            PlugBoardConfig plugBoardConfig = null;
-            selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
-            do {
-                // forced uppercase conversion
-                initString = selectionReader.readLine(prompt).trim();
-                sException = null;
-                try {
-                    plugBoardConfig = PlugBoard.getPlugBoardType(alphabetString, initString);
-                    enigma.validateWithCurrent(plugBoardConfig);
-                } catch (ArmatureInitException e) {
-                    aException = e;
-                } catch (ScramblerSettingException e) {
-                    sException = e;
-                }
-            } while (sException != null);
-            if (aException != null) {
-                while (choose2) {
-                    String yn = selectionReader.readLine(aException.getMessage() + SWITCH_PROMPT).trim();
-                    if ("y".equals(yn) || "Y".equals(yn)) {
-                        response = new ScramblerSelectResponse<>(plugBoardConfig, true);
-                        choose = false;
-                        choose2 = false;
-                    } else if ("n".equals(yn) || "N".equals(yn)) {
-                        selectionReader.printAbove(denyString);
-                        choose2 = false;
-                    }
-                }
-            } else {
-                response = new ScramblerSelectResponse<>(plugBoardConfig, false);
-                choose = false;
-            }
-        }
-        selectionReader.setVariable(LineReader.DISABLE_COMPLETION, false);
         return response;
     }
 
@@ -519,6 +491,7 @@ public class KeyBoard implements Runnable {
         try {
             enigma.getArmature().validateWithCurrent(newRotorTypes);
         } catch (ArmatureInitException e) {
+            // TODO try and extract this to method object to unify with the one in promtforscramblertype
             exception = e;
             boolean choose = true;
             selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
