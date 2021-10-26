@@ -29,7 +29,7 @@ public class Armature {
     private EntryWheel entryWheel;
     private Rotor[] rotors;
     private Reflector reflector;
-    private List<ScramblerMounting> scramblerWiring;
+    private List<ScramblerMounting<?, ?>> scramblerWiring;
 
     public Armature(Enigma enigma) throws ArmatureInitException {
         this(enigma, DEFAULT_ENTRY_WHEEL_TYPE, DEFAULT_ROTOR_TYPES, DEFAULT_REFLECTOR_TYPE);
@@ -88,7 +88,7 @@ public class Armature {
         } // else relevant when setting available
     }
 
-    public <T extends ScramblerType<?>> void validateWithCurrent(T scramblerType) throws ArmatureInitException {
+    public <S extends Scrambler<S, T>, T extends ScramblerType<S, T>> void validateWithCurrent(T scramblerType) throws ArmatureInitException {
         if (scramblerType instanceof EntryWheelType) {
             validateWithCurrent((EntryWheelType) scramblerType);
         } else if (scramblerType instanceof ReflectorType) {
@@ -98,7 +98,7 @@ public class Armature {
 
     public void validateWithCurrent(EntryWheelType entryWheelType) throws ArmatureInitException {
         try {
-            validateAllTypes(entryWheelType, getRotorTypes(), (ReflectorType) reflector.type);
+            validateAllTypes(entryWheelType, getRotorTypes(), reflector.type);
         } catch (ArmatureInitException e) {
             throw new ArmatureInitException(String.format(UNFIT_SCRAMBLER_MSG_FORMAT, entryWheelType.getClass().getSimpleName()), e);
         }
@@ -106,7 +106,7 @@ public class Armature {
 
     public void validateWithCurrent(RotorType[] rotorTypes) throws ArmatureInitException {
         try {
-            validateAllTypes((EntryWheelType) entryWheel.type, rotorTypes, (ReflectorType) reflector.type);
+            validateAllTypes(entryWheel.type, rotorTypes, reflector.type);
         } catch (ArmatureInitException e) {
             throw new ArmatureInitException(String.format(UNFIT_SCRAMBLER_MSG_FORMAT, rotorTypes[0].getClass().getSimpleName()), e);
         }
@@ -114,7 +114,7 @@ public class Armature {
 
     public void validateWithCurrent(ReflectorType reflectorType) throws ArmatureInitException {
         try {
-            validateAllTypes((EntryWheelType) entryWheel.type, getRotorTypes(), reflectorType);
+            validateAllTypes(entryWheel.type, getRotorTypes(), reflectorType);
         } catch (ArmatureInitException e) {
             throw new ArmatureInitException("Reflector doesn't fit other scramblers in armature", e);
         }
@@ -122,7 +122,7 @@ public class Armature {
 
     private void validateWithCurrent(RotorType rotorType, int newPos) throws ArmatureInitException {
         try {
-            validateAllTypes((EntryWheelType) entryWheel.type, getRotorTypes(rotorType, newPos), (ReflectorType) reflector.type);
+            validateAllTypes(entryWheel.type, getRotorTypes(rotorType, newPos), reflector.type);
         } catch (ArmatureInitException e) {
             throw new ArmatureInitException(String.format("Rotortype at pos %d doesn't fit", newPos), e);
         }
@@ -133,7 +133,7 @@ public class Armature {
             RotorType[] rotorTypes,
             ReflectorType reflectorType) throws ArmatureInitException {
 
-        ScramblerType<?>[] allTypes = new ScramblerType[rotorTypes.length + 2];
+        ScramblerType<?, ?>[] allTypes = new ScramblerType[rotorTypes.length + 2];
         System.arraycopy(rotorTypes, 0, allTypes, 0, rotorTypes.length);
         allTypes[rotorTypes.length] = entryWheelType;
         allTypes[rotorTypes.length + 1] = reflectorType;
@@ -147,7 +147,7 @@ public class Armature {
             ReflectorType reflectorType,
             PlugBoardConfig plugBoardConfig) throws ArmatureInitException {
 
-        ScramblerType<?>[] allTypes = new ScramblerType[rotorTypes.length + 3];
+        ScramblerType<?, ?>[] allTypes = new ScramblerType[rotorTypes.length + 3];
         System.arraycopy(rotorTypes, 0, allTypes, 0, rotorTypes.length);
         allTypes[rotorTypes.length] = entryWheelType;
         allTypes[rotorTypes.length + 1] = reflectorType;
@@ -251,16 +251,16 @@ public class Armature {
         }
     }
 
-    private static void validateAlphabetStrings(ScramblerType<?>[] scramblerTypes) throws ArmatureInitException {
+    private static void validateAlphabetStrings(ScramblerType<?, ?>[] scramblerTypes) throws ArmatureInitException {
         // TODO extract class name of type and format into message
         String prevAlphabetString = null;
-        for (ScramblerType<?> scramblerType : scramblerTypes) {
+        for (ScramblerType<?, ?> scramblerType : scramblerTypes) {
             prevAlphabetString = validateAlphabetString(prevAlphabetString, scramblerType);
         }
     }
 
     private static String validateAlphabetString(String prevAlphabetString,
-                                                 ScramblerType<?> scramblerType) throws ArmatureInitException {
+                                                 ScramblerType<?, ?> scramblerType) throws ArmatureInitException {
         if (scramblerType != null) {
             String currentAlphabetString = scramblerType.getAlphabetString();
             if (prevAlphabetString != null && !prevAlphabetString.equals(currentAlphabetString)) {
@@ -294,17 +294,17 @@ public class Armature {
         int endExclusive = rotors.length * 2 + 3;
         this.scramblerWiring = IntStream.range(0, endExclusive).sequential()
                 .mapToObj(value -> {
-                    ScramblerMounting result;
+                    ScramblerMounting<?, ?> result;
                     if (value == 0) {
-                        result = new ScramblerMounting(entryWheel);
+                        result = new ScramblerMounting<>(entryWheel);
                     } else if (value < rotors.length + 1) {
-                        result = new ScramblerMounting(rotors[value - 1]);
+                        result = new ScramblerMounting<>(rotors[value - 1]);
                     } else if (value == rotors.length + 1) {
-                        result = new ScramblerMounting(reflector);
+                        result = new ScramblerMounting<>(reflector);
                     } else if (value != endExclusive - 1) {
-                        result = new ScramblerMounting(rotors[rotors.length * 2 + 1 - value], true);
+                        result = new ScramblerMounting<>(rotors[rotors.length * 2 + 1 - value], true);
                     } else {
-                        result = new ScramblerMounting(entryWheel, true);
+                        result = new ScramblerMounting<>(entryWheel, true);
                     }
                     return result;
                 })
@@ -319,7 +319,7 @@ public class Armature {
         RotorType[] presentTypes = new RotorType[rotors.length];
         if (0 < newPos && newPos < rotors.length) {
             for (int i = 0; i < rotors.length; i++) {
-                presentTypes[i] = (i == newPos) ? newType : (RotorType) rotors[i].type;
+                presentTypes[i] = (i == newPos) ? newType : rotors[i].type;
             }
         } else {
             throw new ArmatureInitException("invalid rotor number");
@@ -328,14 +328,14 @@ public class Armature {
     }
 
     public EntryWheelType getEntryWheelType() {
-        return (EntryWheelType) entryWheel.getType();
+        return entryWheel.getType();
     }
 
     public ReflectorType getReflectorType() {
-        return (ReflectorType) reflector.getType();
+        return reflector.getType();
     }
 
-    public List<ScramblerMounting> getScramblerWiring() {
+    public List<ScramblerMounting<?, ?>> getScramblerWiring() {
         return scramblerWiring;
     }
 

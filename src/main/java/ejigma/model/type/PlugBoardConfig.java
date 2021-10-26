@@ -3,7 +3,7 @@ package ejigma.model.type;
 import ejigma.exception.ScramblerSettingException;
 import ejigma.model.PlugBoard;
 
-public interface PlugBoardConfig extends ScramblerType<PlugBoard> {
+public interface PlugBoardConfig extends ScramblerType<PlugBoard, PlugBoardConfig> {
 
     String getSourceString();
 

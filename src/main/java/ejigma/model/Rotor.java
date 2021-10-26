@@ -6,7 +6,7 @@ import ejigma.util.Util;
 
 import java.util.stream.IntStream;
 
-public class Rotor extends ScramblerWheel {
+public class Rotor extends ScramblerWheel<Rotor, RotorType> {
 
     private int ringSetting;
     private char ringSettingAsChar;

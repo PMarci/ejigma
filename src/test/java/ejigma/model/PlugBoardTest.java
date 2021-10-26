@@ -1,6 +1,7 @@
 package ejigma.model;
 
 import ejigma.exception.ScramblerSettingException;
+import ejigma.model.type.ScramblerType;
 import ejigma.util.ScrambleResult;
 import org.junit.Test;
 
@@ -44,7 +45,7 @@ public class PlugBoardTest {
         assertEquals("ABCDEFGHIJKLMNOPQRSTUVWXYZ", singleScramble(plugBoard));
     }
 
-    private static String singleScramble(Scrambler scrambler) {
+    private static <S extends Scrambler<S, T>, T extends ScramblerType<S, T>> String singleScramble(Scrambler<S, T> scrambler) {
         return Scrambler.DEFAULT_ALPHABET_STRING.codePoints().sequential()
             .mapToObj(i -> new ScrambleResult(Scrambler.DEFAULT_ALPHABET_STRING, ((char) i)))
             .mapToInt(scrambleResult -> scrambler.scramble(scrambleResult).getResultAsChar())

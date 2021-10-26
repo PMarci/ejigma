@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class PlugBoard extends Scrambler {
+public class PlugBoard extends Scrambler<PlugBoard, PlugBoardConfig> {
 
     private static final Random RANDOM = new Random();
 

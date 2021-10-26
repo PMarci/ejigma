@@ -4,7 +4,7 @@ import ejigma.exception.ScramblerSettingException;
 import ejigma.model.type.ScramblerType;
 import ejigma.util.ScrambleResult;
 
-public abstract class ScramblerWheel extends Scrambler {
+public abstract class ScramblerWheel<S extends ScramblerWheel<S, T>, T extends ScramblerType<S, T>> extends Scrambler<S, T> {
 
     private int offset;
     char offsetAsChar;
@@ -14,7 +14,7 @@ public abstract class ScramblerWheel extends Scrambler {
             String alphabetString,
             String wiringString,
             boolean staticc,
-            ScramblerType<? extends ScramblerWheel> scramblerType)
+            T scramblerType)
         throws ScramblerSettingException {
 
         super(alphabetString, wiringString, scramblerType);

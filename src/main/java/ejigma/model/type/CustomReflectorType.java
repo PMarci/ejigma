@@ -10,7 +10,7 @@ import java.io.Serializable;
 
 @XmlRootElement(name = "customReflectorType")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class CustomReflectorType implements CustomScramblerType<Reflector>, ReflectorType, Serializable {
+public class CustomReflectorType implements CustomScramblerType<Reflector, ReflectorType>, ReflectorType, Serializable {
 
 
     private String name;

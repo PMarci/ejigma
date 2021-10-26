@@ -11,7 +11,7 @@ import java.io.Serializable;
 
 @XmlRootElement(name = "customPlugBoardConfig")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class CustomPlugBoardConfig implements CustomScramblerType<PlugBoard>, PlugBoardConfig, Serializable {
+public class CustomPlugBoardConfig implements CustomScramblerType<PlugBoard, PlugBoardConfig>, PlugBoardConfig, Serializable {
 
     private String name = "DEFAULT";
     private String alphabetString = Scrambler.DEFAULT_ALPHABET_STRING;
@@ -38,10 +38,6 @@ public class CustomPlugBoardConfig implements CustomScramblerType<PlugBoard>, Pl
         this.name = name;
     }
 
-    public String getAlphabetString() {
-        return alphabetString;
-    }
-
     @Override
     public String toString() {
         return getName();
@@ -50,6 +46,14 @@ public class CustomPlugBoardConfig implements CustomScramblerType<PlugBoard>, Pl
     @Override
     public String getInitString() {
         return initString;
+    }
+
+    public void setInitString(String initString) {
+        this.initString = initString;
+    }
+
+    public String getAlphabetString() {
+        return alphabetString;
     }
 
     public void setAlphabetString(String alphabetString) {

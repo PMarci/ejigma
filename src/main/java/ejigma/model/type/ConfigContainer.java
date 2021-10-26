@@ -27,36 +27,35 @@ public class ConfigContainer {
 
     public ConfigContainer() {
         this.entryWheelTypes = initScramblerTypes(
-                CustomEntryWheelType.class,
+                EntryWheelType.class,
                 ConfigContainer::getHEntryWheelTypes,
                 TypeLoader.ENTRYWHEEL_TYPES_FOLDER);
         this.rotorTypes = initScramblerTypes(
-                CustomRotorType.class,
+                RotorType.class,
                 ConfigContainer::getHRotorTypes,
                 TypeLoader.ROTOR_TYPES_FOLDER);
         this.reflectorTypes = initScramblerTypes(
-                CustomReflectorType.class,
+                ReflectorType.class,
                 ConfigContainer::getHReflectorTypes,
                 TypeLoader.REFLECTOR_TYPES_FOLDER);
         this.customPlugBoardConfigs = initScramblerTypes(
-                CustomPlugBoardConfig.class,
+                PlugBoardConfig.class,
                 ConfigContainer::getHPlugBoardConfigs,
                 TypeLoader.PLUGBOARD_CONFIGS_FOLDER);
     }
 
-    @SuppressWarnings("unchecked")
-    private <C extends T, T extends ScramblerType<S>, S extends Scrambler> List<T> initScramblerTypes(
-            Class<? extends CustomScramblerType<S>> customScramblerTypeClass,
-            Supplier<List<C>> historicSupplier,
+    private <T extends ScramblerType<S, T>, S extends Scrambler<S, T>> List<T> initScramblerTypes(
+            Class<T> customScramblerTypeClass,
+            Supplier<List<T>> historicSupplier,
             String subFolder) {
 
-        List<ScramblerType<S>> scramblerTypes = new ArrayList<>(historicSupplier.get());
-        List<? extends CustomScramblerType<S>> cScramblerTypes =
+        List<T> scramblerTypes = new ArrayList<>(historicSupplier.get());
+        List<T> cScramblerTypes =
                 typeLoader.loadCustomScramblerTypes(customScramblerTypeClass, subFolder);
         if (!cScramblerTypes.isEmpty()) {
             scramblerTypes.addAll(cScramblerTypes);
         }
-        return (List<T>) scramblerTypes;
+        return scramblerTypes;
     }
 
     private static JAXBContext initJaxbContext() {
@@ -74,13 +73,13 @@ public class ConfigContainer {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends ScramblerType<?>> List<T> getScramblerTypes(Class<T> scramblerType) {
+    public <S extends Scrambler<S, T>, T extends ScramblerType<S, T>> List<T> getScramblerTypes(Class<T> scramblerTypeClass) {
         List<T> result = null;
-        if (scramblerType.isAssignableFrom(RotorType.class)) {
+        if (scramblerTypeClass.isAssignableFrom(RotorType.class)) {
             result = (List<T>) getRotorTypes();
-        } else if (scramblerType.isAssignableFrom(ReflectorType.class)) {
+        } else if (scramblerTypeClass.isAssignableFrom(ReflectorType.class)) {
             result = (List<T>) getReflectorTypes();
-        } else if (scramblerType.isAssignableFrom(EntryWheelType.class)) {
+        } else if (scramblerTypeClass.isAssignableFrom(EntryWheelType.class)) {
             result = (List<T>) getEntryWheelTypes();
         }
         return result;
@@ -122,25 +121,25 @@ public class ConfigContainer {
         this.customPlugBoardConfigs = customPlugBoardConfigs;
     }
 
-    public static List<HistoricRotorType> getHRotorTypes() {
+    public static List<RotorType> getHRotorTypes() {
         return getEnumConstants(HistoricRotorType.class);
     }
 
-    public static List<HistoricReflectorType> getHReflectorTypes() {
+    public static List<ReflectorType> getHReflectorTypes() {
         return getEnumConstants(HistoricReflectorType.class);
     }
 
-    public static List<HistoricEntryWheelType> getHEntryWheelTypes() {
+    public static List<EntryWheelType> getHEntryWheelTypes() {
         return getEnumConstants(HistoricEntryWheelType.class);
     }
 
-    public static List<HistoricPlugBoardConfig> getHPlugBoardConfigs() {
+    public static List<PlugBoardConfig> getHPlugBoardConfigs() {
         return getEnumConstants(HistoricPlugBoardConfig.class);
     }
 
-    private static <S extends Scrambler, T extends ScramblerType<S>> List<T> getEnumConstants(Class<? extends T> enu) {
-        T[] enumConstants = enu.getEnumConstants();
-        List<T> result = Collections.emptyList();
+    private static <H extends T,S extends Scrambler<S,T>, T extends ScramblerType<S, T>> List<H> getEnumConstants(Class<? extends H> enu) {
+        H[] enumConstants = enu.getEnumConstants();
+        List<H> result = Collections.emptyList();
         if (enumConstants != null) {
             result = Arrays.asList(enumConstants);
         }

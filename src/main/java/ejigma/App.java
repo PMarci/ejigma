@@ -131,7 +131,7 @@ public class App {
                 }));
     }
 
-    private static <T extends ScramblerType<?>> T getScramblerFromOpt(ConfigContainer configContainer,
+    private static <T extends ScramblerType<?, ?>> T getScramblerFromOpt(ConfigContainer configContainer,
                                                                       String opt,
                                                                       Function<ConfigContainer, List<T>> get,
                                                                       String type) throws ArmatureInitException {

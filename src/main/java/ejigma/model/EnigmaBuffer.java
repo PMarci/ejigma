@@ -121,11 +121,7 @@ public class EnigmaBuffer {
     }
 
     String blanks(int nb) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < nb; i++) {
-            sb.append(' ');
-        }
-        return sb.toString();
+        return " ".repeat(Math.max(0, nb));
     }
 
     public void insert(String insertString) {

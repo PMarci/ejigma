@@ -4,7 +4,7 @@ import ejigma.exception.ScramblerSettingException;
 import ejigma.model.type.EntryWheelType;
 import ejigma.util.ScrambleResult;
 
-public class EntryWheel extends ScramblerWheel {
+public class EntryWheel extends ScramblerWheel<EntryWheel, EntryWheelType> {
 
     public EntryWheel(String wiringString, EntryWheelType entryWheelType) throws ScramblerSettingException {
         this(DEFAULT_ALPHABET_STRING, wiringString, entryWheelType);

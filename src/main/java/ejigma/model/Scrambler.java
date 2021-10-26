@@ -10,12 +10,12 @@ import ejigma.util.Util;
 
 import static java.util.Objects.requireNonNull;
 
-public abstract class Scrambler {
+public abstract class Scrambler<S extends Scrambler<S, T>, T extends ScramblerType<S, T>> {
 
     public static final String DEFAULT_ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     public static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
 
-    protected final ScramblerType<? extends Scrambler> type;
+    protected final T type;
     protected final String alphabetString;
     protected final String wiringString;
 
@@ -24,7 +24,7 @@ public abstract class Scrambler {
     int[] forwardLinks;
     int[] reverseLinks;
 
-    protected Scrambler(String alphabetString, String wiringString, ScramblerType<? extends Scrambler> scramblerType) throws ScramblerSettingException {
+    protected Scrambler(String alphabetString, String wiringString, T scramblerType) throws ScramblerSettingException {
         this.type = scramblerType;
         validateAlphabetString(alphabetString);
         this.alphabetString = alphabetString;
@@ -74,7 +74,7 @@ public abstract class Scrambler {
         return alphabetString;
     }
 
-    public ScramblerType<? extends Scrambler> getType() {
+    public T getType() {
         return type;
     }
 }

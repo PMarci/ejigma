@@ -5,7 +5,7 @@ import ejigma.model.Scrambler;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public interface ScramblerType<S extends Scrambler> {
+public interface ScramblerType<S extends Scrambler<S, T>, T extends ScramblerType<S, T>> {
 
     Pattern TYPE_SUFFIX_PATTERN = Pattern.compile("^(?:Custom|Historic)?(.*?)(?:Type|Config)$");
 

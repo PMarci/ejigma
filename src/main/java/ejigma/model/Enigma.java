@@ -24,7 +24,7 @@ public class Enigma {
     private KeyBoard keyBoard;
     private ConfigContainer configContainer;
 
-    private List<ScramblerMounting> scramblerWiring;
+    private List<ScramblerMounting<?, ?>> scramblerWiring;
     private String alphabetString;
 
     public Enigma() throws IOException {
@@ -93,7 +93,7 @@ public class Enigma {
 
     public ScrambleResult encrypt(ScrambleResult current) {
         for (int i = 0; i < scramblerWiring.size(); i++) {
-            ScramblerMounting scramblerMounting = scramblerWiring.get(i);
+            ScramblerMounting<?, ?> scramblerMounting = scramblerWiring.get(i);
             current = scramblerMounting.scramble(current);
             if (i == scramblerWiring.size() - 1) {
                 current.recordOutput();
@@ -103,7 +103,7 @@ public class Enigma {
     }
 
     private char encrypt(char c) {
-        for (ScramblerMounting scramblerMounting : scramblerWiring) {
+        for (ScramblerMounting<?, ?> scramblerMounting : scramblerWiring) {
             c = scramblerMounting.scramble(c);
         }
         return c;
@@ -152,9 +152,9 @@ public class Enigma {
     public void setPlugBoard(PlugBoardConfig newType) throws ArmatureInitException, ScramblerSettingException {
         validateWithCurrent(newType);
         // TODO more elegant handling
-        PlugBoard plugBoard = newType.unsafeScrambler();
-        plugBoard.validatePlugBoard();
-        forceSetPlugBoard(plugBoard);
+        PlugBoard vPlugBoard = newType.unsafeScrambler();
+        vPlugBoard.validatePlugBoard();
+        forceSetPlugBoard(vPlugBoard);
         initWiring();
     }
 
@@ -177,10 +177,10 @@ public class Enigma {
     }
 
     private void initWiring() {
-        List<ScramblerMounting> wiring = new ArrayList<>(armature.getScramblerWiring());
+        List<ScramblerMounting<?, ?>> wiring = new ArrayList<>(armature.getScramblerWiring());
         if (plugBoard != null) {
-            wiring.add(0, new ScramblerMounting(plugBoard));
-            wiring.add(wiring.size() - 1, new ScramblerMounting(plugBoard));
+            wiring.add(0, new ScramblerMounting<>(plugBoard));
+            wiring.add(wiring.size() - 1, new ScramblerMounting<>(plugBoard));
         }
         this.scramblerWiring = wiring;
     }

@@ -387,19 +387,11 @@ public class ScrambleResult {
         }
 
         public static String getPadding(String s, int padding) {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < getSpace(s, padding); i++) {
-                sb.append(' ');
-            }
-            return sb.toString();
+            return " ".repeat(Math.max(0, getSpace(s, padding)));
         }
 
         static String getPadding(int strLen, int padding) {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < getSpace(strLen, padding); i++) {
-                sb.append(' ');
-            }
-            return sb.toString();
+            return " ".repeat(Math.max(0, getSpace(strLen, padding)));
         }
 
         private static int getSpace(String s, int padding) {

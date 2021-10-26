@@ -305,7 +305,7 @@ public class KeyBoard implements Runnable {
             PlugBoardConfig newType = newPlugBoardTypeResponse.getScramblerType();
             String vNewAlphabetString = newType.getAlphabetString();
             if (newPlugBoardTypeResponse.isReselect()) {
-                PlugBoardConfig oldPlugBoardConfig = (PlugBoardConfig) enigma.getPlugBoard().getType();
+                PlugBoardConfig oldPlugBoardConfig = enigma.getPlugBoard().getType();
                 try {
                     enigma.forceSetPlugBoard(newType.freshScrambler());
                     if (promptForAuto(PlugBoard.class.getSimpleName(), "EntryWheel")) {
@@ -335,7 +335,7 @@ public class KeyBoard implements Runnable {
     }
 
     @SuppressWarnings("unchecked")
-    private <S extends Scrambler, T extends ScramblerType<S>> ScramblerSelectResponse<S, T> promptForScramblerType(Class<T> scramblerTypeClass) {
+    private <S extends Scrambler<S, T>, T extends ScramblerType<S, T>> ScramblerSelectResponse<S, T> promptForScramblerType(Class<T> scramblerTypeClass) {
         ReselectHelper<S, T> helper = new ReselectHelper<>();
         String scramblerTypeClassName = scramblerTypeClass.getSimpleName();
         String scramblerName = getScramblerName(scramblerTypeClassName);
@@ -663,7 +663,7 @@ public class KeyBoard implements Runnable {
         this.alphabet = alphabetString.toCharArray();
     }
 
-    public static class ScramblerSelectResponse<S extends Scrambler, T extends ScramblerType<S>> {
+    public static class ScramblerSelectResponse<S extends Scrambler<S, T>, T extends ScramblerType<S, T>> {
 
         private T scramblerType;
 
@@ -695,7 +695,7 @@ public class KeyBoard implements Runnable {
 
     }
 
-    private class ReselectHelper<S extends Scrambler, T extends ScramblerType<S>> {
+    private class ReselectHelper<S extends Scrambler<S,T>, T extends ScramblerType<S, T>> {
         private boolean choose = true;
         private Exception exception;
         private ScramblerSelectResponse<S, T> response;
@@ -713,10 +713,10 @@ public class KeyBoard implements Runnable {
         public void handle(String denyString) {
             selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
             while (choose) {
-                // TODO with the new UIE we can leave the first loop with an invalid armature state
-                // there should be a separate exception type for an invalid armature specifically to catch and reset (or to avoid breaking it the first place)
-                // unrelated messages from Armature.validateAlphabetString can show up here with a prompt to reselect, even though this should be caught before
-                // also leaving currently leaves the invalid config in the armature
+                // TODO there should be a separate exception type for an invalid armature specifically to catch and
+                // reset (or to avoid breaking it the first place)
+                // unrelated messages from Armature.validateAlphabetString can show up here with a prompt to reselect,
+                // even though this should be caught before
                 String yn = selectionReader.readLine(exception.getMessage() + SWITCH_PROMPT).trim();
                 if ("y".equals(yn) || "Y".equals(yn)) {
                     response = scramblerTypes.length > 1 ?
@@ -808,7 +808,7 @@ public class KeyBoard implements Runnable {
             this.completer = completer;
         }
 
-        <T extends ScramblerType<?>> void setCompleter(Class<T> scramblerTypeType) {
+        <T extends ScramblerType<?, ?>> void setCompleter(Class<T> scramblerTypeType) {
             if (scramblerTypeType.isAssignableFrom(ReflectorType.class)) {
                 setCompleter(completeFor(enigma.getConfigContainer()::getReflectorTypes));
             } else if (scramblerTypeType.isAssignableFrom(EntryWheelType.class)) {
@@ -818,7 +818,7 @@ public class KeyBoard implements Runnable {
             }
         }
 
-        private <T extends ScramblerType<?>> Completer completeFor(Supplier<List<T>> supplier) {
+        private <T extends ScramblerType<?, ?>> Completer completeFor(Supplier<List<T>> supplier) {
             return (reader, line, candidates) -> {
                 List<T> reflectorTypes = supplier.get();
                 candidates.addAll(reflectorTypes.stream()

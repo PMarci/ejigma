@@ -1,18 +1,19 @@
 package ejigma.model;
 
+import ejigma.model.type.ScramblerType;
 import ejigma.util.ScrambleResult;
 
-public class ScramblerMounting {
+public class ScramblerMounting<S extends Scrambler<S, T>, T extends ScramblerType<S, T>> {
 
-    private final Scrambler scrambler;
+    private final Scrambler<S, T> scrambler;
     private final boolean reverseWired;
 
-    ScramblerMounting(Scrambler scrambler, boolean reverseWired) {
+    ScramblerMounting(Scrambler<S, T> scrambler, boolean reverseWired) {
         this.scrambler = scrambler;
         this.reverseWired = reverseWired;
     }
 
-    ScramblerMounting(Scrambler scrambler) {
+    ScramblerMounting(Scrambler<S, T> scrambler) {
         this.scrambler = scrambler;
         this.reverseWired = false;
     }
@@ -25,7 +26,7 @@ public class ScramblerMounting {
         return !reverseWired ? scrambler.scramble(input) : scrambler.reverseScramble(input);
     }
 
-    public Scrambler getScrambler() {
+    public Scrambler<S, T> getScrambler() {
         return scrambler;
     }
 

@@ -5,7 +5,7 @@ import ejigma.model.type.ReflectorType;
 import ejigma.util.ScrambleResult;
 import ejigma.util.Util;
 
-public class Reflector extends ScramblerWheel {
+public class Reflector extends ScramblerWheel<Reflector, ReflectorType> {
 
     public Reflector(String alphabetString, String wiringString, ReflectorType reflectorType) throws ScramblerSettingException {
         this(alphabetString, wiringString, true, reflectorType);
