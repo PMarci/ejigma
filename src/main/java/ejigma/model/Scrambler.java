@@ -4,24 +4,31 @@ import ejigma.exception.ScramblerSettingAlphabetException;
 import ejigma.exception.ScramblerSettingException;
 import ejigma.exception.ScramblerSettingLengthException;
 import ejigma.exception.ScramblerSettingWiringException;
+import ejigma.model.type.Printable;
 import ejigma.model.type.ScramblerType;
+import ejigma.util.GsonExclude;
 import ejigma.util.ScrambleResult;
 import ejigma.util.Util;
 
 import static java.util.Objects.requireNonNull;
 
-public abstract class Scrambler<S extends Scrambler<S, T>, T extends ScramblerType<S, T>> {
+public abstract class Scrambler<S extends Scrambler<S, T>, T extends ScramblerType<S, T>> implements Printable {
 
     public static final String DEFAULT_ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     public static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
 
-    protected final T type;
+    // trying something out for gson
+    protected T type;
     protected final String alphabetString;
     protected final String wiringString;
 
+    @GsonExclude
     protected final char[] alphabet;
 
+    @GsonExclude
     int[] forwardLinks;
+
+    @GsonExclude
     int[] reverseLinks;
 
     protected Scrambler(String alphabetString, String wiringString, T scramblerType) throws ScramblerSettingException {
@@ -76,5 +83,10 @@ public abstract class Scrambler<S extends Scrambler<S, T>, T extends ScramblerTy
 
     public T getType() {
         return type;
+    }
+
+    @Override
+    public String toString() {
+        return print();
     }
 }

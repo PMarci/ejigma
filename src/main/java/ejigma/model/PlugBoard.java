@@ -2,6 +2,7 @@ package ejigma.model;
 
 import ejigma.exception.ScramblerSettingException;
 import ejigma.model.type.PlugBoardConfig;
+import ejigma.util.GsonExclude;
 import ejigma.util.ScrambleResult;
 import ejigma.util.Util;
 
@@ -13,6 +14,7 @@ public class PlugBoard extends Scrambler<PlugBoard, PlugBoardConfig> {
 
     private static final Random RANDOM = new Random();
 
+    @GsonExclude
     private final String sourceString;
 
     public PlugBoard() throws ScramblerSettingException {
@@ -213,13 +215,14 @@ public class PlugBoard extends Scrambler<PlugBoard, PlugBoardConfig> {
             int splitIndex = IntStream.range(0, initString.length())
                     .filter(i -> alphabetString.indexOf(upperCaseString.charAt(i)) == -1)
                     .findFirst()
-                    .orElseThrow(() -> new ScramblerSettingException(String.format(denyStringFormat, reasonInvalidSeparator)));
+                    .orElseThrow(() -> new ScramblerSettingException(String.format(denyStringFormat,
+                                                                                   reasonInvalidSeparator)));
             result = new String[]{initString.substring(0, splitIndex), initString.substring(splitIndex + 1)};
+            if (result[0].length() != result[1].length()) {
+                throw new ScramblerSettingException(String.format(denyStringFormat, reasonUnequal));
+            }
         } else {
             result = new String[]{"", ""};
-        }
-        if (result[0].length() != result[1].length()) {
-            throw new ScramblerSettingException(String.format(denyStringFormat, reasonUnequal));
         }
         return result;
     }
@@ -283,11 +286,6 @@ public class PlugBoard extends Scrambler<PlugBoard, PlugBoardConfig> {
 
             public String getInitString() {
                 return sourceString + '\u0000' + wiringString;
-            }
-
-            @Override
-            public String toString() {
-                return getName();
             }
         };
     }

@@ -3,6 +3,7 @@ package ejigma.model;
 import ejigma.exception.ScramblerSettingException;
 import ejigma.model.type.EntryWheelType;
 import ejigma.util.ScrambleResult;
+import ejigma.util.Util;
 
 public class EntryWheel extends ScramblerWheel<EntryWheel, EntryWheelType> {
 
@@ -58,7 +59,7 @@ public class EntryWheel extends ScramblerWheel<EntryWheel, EntryWheelType> {
                 EntryWheel entryWheel = null;
                 try {
                     // TODO random option
-                    entryWheel = new EntryWheel(alphabetString, alphabetString, this);
+                    entryWheel = new EntryWheel(alphabetString, Util.generate2Cycles(alphabetString), this);
                 } catch (ScramblerSettingException e) {
                     e.printStackTrace();
                 }
@@ -68,6 +69,11 @@ public class EntryWheel extends ScramblerWheel<EntryWheel, EntryWheelType> {
             @Override
             public String getAlphabetString() {
                 return alphabetString;
+            }
+
+            @Override
+            public String toString() {
+                return getName();
             }
         };
     }

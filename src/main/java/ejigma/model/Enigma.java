@@ -109,6 +109,12 @@ public class Enigma {
         return c;
     }
 
+    private void setSelection(KeyBoard.SelectionWrapper wrapper) {
+        if (wrapper != null) {
+            
+        }
+    }
+
     public void setEntryWheel(EntryWheelType entryWheelType) throws ArmatureInitException {
         armature.setEntryWheel(entryWheelType);
         initWiring();
@@ -160,6 +166,11 @@ public class Enigma {
 
     public void forceSetPlugBoard(PlugBoard plugBoard) {
         this.plugBoard = plugBoard;
+        initWiring();
+    }
+
+    public void forceSetPlugBoard(PlugBoardConfig newType) {
+        this.plugBoard = newType.freshScrambler();
         initWiring();
     }
 

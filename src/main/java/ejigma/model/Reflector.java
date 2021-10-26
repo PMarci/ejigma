@@ -58,6 +58,11 @@ public class Reflector extends ScramblerWheel<Reflector, ReflectorType> {
             public String getAlphabetString() {
                 return alphabetString;
             }
+
+            @Override
+            public String toString() {
+                return getName();
+            }
         };
     }
 
