@@ -161,7 +161,11 @@ public class Armature {
     }
 
     public void forceSetEntryWheel(EntryWheelType entryWheelType) {
-        this.entryWheel = initEntryWheel(entryWheelType);
+        forceSetEntryWheel(initEntryWheel(entryWheelType));
+    }
+
+    public void forceSetEntryWheel(EntryWheel entryWheel) {
+        this.entryWheel = entryWheel;
         initWiring();
     }
 
@@ -176,7 +180,11 @@ public class Armature {
     }
 
     public void forceSetReflector(ReflectorType reflectorType) {
-        this.reflector = initReflector(reflectorType);
+        forceSetReflector(initReflector(reflectorType));
+    }
+
+    public void forceSetReflector(Reflector reflector) {
+        this.reflector = reflector;
         initWiring();
     }
 
@@ -191,12 +199,16 @@ public class Armature {
     }
 
     public void forceSetRotors(RotorType[] types) {
-        Rotor[] newRotors = initRotors(types);
-        tryAndCopyOffsets(newRotors);
-        this.rotors = newRotors;
+        forceSetRotors(initRotors(types));
+    }
+
+    public void forceSetRotors(Rotor[] rotors) {
+        tryAndCopyOffsets(rotors);
+        this.rotors = rotors;
         initWiring();
     }
 
+    // TODO if I implement this state copying for all components I can get rid of the overloads above
     private void tryAndCopyOffsets(Rotor[] newRotors) {
         if (newRotors != null) {
             for (int i = 0; i < rotors.length && i < newRotors.length; i++) {
@@ -252,14 +264,14 @@ public class Armature {
         if (scramblerType != null) {
             String currentAlphabetString = scramblerType.getAlphabetString();
             if (prevAlphabetString != null && !prevAlphabetString.equals(currentAlphabetString)) {
-                throw new ArmatureInitException("scramblers' alphabetStrings differ");
+                throw new ArmatureInitException("Selected scramblers' alphabetStrings differ!");
             } else if (prevAlphabetString == null && currentAlphabetString != null) {
                 prevAlphabetString = currentAlphabetString;
             } else if (currentAlphabetString == null) {
-                throw new ArmatureInitException("alphabetString can't be null");
+                throw new ArmatureInitException("The alphabetString can't be null!");
             }
         } else {
-            throw new ArmatureInitException("scramblerType can't be null");
+            throw new ArmatureInitException("The ScramblerType can't be null!");
         }
         return prevAlphabetString;
     }
@@ -331,7 +343,15 @@ public class Armature {
         return alphabetString;
     }
 
+    public EntryWheel getEntryWheel() {
+        return entryWheel;
+    }
+
     public Rotor[] getRotors() {
         return rotors;
+    }
+
+    public Reflector getReflector() {
+        return reflector;
     }
 }

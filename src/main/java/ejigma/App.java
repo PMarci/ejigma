@@ -21,6 +21,8 @@ import java.util.stream.Collectors;
 
 public class App {
 
+    private static final boolean PRESS_2_START = false;
+
     public static void main(String[] args) {
         try {
             ConfigContainer configContainer = new ConfigContainer();
@@ -42,7 +44,10 @@ public class App {
 
     private static void startInteractive(ConfigContainer configContainer,
                                          Enigma enigma,
-                                         Map<Character, List<String>> opts) throws ArmatureInitException, ScramblerSettingException, IOException {
+                                         Map<Character, List<String>> opts) throws
+                                                                            ArmatureInitException,
+                                                                            ScramblerSettingException,
+                                                                            IOException {
         enigma.init(configContainer);
         if (opts.containsKey('p')) {
             enigma.initPlugBoard();
@@ -54,7 +59,10 @@ public class App {
 
     private static void startNonInteractive(ConfigContainer configContainer,
                                             Enigma enigma,
-                                            Map<Character, List<String>> opts) throws ArmatureInitException, IOException, ScramblerSettingException {
+                                            Map<Character, List<String>> opts) throws
+                                                                               ArmatureInitException,
+                                                                               IOException,
+                                                                               ScramblerSettingException {
 
         RotorType[] rotorTypes = Armature.DEFAULT_ROTOR_TYPES;
         EntryWheelType entryWheelType = Armature.DEFAULT_ENTRY_WHEEL_TYPE;
@@ -163,13 +171,15 @@ public class App {
     }
 
     private static void anyKey(Terminal terminal) {
-        terminal.writer().write("Press any key to continue");
-        terminal.flush();
-        try {
-            terminal.enterRawMode();
-            terminal.reader().read();
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (PRESS_2_START) {
+            terminal.writer().write("Press any key to continue");
+            terminal.flush();
+            try {
+                terminal.enterRawMode();
+                terminal.reader().read();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

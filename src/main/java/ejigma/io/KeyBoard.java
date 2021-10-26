@@ -27,31 +27,36 @@ import java.util.stream.IntStream;
 import static ejigma.model.type.ScramblerType.getScramblerName;
 import static org.jline.keymap.KeyMap.ctrl;
 import static org.jline.keymap.KeyMap.key;
+import static org.jline.reader.LineReader.Option.MOUSE;
 
 public class KeyBoard implements Runnable {
 
     private static final String FILTER_COMPLETION = "filterCompletion";
-    private static final String SWITCH_PROMPT = ", change them as well? (y/n): ";
     private static final Pattern NUMBERS_PATTERN = Pattern.compile("[^0-9]*([0-9]+)[^0-9]*");
     private static final String ROTOR_PROMPT_FORMAT = "Enter a type for rotor %d: ";
     private static final String NOT_A_ROTORTYPE_STRING = "Not a valid rotorType";
     private static final String ROTOR_DENY_STRING = "Not setting rotors...";
+    private static final String SWITCH_PROMPT = ", change them as well? (y/n): ";
+    private static final int MAX_SELECTION_DEPTH = 1;
 
     private final Terminal terminal;
     private final Enigma enigma;
     private final LineReader selectionReader;
     private final BindingReader bindingReader;
     private final KeyMap<Op> keyMap;
-
-    private String newAlphabetString = null;
-    private SelectCompleter selectCompleter;
-
-    private ExecutorService executor;
     private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
-    private String alphabetString;
+    private ExecutorService executor;
+
     private char[] alphabet;
+    private String alphabetString;
+    private String newAlphabetString = null;
+
+    private SelectCompleter selectCompleter;
+
+    // TODO maybe resettle to enigma, but ultimately part of IO
+    private ScramblerCache scramblerCache;
 
     public KeyBoard(Enigma enigma) {
         setAlphabet(Scrambler.DEFAULT_ALPHABET_STRING);
@@ -74,7 +79,7 @@ public class KeyBoard implements Runnable {
         result.setOpt(LineReader.Option.DISABLE_EVENT_EXPANSION);
         result.setOpt(LineReader.Option.COMPLETE_IN_WORD);
         result.setOpt(LineReader.Option.DISABLE_HIGHLIGHTER);
-        result.setOpt(LineReader.Option.MOUSE);
+        result.setOpt(MOUSE);
         result.setVariable(LineReader.DISABLE_HISTORY, true);
         result.setVariable(FILTER_COMPLETION, false);
         return result;
@@ -183,127 +188,149 @@ public class KeyBoard implements Runnable {
 
     private void processSelectEntryIgnoreInterrupt() {
         try {
-            processSelectEntry();
+            scramblerCache = new ScramblerCache(enigma);
+            processSelectEntry(0);
         } catch (UserInterruptException ignored) {
             //ignored
+            enigma.resetFromCache(scramblerCache);
             enigma.getLightBoard().redisplay();
+            scramblerCache = null;
         }
     }
 
-    private void processSelectEntry() {
-        ScramblerSelectResponse<EntryWheel, EntryWheelType> newEntryWheelTypeResponse;
-        newEntryWheelTypeResponse = promptForScramblerType(EntryWheelType.class);
-        EntryWheelType newType = newEntryWheelTypeResponse.getScramblerType();
-        String vNewAlphabetString = newType.getAlphabetString();
-        if (newEntryWheelTypeResponse.isReselect()) {
-            EntryWheelType oldEntryWheel = enigma.getArmature().getEntryWheelType();
-            try {
-                enigma.forceSetEntryWheel(newType);
-                processSelectRotors();
-                if (promptForAuto(EntryWheel.class.getSimpleName(), Reflector.class.getSimpleName())) {
-                    enigma.setAutoReflector(vNewAlphabetString);
-                } else {
-                    processSelectReflector();
+    private void processSelectEntry(int selectionDepth) {
+        if (selectionDepth <= MAX_SELECTION_DEPTH) {
+            ScramblerSelectResponse<EntryWheel, EntryWheelType> newEntryWheelTypeResponse;
+            newEntryWheelTypeResponse = promptForScramblerType(EntryWheelType.class);
+            EntryWheelType newType = newEntryWheelTypeResponse.getScramblerType();
+            String vNewAlphabetString = newType.getAlphabetString();
+            if (newEntryWheelTypeResponse.isReselect()) {
+                EntryWheelType oldEntryWheel = enigma.getArmature().getEntryWheelType();
+                try {
+                    enigma.forceSetEntryWheel(newType);
+                    processSelectRotors(++selectionDepth);
+                    if (promptForAuto(EntryWheel.class.getSimpleName(), Reflector.class.getSimpleName())) {
+                        enigma.setAutoReflector(vNewAlphabetString);
+                    } else {
+                        processSelectReflector(++selectionDepth);
+                    }
+                    if (promptForAuto(EntryWheel.class.getSimpleName(), PlugBoard.class.getSimpleName())) {
+                        enigma.setAutoPlugBoard(vNewAlphabetString);
+                    } else {
+                        processSelectPlugBoard(++selectionDepth);
+                    }
+                    rebindKeyMap(vNewAlphabetString);
+                } catch (UserInterruptException e) {
+                    enigma.forceSetEntryWheel(oldEntryWheel);
                 }
-                if (promptForAuto(PlugBoard.class.getSimpleName(), PlugBoard.class.getSimpleName())) {
-                    enigma.setAutoPlugBoard(vNewAlphabetString);
-                } else {
-                    processSelectPlugBoard();
+            } else {
+                try {
+                    enigma.setEntryWheel(newType);
+                } catch (ArmatureInitException e) {
+                    selectionReader.printAbove("Can't change entryWheel: " + e.getMessage());
                 }
-                rebindKeyMap(vNewAlphabetString);
-            } catch (UserInterruptException e) {
-                enigma.forceSetEntryWheel(oldEntryWheel);
-            }
-        } else {
-            try {
-                enigma.setEntryWheel(newType);
-            } catch (ArmatureInitException e) {
-                selectionReader.printAbove("Can't change entryWheel: " + e.getMessage());
             }
         }
     }
 
     private void processSelectReflectorIgnoreInterrupt() {
         try {
-            processSelectReflector();
+            scramblerCache = new ScramblerCache(enigma);
+            processSelectReflector(0);
         } catch (UserInterruptException ignored) {
             //ignored
+            enigma.resetFromCache(scramblerCache);
             enigma.getLightBoard().redisplay();
+            scramblerCache = null;
         }
     }
 
-    private void processSelectReflector() {
-        ScramblerSelectResponse<Reflector, ReflectorType> newReflectorTypeResponse;
-        newReflectorTypeResponse = promptForScramblerType(ReflectorType.class);
-        ReflectorType newType = newReflectorTypeResponse.getScramblerType();
-        String vNewAlphabetString = newType.getAlphabetString();
-        if (newReflectorTypeResponse.isReselect()) {
-            ReflectorType oldReflectorType = enigma.getArmature().getReflectorType();
-            try {
-                enigma.forceSetReflector(newType);
-                if (promptForAuto(Reflector.class.getSimpleName(), EntryWheel.class.getSimpleName())) {
-                    enigma.setAutoEntryWheel(vNewAlphabetString);
-                } else {
-                    processSelectEntry();
+    private void processSelectReflector(int selectionDepth) {
+        if (selectionDepth <= MAX_SELECTION_DEPTH) {
+            ScramblerSelectResponse<Reflector, ReflectorType> newReflectorTypeResponse;
+            newReflectorTypeResponse = promptForScramblerType(ReflectorType.class);
+            ReflectorType newType = newReflectorTypeResponse.getScramblerType();
+            String vNewAlphabetString = newType.getAlphabetString();
+            if (newReflectorTypeResponse.isReselect()) {
+                ReflectorType oldReflectorType = enigma.getArmature().getReflectorType();
+                try {
+                    enigma.forceSetReflector(newType);
+                    if (promptForAuto(Reflector.class.getSimpleName(), EntryWheel.class.getSimpleName())) {
+                        enigma.setAutoEntryWheel(vNewAlphabetString);
+                    } else {
+                        processSelectEntry(++selectionDepth);
+                    }
+                    processSelectRotors(++selectionDepth);
+                    if (promptForAuto(Reflector.class.getSimpleName(), PlugBoard.class.getSimpleName())) {
+                        enigma.setAutoPlugBoard(vNewAlphabetString);
+                    } else {
+                        processSelectPlugBoard(++selectionDepth);
+                    }
+                    rebindKeyMap(vNewAlphabetString);
+                } catch (UserInterruptException e) {
+                    enigma.forceSetReflector(oldReflectorType);
                 }
-                processSelectRotors();
-                if (promptForAuto(Reflector.class.getSimpleName(), PlugBoard.class.getSimpleName())) {
-                    enigma.setAutoPlugBoard(vNewAlphabetString);
-                } else {
-                    processSelectPlugBoard();
+            } else {
+                try {
+                    enigma.setReflector(newType);
+                } catch (ArmatureInitException e) {
+                    selectionReader.printAbove("Can't change reflector: " + e.getMessage());
                 }
-                rebindKeyMap(vNewAlphabetString);
-            } catch (UserInterruptException e) {
-                enigma.forceSetReflector(oldReflectorType);
-            }
-        } else {
-            try {
-                enigma.setReflector(newType);
-            } catch (ArmatureInitException e) {
-                selectionReader.printAbove("Can't change reflector: " + e.getMessage());
             }
         }
     }
 
     private void processSelectPlugBoardIgnoreInterrupt() {
         try {
-            processSelectPlugBoard();
+            scramblerCache = new ScramblerCache(enigma);
+            processSelectPlugBoard(0);
         } catch (UserInterruptException ignored) {
             //ignored
+            enigma.resetFromCache(scramblerCache);
             enigma.getLightBoard().redisplay();
+            scramblerCache = null;
         }
     }
 
-    private void processSelectPlugBoard() {
-        ScramblerSelectResponse<PlugBoard, PlugBoardConfig> newPlugBoardTypeResponse;
-        newPlugBoardTypeResponse = promptForScramblerType(PlugBoardConfig.class);
-        PlugBoardConfig newType = newPlugBoardTypeResponse.getScramblerType();
-        String vNewAlphabetString = newType.getAlphabetString();
-        if (newPlugBoardTypeResponse.isReselect()) {
-            PlugBoardConfig oldPlugBoardConfig = (PlugBoardConfig) enigma.getPlugBoard().getType();
-            try {
-                enigma.forceSetPlugBoard(newType.freshScrambler());
-                if (promptForAuto(PlugBoard.class.getSimpleName(), "EntryWheel")) {
-                    enigma.setAutoEntryWheel(vNewAlphabetString);
-                } else {
-                    processSelectEntry();
-                }
-                processSelectRotors();
-                if (promptForAuto(PlugBoard.class.getSimpleName(), "Reflector")) {
-                    enigma.setAutoReflector(vNewAlphabetString);
-                } else {
-                    processSelectReflector();
-                }
-                rebindKeyMap(vNewAlphabetString);
-            } catch (UserInterruptException e) {
-                enigma.forceSetPlugBoard(oldPlugBoardConfig.freshScrambler());
+
+    private void processSelectPlugBoard(int selectionDepth) {
+        if (selectionDepth <= MAX_SELECTION_DEPTH) {
+            boolean completion = false;
+            if (selectionReader.getVariable(LineReader.DISABLE_COMPLETION) != null) {
+                completion = (boolean) selectionReader.getVariable(LineReader.DISABLE_COMPLETION);
             }
-        } else {
-            try {
-                enigma.setPlugBoard(newType);
-            } catch (ArmatureInitException | ScramblerSettingException e) {
-                selectionReader.printAbove("Can't change PlugBoard: " + e.getMessage());
+            selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
+            ScramblerSelectResponse<PlugBoard, PlugBoardConfig> newPlugBoardTypeResponse;
+            newPlugBoardTypeResponse = promptForScramblerType(PlugBoardConfig.class);
+            PlugBoardConfig newType = newPlugBoardTypeResponse.getScramblerType();
+            String vNewAlphabetString = newType.getAlphabetString();
+            if (newPlugBoardTypeResponse.isReselect()) {
+                PlugBoardConfig oldPlugBoardConfig = (PlugBoardConfig) enigma.getPlugBoard().getType();
+                try {
+                    enigma.forceSetPlugBoard(newType.freshScrambler());
+                    if (promptForAuto(PlugBoard.class.getSimpleName(), "EntryWheel")) {
+                        enigma.setAutoEntryWheel(vNewAlphabetString);
+                    } else {
+                        processSelectEntry(++selectionDepth);
+                    }
+                    processSelectRotors(++selectionDepth);
+                    if (promptForAuto(PlugBoard.class.getSimpleName(), Reflector.class.getSimpleName())) {
+                        enigma.setAutoReflector(vNewAlphabetString);
+                    } else {
+                        processSelectReflector(++selectionDepth);
+                    }
+                    rebindKeyMap(vNewAlphabetString);
+                } catch (UserInterruptException e) {
+                    enigma.forceSetPlugBoard(oldPlugBoardConfig.freshScrambler());
+                }
+            } else {
+                try {
+                    enigma.setPlugBoard(newType);
+                } catch (ArmatureInitException | ScramblerSettingException e) {
+                    selectionReader.printAbove("Can't change PlugBoard: " + e.getMessage());
+                }
             }
+            selectionReader.setVariable(LineReader.DISABLE_COMPLETION, completion);
         }
     }
 
@@ -361,52 +388,57 @@ public class KeyBoard implements Runnable {
 
     private void processSelectRotorsIgnoreInterrupt() {
         try {
-            processSelectRotors();
+            scramblerCache = new ScramblerCache(enigma);
+            processSelectRotors(0);
         } catch (UserInterruptException ignored) {
             //ignored
+            enigma.resetFromCache(scramblerCache);
             enigma.getLightBoard().redisplay();
+            scramblerCache = null;
         }
     }
 
-    private void processSelectRotors() {
-        // rotor no prompt
-        int rotorNo;
-        selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
-        rotorNo = promptForRotorNo();
-        selectionReader.setVariable(LineReader.DISABLE_COMPLETION, false);
-        // rotor type prompt
-        selectCompleter.setCompleter(RotorType.class);
-        ScramblerSelectResponse<Rotor, RotorType> newRotorResponse = promptForRotorTypes(rotorNo);
-        RotorType[] newRotorTypes = newRotorResponse.getScramblerTypes();
-        String vNewAlphabetString = newRotorTypes[0].getAlphabetString();
-        if (newRotorResponse.isReselect()) {
-            RotorType[] oldRotorTypes = enigma.getArmature().getRotorTypes();
-            try {
-                enigma.forceSetRotors(newRotorTypes);
-                if (promptForAuto(Rotor.class.getSimpleName(), "EntryWheel")) {
-                    enigma.setAutoEntryWheel(vNewAlphabetString);
-                } else {
-                    processSelectEntry();
+    private void processSelectRotors(int selectionDepth) {
+        if (selectionDepth <= MAX_SELECTION_DEPTH) {
+            // rotor no prompt
+            int rotorNo;
+            selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
+            rotorNo = promptForRotorNo();
+            selectionReader.setVariable(LineReader.DISABLE_COMPLETION, false);
+            // rotor type prompt
+            selectCompleter.setCompleter(RotorType.class);
+            ScramblerSelectResponse<Rotor, RotorType> newRotorResponse = promptForRotorTypes(rotorNo);
+            RotorType[] newRotorTypes = newRotorResponse.getScramblerTypes();
+            String vNewAlphabetString = newRotorTypes[0].getAlphabetString();
+            if (newRotorResponse.isReselect()) {
+                RotorType[] oldRotorTypes = enigma.getArmature().getRotorTypes();
+                try {
+                    enigma.forceSetRotors(newRotorTypes);
+                    if (promptForAuto(Rotor.class.getSimpleName(), EntryWheel.class.getSimpleName())) {
+                        enigma.setAutoEntryWheel(vNewAlphabetString);
+                    } else {
+                        processSelectEntry(++selectionDepth);
+                    }
+                    if (promptForAuto(Rotor.class.getSimpleName(), Reflector.class.getSimpleName())) {
+                        enigma.setAutoReflector(vNewAlphabetString);
+                    } else {
+                        processSelectReflector(++selectionDepth);
+                    }
+                    if (promptForAuto(Rotor.class.getSimpleName(), PlugBoard.class.getSimpleName())) {
+                        enigma.setAutoPlugBoard(vNewAlphabetString);
+                    } else {
+                        processSelectPlugBoard(++selectionDepth);
+                    }
+                    rebindKeyMap(vNewAlphabetString);
+                } catch (UserInterruptException e) {
+                    enigma.forceSetRotors(oldRotorTypes);
                 }
-                if (promptForAuto(Rotor.class.getSimpleName(), "Reflector")) {
-                    enigma.setAutoReflector(vNewAlphabetString);
-                } else {
-                    processSelectReflector();
+            } else {
+                try {
+                    enigma.setRotors(newRotorTypes);
+                } catch (ArmatureInitException e) {
+                    selectionReader.printAbove("Can't change rotors: " + e.getMessage());
                 }
-                if (promptForAuto(Rotor.class.getSimpleName(), "PlugBoard")) {
-                    enigma.setAutoPlugBoard(vNewAlphabetString);
-                } else {
-                    processSelectPlugBoard();
-                }
-                rebindKeyMap(vNewAlphabetString);
-            } catch (UserInterruptException e) {
-                enigma.forceSetRotors(oldRotorTypes);
-            }
-        } else {
-            try {
-                enigma.setRotors(newRotorTypes);
-            } catch (ArmatureInitException e) {
-                selectionReader.printAbove("Can't change rotors: " + e.getMessage());
             }
         }
     }
@@ -445,7 +477,8 @@ public class KeyBoard implements Runnable {
             prompt = String.format(ROTOR_PROMPT_FORMAT, i);
             String tInput = selectionReader.readLine(prompt).trim();
             Optional<RotorType> rotorType = enigma.getConfigContainer().getRotorTypes().stream()
-                    .filter(rotorType1 -> rotorType1.getName().equals(tInput)).findAny();
+                    .filter(rType -> rType.getName().equals(tInput))
+                    .findAny();
             if (rotorType.isPresent()) {
                 RotorType type = rotorType.get();
                 String typeAlphabetString = type.getAlphabetString();
@@ -509,6 +542,7 @@ public class KeyBoard implements Runnable {
         bind(keyMap, Op.DOWN, key(terminal, InfoCmp.Capability.key_down));
         bind(keyMap, Op.LEFT, key(terminal, InfoCmp.Capability.key_left));
         bind(keyMap, Op.RIGHT, key(terminal, InfoCmp.Capability.key_right));
+        unbind(keyMap, Collections.singleton(LineReader.MOUSE));
         return keyMap;
     }
 
@@ -679,6 +713,10 @@ public class KeyBoard implements Runnable {
         public void handle(String denyString) {
             selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
             while (choose) {
+                // TODO with the new UIE we can leave the first loop with an invalid armature state
+                // there should be a separate exception type for an invalid armature specifically to catch and reset (or to avoid breaking it the first place)
+                // unrelated messages from Armature.validateAlphabetString can show up here with a prompt to reselect, even though this should be caught before
+                // also leaving currently leaves the invalid config in the armature
                 String yn = selectionReader.readLine(exception.getMessage() + SWITCH_PROMPT).trim();
                 if ("y".equals(yn) || "Y".equals(yn)) {
                     response = scramblerTypes.length > 1 ?
@@ -723,6 +761,36 @@ public class KeyBoard implements Runnable {
 
         public void setScramblerTypes(T[] scramblerTypes) {
             this.scramblerTypes = scramblerTypes;
+        }
+    }
+
+    public static class ScramblerCache {
+        private final EntryWheel entryWheel;
+        private final Rotor[] rotors;
+        private final Reflector reflector;
+        private final PlugBoard plugBoard;
+
+        public ScramblerCache(Enigma enigma) {
+            this.entryWheel = enigma.getArmature().getEntryWheel();
+            this.rotors = enigma.getArmature().getRotors();
+            this.reflector = enigma.getArmature().getReflector();
+            this.plugBoard = enigma.getPlugBoard();
+        }
+
+        public EntryWheel getEntryWheel() {
+            return entryWheel;
+        }
+
+        public Rotor[] getRotors() {
+            return rotors;
+        }
+
+        public Reflector getReflector() {
+            return reflector;
+        }
+
+        public PlugBoard getPlugBoard() {
+            return plugBoard;
         }
     }
 

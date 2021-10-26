@@ -2,7 +2,7 @@ package ejigma.util;
 
 import ejigma.exception.TypeLoaderError;
 import ejigma.model.Scrambler;
-import ejigma.model.type.*;
+import ejigma.model.type.CustomScramblerType;
 import org.eclipse.persistence.jaxb.UnmarshallerProperties;
 
 import javax.xml.bind.JAXBContext;
@@ -26,6 +26,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+// TODO since it's all instance methods not, maybe try putting type arguments into class
+// maybe create anonymous instances with static builder methods
+// reuse later when reloading is in
 public class TypeLoader {
 
     private final JAXBContext jaxbContext;
@@ -38,24 +41,6 @@ public class TypeLoader {
 
     public TypeLoader(JAXBContext jaxbContext) {
         this.jaxbContext = jaxbContext;
-    }
-
-    public List<CustomEntryWheelType> loadCustomEntryWheelTypes() {
-        return loadCustomScramblerTypes(
-                CustomEntryWheelType.class,
-                ENTRYWHEEL_TYPES_FOLDER);
-    }
-
-    public List<CustomRotorType> loadCustomRotorTypes() {
-        return loadCustomScramblerTypes(CustomRotorType.class, ROTOR_TYPES_FOLDER);
-    }
-
-    public List<CustomReflectorType> loadCustomReflectorTypes() {
-        return loadCustomScramblerTypes(CustomReflectorType.class, REFLECTOR_TYPES_FOLDER);
-    }
-
-    public List<CustomPlugBoardConfig> loadCustomPlugBoardConfigs() {
-        return loadCustomScramblerTypes(CustomPlugBoardConfig.class, PLUGBOARD_CONFIGS_FOLDER);
     }
 
     public <C extends CustomScramblerType<S>, S extends Scrambler> List<C> loadCustomScramblerTypes(

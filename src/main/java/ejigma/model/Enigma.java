@@ -185,6 +185,13 @@ public class Enigma {
         this.scramblerWiring = wiring;
     }
 
+    public void resetFromCache(KeyBoard.ScramblerCache cache) {
+        armature.forceSetEntryWheel(cache.getEntryWheel());
+        armature.forceSetRotors(cache.getRotors());
+        armature.forceSetReflector(cache.getReflector());
+        forceSetPlugBoard(cache.getPlugBoard());
+    }
+
     public void setOffsets(String offsetString) throws ScramblerSettingException {
         armature.setOffsets(offsetString);
     }

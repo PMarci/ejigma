@@ -36,6 +36,9 @@
     - also when backing out one has to press Ctrl+C once for every call site layered on top
     - also exiting out of plugboard selection prints UserInterruptedException
     - could also use a good refactoring
+- [ ] try and unify three processSelectX methods
+    - could do reselection round by adding all scramblers to a list and filtering the current type
+    - would require case separation for rotors
 - [x] option to pass params to interactive mode
     - [x] change condition for interactive mode to not having `-` or `-f` params
 - [ ] make keymap more intuitive and flexible
@@ -89,6 +92,7 @@
 ### general
 
 - [x] open issue about SelectionReader and BindingReader
+- [x] open issue about OOBE in LineReader:5733 where secondaryPrompts has size 0
 - [x] fully implement PlugBoard
     - [x] implement interactive setting of PlugBoard
     - [x] implement non-interactive setting of PlugBoard
