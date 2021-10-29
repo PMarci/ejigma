@@ -5,6 +5,7 @@ import ejigma.exception.ScramblerSettingException;
 import ejigma.model.*;
 import ejigma.model.type.*;
 import ejigma.util.ScrambleResult;
+import ejigma.util.ScramblerSelectResponse;
 import ejigma.util.Util;
 import org.jline.keymap.BindingReader;
 import org.jline.keymap.KeyMap;
@@ -41,7 +42,6 @@ public class KeyBoard implements Runnable {
     private static final String NOT_A_ROTORTYPE_STRING = "Not a valid rotorType";
     private static final String ROTOR_DENY_STRING = "Not setting rotors...";
     private static final String SWITCH_PROMPT = ", change them as well? (y/n): ";
-    private static final int MAX_SELECTION_DEPTH = 1;
 
     private final Terminal terminal;
     private final Enigma enigma;
@@ -189,10 +189,12 @@ public class KeyBoard implements Runnable {
         }
     }
 
-    private void processSelectAEntryIgnoreInterrupt() {
+    private <
+            S extends Scrambler<S, T>,
+            T extends ScramblerType<S, T>> void processSelectScramblerIgnoreInterrupt(Class<T> scramblerTypeClass) {
         try {
             scramblerCache = new ScramblerCache(enigma);
-            processSelectScrambler(EntryWheelType.class);
+            processSelectScrambler(scramblerTypeClass);
         } catch (UserInterruptException ignored) {
             //ignored
             enigma.resetFromCache(scramblerCache);
@@ -204,37 +206,43 @@ public class KeyBoard implements Runnable {
     private <
             S extends Scrambler<S, T>,
             T extends ScramblerType<S, T>> void processSelectScrambler(Class<T> scramblerTypeClass) {
-        ScramblerSelectResponse<S, T> newEntryWheelTypeResponse;
-        newEntryWheelTypeResponse = promptForScramblerType(scramblerTypeClass);
-        T newType = newEntryWheelTypeResponse.getScramblerType();
-        if (RotorType.class.isAssignableFrom(scramblerTypeClass)) {
-            int rotorNo = promptForRotorNo();
-            selectCompleter.setCompleter(RotorType.class);
-            ScramblerSelectResponse<Rotor, RotorType> newRotorResponse = promptForRotorTypes(rotorNo);
-            RotorType[] newRotorTypes = newRotorResponse.getScramblerTypes();
-        } else {
-
-        }
-        String vNewAlphabetString = newType.getAlphabetString();
-        if (newEntryWheelTypeResponse.isReselect()) {
-            enigma.forceSetEntryWheel(newType);
-            processSelectRotors();
-            if (promptForAuto(EntryWheel.class, Reflector.class)) {
-                enigma.setAutoReflector(vNewAlphabetString);
+        int rotorNo = (RotorType.class.isAssignableFrom(scramblerTypeClass)) ?
+                      promptForRotorNo() :
+                      enigma.getArmature().getRotors().length;
+        ScramblerSelectResponse response = new ScramblerSelectResponse(
+                promptForScramblerType2(scramblerTypeClass),
+                alphabetString,
+                rotorNo);
+        while (response.hasNext()) {
+            Class<T> typeToSelect = (Class<T>) response.next();
+            if (RotorType.class.isAssignableFrom(typeToSelect)) {
+                List<RotorType> newTypes = new ArrayList<>();
+                int i = 0;
+                while (i < rotorNo && newTypes.size() < rotorNo) {
+                    RotorType rotorType = (RotorType) promptForScramblerType2(typeToSelect);
+                    newTypes.add(rotorType);
+                    try {
+                        if (i > 0) {
+                            Armature.validateRotorTypes(newTypes.toArray(new RotorType[0]));
+                        }
+                    } catch (ArmatureInitException e) {
+                        selectionReader.printAbove(e.getMessage());
+                        newTypes.remove(rotorType);
+                    }
+                    i = (i < rotorNo - 1) ? i + 1 : i;
+                }
+                IntStream.range(0, newTypes.size())
+                        .mapToObj(ind -> new AbstractMap.SimpleEntry<>(ind, newTypes.get(ind)))
+                        .forEach(entry -> response.set(entry.getValue(), entry.getKey(), alphabetString));
             } else {
-                processSelectReflector();
-            }
-            if (promptForAuto(EntryWheel.class, PlugBoard.class)) {
-                enigma.setAutoPlugBoard(vNewAlphabetString);
-            } else {
-                processSelectPlugBoard();
-            }
-            rebindKeyMap(vNewAlphabetString);
-        } else {
-            try {
-                enigma.setEntryWheel(newType);
-            } catch (ArmatureInitException e) {
-                selectionReader.printAbove("Can't change entryWheel: " + e.getMessage());
+                T type = promptForScramblerType2(typeToSelect);
+                try {
+                    enigma.getArmature().validateWithCurrent(type);
+                } catch (ArmatureInitException e) {
+                    selectionReader.printAbove(e.getMessage());
+                    response.reselect((Class<T>) type.getClass());
+                }
+                response.set(type, alphabetString);
             }
         }
     }
@@ -252,7 +260,7 @@ public class KeyBoard implements Runnable {
     }
 
     private void processSelectEntry() {
-        ScramblerSelectResponse<EntryWheel, EntryWheelType> newEntryWheelTypeResponse;
+        ScramblerSelectResponse newEntryWheelTypeResponse;
         newEntryWheelTypeResponse = promptForScramblerType(EntryWheelType.class);
         EntryWheelType newType = newEntryWheelTypeResponse.getScramblerType();
         String vNewAlphabetString = newType.getAlphabetString();
@@ -296,7 +304,7 @@ public class KeyBoard implements Runnable {
         int rotorNo = promptForRotorNo();
         // rotor type prompt
         selectCompleter.setCompleter(RotorType.class);
-        ScramblerSelectResponse<Rotor, RotorType> newRotorResponse = promptForRotorTypes(rotorNo);
+        ScramblerSelectResponse newRotorResponse = promptForRotorTypes(rotorNo);
         RotorType[] newRotorTypes = newRotorResponse.getScramblerTypes();
         String vNewAlphabetString = newRotorTypes[0].getAlphabetString();
         if (newRotorResponse.isReselect()) {
@@ -339,7 +347,7 @@ public class KeyBoard implements Runnable {
     }
 
     private void processSelectReflector() {
-        ScramblerSelectResponse<Reflector, ReflectorType> newReflectorTypeResponse;
+        ScramblerSelectResponse newReflectorTypeResponse;
         newReflectorTypeResponse = promptForScramblerType(ReflectorType.class);
         ReflectorType newType = newReflectorTypeResponse.getScramblerType();
         String vNewAlphabetString = newType.getAlphabetString();
@@ -383,7 +391,7 @@ public class KeyBoard implements Runnable {
         Boolean completion = (Boolean) Optional.ofNullable(selectionReader.getVariable(LineReader.DISABLE_COMPLETION))
                 .orElse(Boolean.FALSE);
         selectionReader.setVariable(LineReader.DISABLE_COMPLETION, true);
-        ScramblerSelectResponse<PlugBoard, PlugBoardConfig> newPlugBoardTypeResponse;
+        ScramblerSelectResponse newPlugBoardTypeResponse;
         newPlugBoardTypeResponse = promptForScramblerType(PlugBoardConfig.class);
         PlugBoardConfig newType = newPlugBoardTypeResponse.getScramblerType();
         String vNewAlphabetString = newType.getAlphabetString();
@@ -414,7 +422,15 @@ public class KeyBoard implements Runnable {
     @SuppressWarnings("unchecked")
     private <
             S extends Scrambler<S, T>,
-            T extends ScramblerType<S, T>> ScramblerSelectResponse<S, T> promptForScramblerType(Class<T> scramblerTypeClass) {
+            T extends ScramblerType<S, T>> T promptForScramblerType2(Class<T> scramblerTypeClass) {
+        return null;
+    }
+
+    // TODO needs rework/rewrite as well
+    @SuppressWarnings("unchecked")
+    private <
+            S extends Scrambler<S, T>,
+            T extends ScramblerType<S, T>> T promptForScramblerType(Class<T> scramblerTypeClass) {
 
         ReselectHelper<S, T> helper = new ReselectHelper<>();
         String scramblerTypeClassName = scramblerTypeClass.getSimpleName();
@@ -428,7 +444,6 @@ public class KeyBoard implements Runnable {
         while (helper.isChoose()) {
             selectionReader.setVariable(FILTER_COMPLETION, false);
             if (scramblerTypeClass.isAssignableFrom(PlugBoardConfig.class)) {
-                // forced uppercase conversion
                 String initString = selectionReader.readLine(plugPrompt).trim();
                 try {
                     PlugBoardConfig plugBoardConfig = PlugBoard.getPlugBoardType(newAlphabetString, initString);
@@ -456,7 +471,7 @@ public class KeyBoard implements Runnable {
                 if (helper.getException() != null) {
                     helper.handle(denyString);
                 } else {
-                    helper.setResponse(new ScramblerSelectResponse<>(newScramblerType, false));
+                    helper.setResponse(new ScramblerSelectResponse(new ScramblerType[]{newScramblerType}));
                     helper.setChoose(false);
                 }
             } else {
@@ -493,7 +508,7 @@ public class KeyBoard implements Runnable {
         return rotorNo;
     }
 
-    private ScramblerSelectResponse<Rotor, RotorType> promptForRotorTypes(int rotorNo) {
+    private RotorType[] promptForRotorTypes(int rotorNo) {
         RotorType[] newRotorTypes = new RotorType[rotorNo];
         ReselectHelper<Rotor, RotorType> helper = new ReselectHelper<>(newRotorTypes);
         String prompt;
@@ -528,9 +543,9 @@ public class KeyBoard implements Runnable {
             helper.handle(ROTOR_DENY_STRING);
         }
         if (helper.getException() == null) {
-            helper.setResponse(new ScramblerSelectResponse<>(newRotorTypes, false));
+            helper.setResponse(new ScramblerSelectResponse(newRotorTypes));
         }
-        return helper.getResponse();
+        return result;
     }
 
     private <
@@ -691,61 +706,16 @@ public class KeyBoard implements Runnable {
         this.alphabet = alphabetString.toCharArray();
     }
 
-    public static class ScramblerSelectResponse {
-
-        private final String alphabetString;
-
-        private EntryWheelType entryWheelType = null;
-        private RotorType[] rotorTypes = null;
-        private ReflectorType reflectorType = null;
-        private PlugBoardConfig plugBoardConfig = null;
-
-
-        ScramblerSelectResponse(EntryWheelType entryWheelType) {
-            this.entryWheelType = entryWheelType;
-            this.alphabetString = entryWheelType.getAlphabetString();
-        }
-
-        ScramblerSelectResponse(RotorType[] rotorTypes) {
-            this.rotorTypes = rotorTypes;
-            this.reselect = reselect;
-            this.scramblerType = null;
-            this.alphabetString = rotorTypes[0].getAlphabetString();
-        }
-
-        T getScramblerType() {
-            return scramblerType;
-        }
-
-        T[] getScramblerTypes() {
-            return scramblerTypes;
-        }
-
-        T getAScramblerType() {
-            return (scramblerType != null) ? scramblerType : scramblerTypes[0];
-        }
-
-        boolean isReselect() {
-            return reselect;
-        }
-
-        public String getAlphabetString() {
-            return alphabetString;
-        }
-    }
-
     private class ReselectHelper<S extends Scrambler<S, T>, T extends ScramblerType<S, T>> {
         private boolean choose = true;
         private Exception exception;
-        private ScramblerSelectResponse<S, T> response;
+        private ScramblerSelectResponse response = null;
         private T[] scramblerTypes;
 
         public ReselectHelper() {
-            this.response = null;
         }
 
         public ReselectHelper(T[] scramblerTypes) {
-            this();
             this.scramblerTypes = scramblerTypes;
         }
 
@@ -758,9 +728,7 @@ public class KeyBoard implements Runnable {
                 // even though this should be caught before
                 String yn = selectionReader.readLine(exception.getMessage() + SWITCH_PROMPT).trim();
                 if ("y".equals(yn) || "Y".equals(yn)) {
-                    response = scramblerTypes.length > 1 ?
-                               new ScramblerSelectResponse<>(scramblerTypes, true) :
-                               new ScramblerSelectResponse<>(scramblerTypes[0], true);
+                    response = new ScramblerSelectResponse(scramblerTypes);
                     choose = false;
                 } else if ("n".equals(yn) || "N".equals(yn)) {
                     selectionReader.printAbove(denyString);
@@ -786,11 +754,11 @@ public class KeyBoard implements Runnable {
             this.exception = exception;
         }
 
-        public ScramblerSelectResponse<S, T> getResponse() {
+        public ScramblerSelectResponse getResponse() {
             return response;
         }
 
-        public void setResponse(ScramblerSelectResponse<S, T> response) {
+        public void setResponse(ScramblerSelectResponse response) {
             this.response = response;
         }
 
@@ -832,53 +800,6 @@ public class KeyBoard implements Runnable {
             return plugBoard;
         }
     }
-
-    public static class SelectionWrapper {
-
-        private EntryWheelType entryWheelType = null;
-        private RotorType[] rotorTypes = null;
-        private ReflectorType reflectorType = null;
-        private PlugBoardConfig plugBoardConfig = null;
-
-        public SelectionWrapper(EntryWheelType entryWheelType) {
-            this.entryWheelType = entryWheelType;
-        }
-
-        public SelectionWrapper(RotorType[] rotorTypes) {
-            this.rotorTypes = rotorTypes;
-        }
-
-        public SelectionWrapper(ReflectorType reflectorType) {
-            this.reflectorType = reflectorType;
-        }
-
-        public SelectionWrapper(PlugBoardConfig plugBoardConfig) {
-            this.plugBoardConfig = plugBoardConfig;
-        }
-
-        public void apply(Enigma enigma) {
-            if (entryWheelType != null) {
-                enigma.forceSetEntryWheel(entryWheelType);
-            }
-        }
-
-        public void set(EntryWheelType entryWheelType) {
-            this.entryWheelType = entryWheelType;
-        }
-
-        public void set(RotorType[] rotorTypes) {
-            this.rotorTypes = rotorTypes;
-        }
-
-        public void set(ReflectorType reflectorType) {
-            this.reflectorType = reflectorType;
-        }
-
-        public void set(PlugBoardConfig plugBoardConfig) {
-            this.plugBoardConfig = plugBoardConfig;
-        }
-    }
-
 
     private class SelectCompleter implements Completer {
 

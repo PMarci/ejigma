@@ -138,6 +138,14 @@ public class Armature implements Printable {
         }
     }
 
+    public static void validateRotorTypes(
+            RotorType[] rotorTypes) throws ArmatureInitException {
+
+        ScramblerType<?, ?>[] allTypes = new ScramblerType[rotorTypes.length + 2];
+        System.arraycopy(rotorTypes, 0, allTypes, 0, rotorTypes.length);
+        validateAlphabetStrings(allTypes);
+    }
+
     public static void validateAllTypes(
             EntryWheelType entryWheelType,
             RotorType[] rotorTypes,

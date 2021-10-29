@@ -109,12 +109,6 @@ public class Enigma {
         return c;
     }
 
-    private void setSelection(KeyBoard.SelectionWrapper wrapper) {
-        if (wrapper != null) {
-            
-        }
-    }
-
     public void setEntryWheel(EntryWheelType entryWheelType) throws ArmatureInitException {
         armature.setEntryWheel(entryWheelType);
         initWiring();
