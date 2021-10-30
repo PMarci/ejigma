@@ -402,11 +402,11 @@ public class KeyBoard implements Runnable {
             T extends ScramblerType<S, T>> T getAutoScrambler(Class<T> scramblerTypeClass, String alphabetString) {
         T result;
         if (ReflectorType.class.isAssignableFrom(scramblerTypeClass)) {
-            result = (T) new AutoReflectorType(alphabetString).freshScrambler();
+            result = (T) new AutoReflectorType(alphabetString);
         } else if (EntryWheelType.class.isAssignableFrom(scramblerTypeClass)) {
-            result = (T) new AutoEntryWheelType(alphabetString).freshScrambler();
+            result = (T) new AutoEntryWheelType(alphabetString);
         } else if (PlugBoardConfig.class.isAssignableFrom(scramblerTypeClass)) {
-            result = (T) AutoPlugBoardConfig.create(alphabetString).freshScrambler();
+            result = (T) AutoPlugBoardConfig.create(alphabetString);
         } else {
             throw new IllegalArgumentException(String.format("Can't generate auto scrambler for %s",
                                                              scramblerTypeClass.getSimpleName()));

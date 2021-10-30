@@ -42,28 +42,4 @@ public class AutoPlugBoardConfig extends PlugBoardConfig {
         return sourceBuilder.toString();
     }
 
-    @Override
-    public String getName() {
-        return NAME;
-    }
-
-    @Override
-    public String getSourceString() {
-        return sourceString;
-    }
-
-    @Override
-    public String getWiringString() {
-        return wiringString;
-    }
-
-    @Override
-    public String getAlphabetString() {
-        return alphabetString;
-    }
-
-    public String getInitString() {
-        return sourceString + '\u0000' + wiringString;
-    }
-
 }

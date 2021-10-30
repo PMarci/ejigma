@@ -7,6 +7,7 @@ import java.util.Locale;
 
 public class PlugBoardConfig implements ScramblerType<PlugBoard, PlugBoardConfig> {
 
+    private static final String NAME = "PLUGBOARD";
     // not final because of JAXB
     protected String sourceString;
     protected String initString;
@@ -48,7 +49,7 @@ public class PlugBoardConfig implements ScramblerType<PlugBoard, PlugBoardConfig
 
     @Override
     public String getName() {
-        return "PLUGBOARD";
+        return NAME;
     }
 
     @Override

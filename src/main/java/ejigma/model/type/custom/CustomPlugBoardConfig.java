@@ -26,6 +26,7 @@ public class CustomPlugBoardConfig extends PlugBoardConfig implements CustomScra
         this.name = name;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -34,33 +35,16 @@ public class CustomPlugBoardConfig extends PlugBoardConfig implements CustomScra
         this.name = name;
     }
 
-    @Override
-    public String toString() {
-        return getName();
-    }
-
     public void setInitString(String initString) {
         this.initString = initString;
-    }
-
-    public String getAlphabetString() {
-        return alphabetString;
     }
 
     public void setAlphabetString(String alphabetString) {
         this.alphabetString = alphabetString;
     }
 
-    public String getSourceString() {
-        return sourceString;
-    }
-
     public void setSourceString(String sourceString) {
         this.sourceString = sourceString;
-    }
-
-    public String getWiringString() {
-        return wiringString;
     }
 
     public void setWiringString(String wiringString) {

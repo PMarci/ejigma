@@ -28,7 +28,6 @@ public class Armature implements Printable {
 
     @GsonExclude
     private final Enigma enigma;
-    private final String alphabetString;
 
     private EntryWheel entryWheel;
     private Rotor[] rotors;
@@ -50,7 +49,6 @@ public class Armature implements Printable {
         this.enigma = enigma;
         validateAllTypes(entryWheelType, rotorTypes, reflectorType);
         this.entryWheel = initEntryWheel(entryWheelType);
-        this.alphabetString = entryWheelType.getAlphabetString();
         this.rotors = initRotors(rotorTypes);
         this.reflector = initReflector(reflectorType);
         initWiring();
@@ -352,10 +350,6 @@ public class Armature implements Printable {
 
     public List<ScramblerMounting<?, ?>> getScramblerWiring() {
         return scramblerWiring;
-    }
-
-    public String getAlphabetString() {
-        return alphabetString;
     }
 
     public EntryWheel getEntryWheel() {

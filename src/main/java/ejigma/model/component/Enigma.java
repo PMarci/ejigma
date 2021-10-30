@@ -230,7 +230,7 @@ public class Enigma {
 
     public void setArmature(Armature armature) {
         this.armature = armature;
-        this.alphabetString = armature.getAlphabetString();
+        this.alphabetString = armature.getEntryWheelType().getAlphabetString();
         initWiring();
     }
 
