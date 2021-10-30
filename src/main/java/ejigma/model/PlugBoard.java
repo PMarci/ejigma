@@ -58,17 +58,19 @@ public class PlugBoard extends Scrambler<PlugBoard, PlugBoardConfig> {
         int[] linksToCheck = setSomePlugs(sourceString, wiringString, noOpLinks(alphabet.length));
         Map<Integer, Character> chainWired = IntStream.range(0, sourceString.length())
                 .mapToObj(i -> new AbstractMap.SimpleEntry<>(i, sourceString.toCharArray()[i]))
-                // we're looking for source symbols appearing in the wiring at a different index
+                // we're looking for source symbols appearing in the wiring at a different index,
+                // this filters out identity mappings, both manual and default
                 .filter(entry -> {
-                    int indexInWiring = wiringString.indexOf(entry.getValue(), entry.getKey() - 1);
+                    int indexInWiring = wiringString.indexOf(entry.getValue());
                     return indexInWiring != -1 && indexInWiring != entry.getKey();
                 })
                 // when a source char points to a destination char, the destination char has to point
                 // to the source char
                 .filter(entry -> {
                             int wiringSource = alphabetString.indexOf(entry.getValue());
-                            int wiringDest = linksToCheck[wiringSource];
-                            return alphabetString.charAt(wiringDest) != linksToCheck[wiringDest];
+                            char wiringDestChar = alphabetString.charAt(linksToCheck[wiringSource]);
+                            int indexInWiring = wiringString.indexOf(entry.getValue());
+                            return sourceString.charAt(indexInWiring) != wiringDestChar;
                         }
                        )
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

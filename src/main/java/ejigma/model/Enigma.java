@@ -173,12 +173,25 @@ public class Enigma {
         initWiring();
     }
 
+    public void setAutoScrambler(ScramblerType<?, ?> scramblerType) {
+        if (scramblerType instanceof ReflectorType) {
+            armature.setAutoReflector(scramblerType.getAlphabetString());
+        } else if (scramblerType instanceof EntryWheelType) {
+            armature.setAutoEntryWheel(scramblerType.getAlphabetString());
+        } else if (scramblerType instanceof PlugBoardConfig) {
+            setAutoPlugBoard(scramblerType.getAlphabetString());
+        } else {
+            throw new IllegalArgumentException(String.format("Can't generate auto scrambler for %s",
+                                                             scramblerType.getClass().getSimpleName()));
+        }
+    }
+
     public void validateWithCurrent(PlugBoardConfig plugBoardConfig) throws ArmatureInitException {
-            Armature.validateAllTypes(
-                    armature.getEntryWheelType(),
-                    armature.getRotorTypes(),
-                    armature.getReflectorType(),
-                    plugBoardConfig);
+        Armature.validateAllTypes(
+                armature.getEntryWheelType(),
+                armature.getRotorTypes(),
+                armature.getReflectorType(),
+                plugBoardConfig);
     }
 
     private void initWiring() {
