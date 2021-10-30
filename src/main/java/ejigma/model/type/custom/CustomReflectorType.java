@@ -1,26 +1,30 @@
-package ejigma.model.type;
+package ejigma.model.type.custom;
 
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.EntryWheel;
+import ejigma.model.Reflector;
+import ejigma.model.type.CustomScramblerType;
+import ejigma.model.type.ReflectorType;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 
-@XmlRootElement(name = "customEntryWheelType")
+@SuppressWarnings("unused")
+@XmlRootElement(name = "customReflectorType")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class CustomEntryWheelType implements CustomScramblerType<EntryWheel, EntryWheelType>, EntryWheelType, Serializable {
+public class CustomReflectorType implements CustomScramblerType<Reflector, ReflectorType>, ReflectorType, Serializable {
+
 
     private String name;
     private String alphabetString;
     private String wiringString;
 
-    public CustomEntryWheelType() {
+    public CustomReflectorType() {
         // jaxb
     }
 
-    public CustomEntryWheelType(String name, String alphabetString, String wiringString) {
+    public CustomReflectorType(String name, String alphabetString, String wiringString) {
         this.name = name;
         this.alphabetString = alphabetString;
         this.wiringString = wiringString;
@@ -32,10 +36,10 @@ public class CustomEntryWheelType implements CustomScramblerType<EntryWheel, Ent
     }
 
     @Override
-    public EntryWheel freshScrambler() {
-        EntryWheel result = null;
+    public Reflector freshScrambler() {
+        Reflector result = null;
         try {
-            result = new EntryWheel(alphabetString, wiringString, this);
+            result = new Reflector(alphabetString, wiringString, this);
         } catch (ScramblerSettingException e) {
             e.printStackTrace();
         }

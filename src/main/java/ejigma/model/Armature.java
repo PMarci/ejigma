@@ -2,10 +2,12 @@ package ejigma.model;
 
 import ejigma.exception.ArmatureInitException;
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.historic.HistoricEntryWheelType;
-import ejigma.model.historic.HistoricReflectorType;
-import ejigma.model.historic.HistoricRotorType;
 import ejigma.model.type.*;
+import ejigma.model.type.auto.AutoEntryWheelType;
+import ejigma.model.type.auto.AutoReflectorType;
+import ejigma.model.type.historic.HistoricEntryWheelType;
+import ejigma.model.type.historic.HistoricReflectorType;
+import ejigma.model.type.historic.HistoricRotorType;
 import ejigma.util.GsonExclude;
 
 import java.util.Arrays;
@@ -184,7 +186,7 @@ public class Armature implements Printable {
     }
 
     public void setAutoEntryWheel(String alphabetString) {
-        this.entryWheel = EntryWheel.auto(alphabetString).freshScrambler();
+        this.entryWheel = new AutoEntryWheelType(alphabetString).freshScrambler();
         initWiring();
     }
 
@@ -203,7 +205,7 @@ public class Armature implements Printable {
     }
 
     public void setAutoReflector(String alphabetString) {
-        this.reflector = Reflector.auto(alphabetString).freshScrambler();
+        this.reflector = new AutoReflectorType(alphabetString).freshScrambler();
         initWiring();
     }
 

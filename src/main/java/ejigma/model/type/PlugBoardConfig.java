@@ -3,17 +3,36 @@ package ejigma.model.type;
 import ejigma.exception.ScramblerSettingException;
 import ejigma.model.PlugBoard;
 
-public interface PlugBoardConfig extends ScramblerType<PlugBoard, PlugBoardConfig> {
+import java.util.Locale;
 
-    String getSourceString();
+public class PlugBoardConfig implements ScramblerType<PlugBoard, PlugBoardConfig> {
 
-    String getWiringString();
+    // not final because of JAXB
+    protected String sourceString;
+    protected String initString;
+    protected String wiringString;
+    protected String alphabetString;
 
-    String getAlphabetString();
+    protected PlugBoardConfig() {
+        // jaxb
+    }
 
-    String getInitString();
+    public PlugBoardConfig(String sourceString, String wiringString, String alphabetString) {
+        this.sourceString = sourceString;
+        this.wiringString = wiringString;
+        this.initString = getInitString();
+        this.alphabetString = alphabetString;
+    }
 
-    default PlugBoard freshScrambler() {
+    public PlugBoardConfig(String alphabetString, String initString) throws ScramblerSettingException {
+        String[] splitInitString = PlugBoard.splitInitString(alphabetString, initString.toUpperCase(Locale.ROOT));
+        this.initString = initString;
+        this.sourceString = splitInitString[0];
+        this.wiringString = splitInitString[1];
+        this.alphabetString = alphabetString;
+    }
+
+    public PlugBoard freshScrambler() {
         PlugBoard plugBoard = null;
         try {
             plugBoard = unsafeScrambler();
@@ -23,7 +42,34 @@ public interface PlugBoardConfig extends ScramblerType<PlugBoard, PlugBoardConfi
         return plugBoard;
     }
 
-    default PlugBoard unsafeScrambler() throws ScramblerSettingException {
+    public PlugBoard unsafeScrambler() throws ScramblerSettingException {
         return new PlugBoard(getAlphabetString(), getSourceString(), getWiringString());
+    }
+
+    @Override
+    public String getName() {
+        return "PLUGBOARD";
+    }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
+
+    public String getSourceString() {
+        return sourceString;
+    }
+
+    public String getWiringString() {
+        return wiringString;
+    }
+
+    @Override
+    public String getAlphabetString() {
+        return alphabetString;
+    }
+
+    public String getInitString() {
+        return sourceString + '\u0000' + wiringString;
     }
 }

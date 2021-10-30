@@ -1,33 +1,29 @@
-package ejigma.model.type;
+package ejigma.model.type.custom;
 
 
 import ejigma.model.PlugBoard;
-import ejigma.model.Scrambler;
+import ejigma.model.type.CustomScramblerType;
+import ejigma.model.type.PlugBoardConfig;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 
+@SuppressWarnings("unused")
 @XmlRootElement(name = "customPlugBoardConfig")
 @XmlAccessorType(XmlAccessType.PROPERTY)
-public class CustomPlugBoardConfig implements CustomScramblerType<PlugBoard, PlugBoardConfig>, PlugBoardConfig, Serializable {
+public class CustomPlugBoardConfig extends PlugBoardConfig implements CustomScramblerType<PlugBoard, PlugBoardConfig>, Serializable {
 
     private String name = "DEFAULT";
-    private String alphabetString = Scrambler.DEFAULT_ALPHABET_STRING;
-    private String initString = "";
-    private String sourceString = "";
-    private String wiringString = "";
 
     public CustomPlugBoardConfig() {
         // jaxb
     }
 
     public CustomPlugBoardConfig(String name, String alphabetString, String sourceString, String wiringString) {
+        super(sourceString, wiringString, alphabetString);
         this.name = name;
-        this.alphabetString = alphabetString;
-        this.sourceString = sourceString;
-        this.wiringString = wiringString;
     }
 
     public String getName() {
@@ -41,11 +37,6 @@ public class CustomPlugBoardConfig implements CustomScramblerType<PlugBoard, Plu
     @Override
     public String toString() {
         return getName();
-    }
-
-    @Override
-    public String getInitString() {
-        return initString;
     }
 
     public void setInitString(String initString) {

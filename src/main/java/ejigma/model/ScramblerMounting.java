@@ -25,12 +25,4 @@ public class ScramblerMounting<S extends Scrambler<S, T>, T extends ScramblerTyp
     char scramble(char input) {
         return !reverseWired ? scrambler.scramble(input) : scrambler.reverseScramble(input);
     }
-
-    public Scrambler<S, T> getScrambler() {
-        return scrambler;
-    }
-
-    public boolean isReverseWired() {
-        return reverseWired;
-    }
 }

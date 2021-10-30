@@ -4,6 +4,9 @@ import ejigma.exception.ArmatureInitException;
 import ejigma.exception.ScramblerSettingException;
 import ejigma.model.*;
 import ejigma.model.type.*;
+import ejigma.model.type.auto.AutoEntryWheelType;
+import ejigma.model.type.auto.AutoPlugBoardConfig;
+import ejigma.model.type.auto.AutoReflectorType;
 import ejigma.util.ScrambleResult;
 import ejigma.util.ScramblerSelectResponse;
 import ejigma.util.Util;
@@ -42,7 +45,7 @@ public class KeyBoard implements Runnable {
     private static final String ROTOR_PROMPT_FORMAT = "Enter a type for rotor %d: ";
     private static final String NOT_A_ROTORTYPE_STRING = "Not a valid rotorType";
     private static final String ROTOR_DENY_STRING = "Not setting rotors...";
-    private static final String SWITCH_PROMPT = ", change them (y) or quit selection(n)? (y/n): ";
+    private static final String SWITCH_PROMPT = ", change them (y) or quit selection (n)? (y/n): ";
 
     private final Terminal terminal;
     private final Enigma enigma;
@@ -204,6 +207,7 @@ public class KeyBoard implements Runnable {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private <
             S extends Scrambler<S, T>,
             T extends ScramblerType<S, T>> void processSelectScrambler(Class<T> scramblerTypeClass) {
@@ -284,13 +288,17 @@ public class KeyBoard implements Runnable {
         Optional<T> scramblerTypeOptional = Optional.empty();
         while (scramblerTypeOptional.isEmpty()) {
             if (scramblerTypeClass.isAssignableFrom(PlugBoardConfig.class)) {
-                boolean completionFilterSetting = (Boolean) selectionReader.getVariable(FILTER_COMPLETION);
-                boolean completionSetting = (Boolean) selectionReader.getVariable(DISABLE_COMPLETION);
+                boolean completionFilterSetting =
+                        (boolean) Optional.ofNullable(selectionReader.getVariable(FILTER_COMPLETION))
+                                .orElse(false);
+                boolean completionSetting =
+                        (boolean) Optional.ofNullable(selectionReader.getVariable(DISABLE_COMPLETION))
+                                .orElse(false);
                 selectionReader.setVariable(FILTER_COMPLETION, false);
                 selectionReader.setVariable(DISABLE_COMPLETION, true);
                 String initString = selectionReader.readLine(plugPrompt).trim();
                 try {
-                    PlugBoardConfig plugBoardConfig = PlugBoard.getPlugBoardType(
+                    PlugBoardConfig plugBoardConfig = new PlugBoardConfig(
                             (newAlphabetString != null) ?
                             newAlphabetString :
                             alphabetString,
@@ -366,6 +374,7 @@ public class KeyBoard implements Runnable {
         return rotorNo;
     }
 
+    // TODO think about collapsing this into the ConfigContainer by initializing auto types into the collections
     private <
             U extends ScramblerType<?, ?>,
             A extends ScramblerType<?, ?>> boolean promptForAuto(Class<U> unfitClass, Class<A> autoClass) {
@@ -393,11 +402,11 @@ public class KeyBoard implements Runnable {
             T extends ScramblerType<S, T>> T getAutoScrambler(Class<T> scramblerTypeClass, String alphabetString) {
         T result;
         if (ReflectorType.class.isAssignableFrom(scramblerTypeClass)) {
-            result = (T) Reflector.auto(alphabetString);
+            result = (T) new AutoReflectorType(alphabetString).freshScrambler();
         } else if (EntryWheelType.class.isAssignableFrom(scramblerTypeClass)) {
-            result = (T) EntryWheel.auto(alphabetString);
+            result = (T) new AutoEntryWheelType(alphabetString).freshScrambler();
         } else if (PlugBoardConfig.class.isAssignableFrom(scramblerTypeClass)) {
-            result = (T) PlugBoard.auto(alphabetString);
+            result = (T) AutoPlugBoardConfig.create(alphabetString).freshScrambler();
         } else {
             throw new IllegalArgumentException(String.format("Can't generate auto scrambler for %s",
                                                              scramblerTypeClass.getSimpleName()));
@@ -572,7 +581,6 @@ public class KeyBoard implements Runnable {
     }
 
     private class SelectCompleter implements Completer {
-
 
         Completer completer;
 

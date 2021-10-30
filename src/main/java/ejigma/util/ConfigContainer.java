@@ -1,11 +1,14 @@
-package ejigma.model.type;
+package ejigma.util;
 
 import ejigma.model.Scrambler;
-import ejigma.model.historic.HistoricEntryWheelType;
-import ejigma.model.historic.HistoricPlugBoardConfig;
-import ejigma.model.historic.HistoricReflectorType;
-import ejigma.model.historic.HistoricRotorType;
-import ejigma.util.TypeLoader;
+import ejigma.model.type.*;
+import ejigma.model.type.custom.CustomEntryWheelType;
+import ejigma.model.type.custom.CustomPlugBoardConfig;
+import ejigma.model.type.custom.CustomReflectorType;
+import ejigma.model.type.custom.CustomRotorType;
+import ejigma.model.type.historic.HistoricEntryWheelType;
+import ejigma.model.type.historic.HistoricReflectorType;
+import ejigma.model.type.historic.HistoricRotorType;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -40,7 +43,8 @@ public class ConfigContainer {
                 TypeLoader.REFLECTOR_TYPES_FOLDER);
         this.customPlugBoardConfigs = initScramblerTypes(
                 CustomPlugBoardConfig.class,
-                ConfigContainer::getHPlugBoardConfigs,
+                // no historical configs
+                Collections::emptyList,
                 TypeLoader.PLUGBOARD_CONFIGS_FOLDER);
     }
 
@@ -134,10 +138,6 @@ public class ConfigContainer {
 
     public static List<EntryWheelType> getHEntryWheelTypes() {
         return getEnumConstants(HistoricEntryWheelType.class);
-    }
-
-    public static List<PlugBoardConfig> getHPlugBoardConfigs() {
-        return getEnumConstants(HistoricPlugBoardConfig.class);
     }
 
     private static <H extends T,S extends Scrambler<S,T>, T extends ScramblerType<S, T>> List<H> getEnumConstants(Class<? extends H> enu) {

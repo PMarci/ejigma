@@ -4,15 +4,15 @@ import ejigma.exception.ScramblerSettingException;
 import ejigma.model.type.PlugBoardConfig;
 import ejigma.util.GsonExclude;
 import ejigma.util.ScrambleResult;
-import ejigma.util.Util;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class PlugBoard extends Scrambler<PlugBoard, PlugBoardConfig> {
-
-    private static final Random RANDOM = new Random();
 
     @GsonExclude
     private final String sourceString;
@@ -26,7 +26,7 @@ public class PlugBoard extends Scrambler<PlugBoard, PlugBoardConfig> {
             String sourceString,
             String wiringString) throws ScramblerSettingException {
 
-        super(alphabetString, wiringString, getPlugBoardType(alphabetString, sourceString, wiringString));
+        super(alphabetString, wiringString, new PlugBoardConfig(sourceString, wiringString, alphabetString));
         this.sourceString = sourceString;
         validatePlugBoard();
         setWiring(sourceString, this.wiringString);
@@ -229,66 +229,4 @@ public class PlugBoard extends Scrambler<PlugBoard, PlugBoardConfig> {
         return result;
     }
 
-    // TODO test
-    // TODO generalize with two other very similar methods
-    public static PlugBoardConfig auto(String alphabetString) {
-        int aLen = alphabetString.length();
-        int noOfPairs = RANDOM.nextInt(aLen);
-        int sourceIndex;
-        boolean[] sourceDrawn = new boolean[aLen];
-        Arrays.fill(sourceDrawn, false);
-        StringBuilder sourceBuilder = new StringBuilder();
-
-        if (aLen > 2) {
-            for (int i = 0; i < noOfPairs; i++) {
-                do {
-                    sourceIndex = RANDOM.nextInt(aLen);
-                } while (sourceDrawn[sourceIndex]);
-                sourceDrawn[sourceIndex] = true;
-                sourceBuilder.append(alphabetString.charAt(sourceIndex));
-            }
-        }
-        String source = sourceBuilder.toString();
-        String string = Util.generate2Cycles(source);
-        return getPlugBoardType(alphabetString, source, string);
-    }
-
-    public static PlugBoardConfig getPlugBoardType(String alphabetString,
-                                                   String initString) throws ScramblerSettingException {
-        String[] initStrings = PlugBoard.splitInitString(
-                alphabetString,
-                initString.toUpperCase(Locale.ROOT));
-        return getPlugBoardType(alphabetString, initStrings[0], initStrings[1]);
-    }
-
-    private static PlugBoardConfig getPlugBoardType(String alphabetString,
-                                                    String sourceString,
-                                                    String wiringString) {
-        return new PlugBoardConfig() {
-
-            @Override
-            public String getName() {
-                return "PLUGBOARD";
-            }
-
-            @Override
-            public String getSourceString() {
-                return sourceString;
-            }
-
-            @Override
-            public String getWiringString() {
-                return wiringString;
-            }
-
-            @Override
-            public String getAlphabetString() {
-                return alphabetString;
-            }
-
-            public String getInitString() {
-                return sourceString + '\u0000' + wiringString;
-            }
-        };
-    }
 }

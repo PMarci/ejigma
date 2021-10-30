@@ -4,9 +4,13 @@ import ejigma.exception.ArmatureInitException;
 import ejigma.exception.ScramblerSettingException;
 import ejigma.model.Armature;
 import ejigma.model.Enigma;
-import ejigma.model.EntryWheel;
-import ejigma.model.Reflector;
-import ejigma.model.type.*;
+import ejigma.model.type.EntryWheelType;
+import ejigma.model.type.ReflectorType;
+import ejigma.model.type.RotorType;
+import ejigma.model.type.ScramblerType;
+import ejigma.model.type.auto.AutoEntryWheelType;
+import ejigma.model.type.auto.AutoReflectorType;
+import ejigma.util.ConfigContainer;
 import ejigma.util.ScrambleResult;
 import org.jline.terminal.Terminal;
 
@@ -80,8 +84,8 @@ public class App {
             }
             rotorTypes = list.toArray(new RotorType[0]);
             alphabetString = rotorTypes[0].getAlphabetString();
-            configContainer.getEntryWheelTypes().add(EntryWheel.auto(alphabetString));
-            configContainer.getReflectorTypes().add(Reflector.auto(alphabetString));
+            configContainer.getEntryWheelTypes().add(new AutoEntryWheelType(alphabetString));
+            configContainer.getReflectorTypes().add(new AutoReflectorType(alphabetString));
         }
         if (opts.containsKey('e')) {
             entryWheelType = getScramblerFromOpt(configContainer,

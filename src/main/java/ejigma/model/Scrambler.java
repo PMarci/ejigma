@@ -17,7 +17,7 @@ public abstract class Scrambler<S extends Scrambler<S, T>, T extends ScramblerTy
     public static final String DEFAULT_ALPHABET_STRING = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     public static final char[] DEFAULT_ALPHABET = DEFAULT_ALPHABET_STRING.toCharArray();
 
-    // trying something out for gson
+    // TODO fix printing strangeness
     protected T type;
     protected final String alphabetString;
     protected final String wiringString;

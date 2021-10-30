@@ -1,4 +1,4 @@
-package ejigma.model.historic;
+package ejigma.model.type.historic;
 
 import ejigma.exception.ScramblerSettingException;
 import ejigma.model.EntryWheel;

@@ -1,13 +1,16 @@
-package ejigma.model.type;
+package ejigma.model.type.custom;
 
 import ejigma.exception.ScramblerSettingException;
 import ejigma.model.Rotor;
+import ejigma.model.type.CustomScramblerType;
+import ejigma.model.type.RotorType;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 
+@SuppressWarnings("unused")
 @XmlRootElement(name = "customRotorType")
 @XmlAccessorType(XmlAccessType.PROPERTY)
 public class CustomRotorType implements CustomScramblerType<Rotor, RotorType>, RotorType, Serializable {

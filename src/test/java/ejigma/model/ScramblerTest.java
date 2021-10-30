@@ -1,6 +1,6 @@
 package ejigma.model;
 
-import ejigma.model.type.CustomRotorType;
+import ejigma.model.type.custom.CustomRotorType;
 import ejigma.util.ScrambleResult;
 import org.fusesource.jansi.Ansi;
 import org.junit.Before;

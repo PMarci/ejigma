@@ -2,6 +2,7 @@ package ejigma.model;
 
 import ejigma.exception.ScramblerSettingException;
 import ejigma.model.type.ScramblerType;
+import ejigma.model.type.auto.AutoPlugBoardConfig;
 import ejigma.util.ScrambleResult;
 import org.junit.Test;
 
@@ -54,9 +55,11 @@ public class PlugBoardTest {
         assertEquals("AKCDEFGHIJBLMNOPQRSTUVWXYZ", singleScramble(plugBoard));
     }
 
-    @Test
+    @Test(expected = Test.None.class)
     public void testAutoPlugBoard() throws ScramblerSettingException {
-        PlugBoard plugBoard = PlugBoard.auto(Scrambler.DEFAULT_ALPHABET_STRING).freshScrambler();
+        for (int i = 0; i < 100; i++) {
+            AutoPlugBoardConfig.create(Scrambler.DEFAULT_ALPHABET_STRING).unsafeScrambler();
+        }
     }
 
     private static <S extends Scrambler<S, T>, T extends ScramblerType<S, T>> String singleScramble(Scrambler<S, T> scrambler) {

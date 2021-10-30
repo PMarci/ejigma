@@ -5,6 +5,8 @@ import ejigma.exception.ScramblerSettingException;
 import ejigma.io.KeyBoard;
 import ejigma.io.LightBoard;
 import ejigma.model.type.*;
+import ejigma.model.type.auto.AutoPlugBoardConfig;
+import ejigma.util.ConfigContainer;
 import ejigma.util.ScrambleResult;
 import ejigma.util.TerminalProvider;
 import ejigma.util.Util;
@@ -169,7 +171,7 @@ public class Enigma {
     }
 
     public void setAutoPlugBoard(String alphabetString) {
-        this.plugBoard = PlugBoard.auto(alphabetString).freshScrambler();
+        this.plugBoard = AutoPlugBoardConfig.create(alphabetString).freshScrambler();
         initWiring();
     }
 
