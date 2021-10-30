@@ -138,12 +138,8 @@ public class Armature implements Printable {
         }
     }
 
-    public static void validateRotorTypes(
-            RotorType[] rotorTypes) throws ArmatureInitException {
-
-        ScramblerType<?, ?>[] allTypes = new ScramblerType[rotorTypes.length + 2];
-        System.arraycopy(rotorTypes, 0, allTypes, 0, rotorTypes.length);
-        validateAlphabetStrings(allTypes);
+    public static void validateRotorTypes(List<RotorType> rotorTypes) throws ArmatureInitException {
+        validateAlphabetStrings(rotorTypes.toArray(RotorType[]::new));
     }
 
     public static void validateAllTypes(
@@ -268,7 +264,7 @@ public class Armature implements Printable {
         }
     }
 
-    private static void validateAlphabetStrings(ScramblerType<?, ?>[] scramblerTypes) throws ArmatureInitException {
+    public static void validateAlphabetStrings(ScramblerType<?, ?>[] scramblerTypes) throws ArmatureInitException {
         // TODO extract class name of type and format into message
         String prevAlphabetString = null;
         for (ScramblerType<?, ?> scramblerType : scramblerTypes) {

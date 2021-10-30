@@ -38,6 +38,10 @@ public class Util {
         return Arrays.stream(arr).anyMatch(Objects::nonNull);
     }
 
+    public static boolean allNonNulls(Object[] arr) {
+        return Arrays.stream(arr).allMatch(Objects::nonNull);
+    }
+
     public static <T> AbstractMap.SimpleEntry<Integer, T> firstNonNull(T[] array) {
         return Optional.ofNullable(array)
                 .flatMap(
@@ -45,7 +49,7 @@ public class Util {
                                 .mapToObj(i -> new AbstractMap.SimpleEntry<>(i, arr[i]))
                                 .filter(entry -> entry.getValue() != null)
                                 .findFirst())
-                .orElse(null);
+                .orElse(new AbstractMap.SimpleEntry<>(-1, null));
     }
 
     public static String fisherYatesShuffle(String alphabet) {
