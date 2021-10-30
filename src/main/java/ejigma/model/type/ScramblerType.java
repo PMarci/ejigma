@@ -1,6 +1,6 @@
 package ejigma.model.type;
 
-import ejigma.model.Scrambler;
+import ejigma.model.component.Scrambler;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

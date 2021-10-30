@@ -2,8 +2,8 @@ package ejigma;
 
 import ejigma.exception.ArmatureInitException;
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.Armature;
-import ejigma.model.Enigma;
+import ejigma.model.component.Armature;
+import ejigma.model.component.Enigma;
 import ejigma.model.type.EntryWheelType;
 import ejigma.model.type.ReflectorType;
 import ejigma.model.type.RotorType;

@@ -1,8 +1,8 @@
 package ejigma.util;
 
 import ejigma.exception.ArmatureInitException;
-import ejigma.model.Armature;
-import ejigma.model.Enigma;
+import ejigma.model.component.Armature;
+import ejigma.model.component.Enigma;
 import ejigma.model.type.*;
 
 import java.util.Arrays;

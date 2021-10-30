@@ -1,4 +1,4 @@
-package ejigma.model;
+package ejigma.model.component;
 
 import ejigma.model.type.custom.CustomRotorType;
 import ejigma.util.ScrambleResult;

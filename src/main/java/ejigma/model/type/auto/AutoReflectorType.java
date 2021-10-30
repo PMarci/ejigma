@@ -1,7 +1,7 @@
 package ejigma.model.type.auto;
 
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.Reflector;
+import ejigma.model.component.Reflector;
 import ejigma.model.type.ReflectorType;
 import ejigma.util.Util;
 

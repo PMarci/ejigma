@@ -1,4 +1,4 @@
-package ejigma.model;
+package ejigma.model.component;
 
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;

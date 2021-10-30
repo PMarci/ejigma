@@ -1,7 +1,7 @@
 package ejigma.util;
 
 import ejigma.exception.TypeLoaderError;
-import ejigma.model.Scrambler;
+import ejigma.model.component.Scrambler;
 import ejigma.model.type.ScramblerType;
 import org.eclipse.persistence.jaxb.UnmarshallerProperties;
 

@@ -1,4 +1,4 @@
-package ejigma.model;
+package ejigma.model.component;
 
 import ejigma.exception.ArmatureInitException;
 import ejigma.exception.ScramblerSettingException;

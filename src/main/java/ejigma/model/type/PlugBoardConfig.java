@@ -1,7 +1,7 @@
 package ejigma.model.type;
 
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.PlugBoard;
+import ejigma.model.component.PlugBoard;
 
 import java.util.Locale;
 

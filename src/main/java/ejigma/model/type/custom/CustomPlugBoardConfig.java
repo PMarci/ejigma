@@ -1,7 +1,7 @@
 package ejigma.model.type.custom;
 
 
-import ejigma.model.PlugBoard;
+import ejigma.model.component.PlugBoard;
 import ejigma.model.type.CustomScramblerType;
 import ejigma.model.type.PlugBoardConfig;
 

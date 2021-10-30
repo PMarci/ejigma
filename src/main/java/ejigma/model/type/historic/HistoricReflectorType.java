@@ -1,8 +1,8 @@
 package ejigma.model.type.historic;
 
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.Reflector;
-import ejigma.model.Scrambler;
+import ejigma.model.component.Reflector;
+import ejigma.model.component.Scrambler;
 import ejigma.model.type.ReflectorType;
 
 public enum HistoricReflectorType implements ReflectorType {

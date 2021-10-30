@@ -2,8 +2,8 @@
 package ejigma.model.type.historic;
 
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.Rotor;
-import ejigma.model.Scrambler;
+import ejigma.model.component.Rotor;
+import ejigma.model.component.Scrambler;
 import ejigma.model.type.RotorType;
 
 public enum HistoricRotorType implements RotorType {

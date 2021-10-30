@@ -1,7 +1,7 @@
 package ejigma.model.type.custom;
 
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.Rotor;
+import ejigma.model.component.Rotor;
 import ejigma.model.type.CustomScramblerType;
 import ejigma.model.type.RotorType;
 

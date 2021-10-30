@@ -2,7 +2,7 @@ package ejigma.io;
 
 import ejigma.exception.ArmatureInitException;
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.*;
+import ejigma.model.component.*;
 import ejigma.model.type.*;
 import ejigma.model.type.auto.AutoEntryWheelType;
 import ejigma.model.type.auto.AutoPlugBoardConfig;

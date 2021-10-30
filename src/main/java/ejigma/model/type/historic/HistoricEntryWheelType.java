@@ -1,8 +1,8 @@
 package ejigma.model.type.historic;
 
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.EntryWheel;
-import ejigma.model.Scrambler;
+import ejigma.model.component.EntryWheel;
+import ejigma.model.component.Scrambler;
 import ejigma.model.type.EntryWheelType;
 
 public enum HistoricEntryWheelType implements EntryWheelType {

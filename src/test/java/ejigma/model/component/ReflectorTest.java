@@ -1,26 +1,26 @@
-package ejigma.model;
+package ejigma.model.component;
 
 import org.junit.Test;
 
-public class RotorTest {
+public class ReflectorTest {
 
     @Test
     public void testCorrectConstructor() {
-//        HistoricRotorType expected = HistoricRotorType.NOOP;
+//        ReflectorType expected = HistoricReflectorType.NOOP;
         // using getter for coverage
         // TODO fix
-//        assertArrayEquals(expected.getRotor().getWirings(), HistoricRotorType.NOOP.getWirings());
+//        assertArrayEquals(expected.getReflector().getWirings(), HistoricReflectorType.NOOP.getWirings());
     }
 
 //    @Test(expected = ScramblerSettingLengthException.class)
 //    public void testIncorrectLengthConstructor() throws ScramblerSettingException {
 //        String incorrectLengthString = "AABCDEFGHIJKLMNOPQRSTUVWXYZ";
-//        new Rotor(incorrectLengthString);
+//        new Reflector(incorrectLengthString);
 //    }
 
 //    @Test(expected = ScramblerSettingWiringException.class)
 //    public void testIncorrectWiringConstructor() throws ScramblerSettingException {
 //        String incorrectWiringsString = "AACDEFGHIJKLMNOPQRSTUVWXYZ";
-//        new Rotor(incorrectWiringsString);
+//        new Reflector(incorrectWiringsString);
 //    }
 }

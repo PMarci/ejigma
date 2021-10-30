@@ -1,7 +1,7 @@
 package ejigma.io;
 
-import ejigma.model.Enigma;
-import ejigma.model.EnigmaBuffer;
+import ejigma.model.component.Enigma;
+import ejigma.model.component.EnigmaBuffer;
 import ejigma.util.ScrambleResult;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;

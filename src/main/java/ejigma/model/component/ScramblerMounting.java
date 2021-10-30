@@ -1,4 +1,4 @@
-package ejigma.model;
+package ejigma.model.component;
 
 import ejigma.model.type.ScramblerType;
 import ejigma.util.ScrambleResult;

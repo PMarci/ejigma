@@ -1,7 +1,7 @@
 package ejigma.model.type.auto;
 
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.EntryWheel;
+import ejigma.model.component.EntryWheel;
 import ejigma.model.type.EntryWheelType;
 import ejigma.util.Util;
 

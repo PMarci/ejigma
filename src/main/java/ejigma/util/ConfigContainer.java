@@ -1,6 +1,6 @@
 package ejigma.util;
 
-import ejigma.model.Scrambler;
+import ejigma.model.component.Scrambler;
 import ejigma.model.type.*;
 import ejigma.model.type.custom.CustomEntryWheelType;
 import ejigma.model.type.custom.CustomPlugBoardConfig;

@@ -1,4 +1,4 @@
-package ejigma.model;
+package ejigma.model.component;
 
 import ejigma.exception.ScramblerSettingException;
 import ejigma.model.type.PlugBoardConfig;

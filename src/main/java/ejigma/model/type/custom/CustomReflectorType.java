@@ -1,7 +1,7 @@
 package ejigma.model.type.custom;
 
 import ejigma.exception.ScramblerSettingException;
-import ejigma.model.Reflector;
+import ejigma.model.component.Reflector;
 import ejigma.model.type.CustomScramblerType;
 import ejigma.model.type.ReflectorType;
 
