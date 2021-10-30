@@ -43,42 +43,55 @@ public class TypeLoader {
         this.jaxbContext = jaxbContext;
     }
 
-    public <S extends Scrambler<S, T>, T extends ScramblerType<S, T>> List<T> loadCustomScramblerTypes(
-            Class<T> scramblerTypeClass,
+    public <
+            C extends T,
+            S extends Scrambler<S, T>,
+            T extends ScramblerType<S, T>> List<C> loadCustomScramblerTypes(
+            Class<C> customScramblerTypeClass,
             String subFolder) {
-        List<T> scramblerTypes = Collections.emptyList();
+        List<C> scramblerTypes = Collections.emptyList();
         try {
-            scramblerTypes = getCustomScramblerTypes(scramblerTypeClass, subFolder);
+            scramblerTypes = getCustomScramblerTypes(customScramblerTypeClass, subFolder);
         } catch (JAXBException | URISyntaxException | IOException e) {
             e.printStackTrace();
         }
         return scramblerTypes;
     }
 
-    private <S extends Scrambler<S, T>, T extends ScramblerType<S, T>> List<T> getCustomScramblerTypes(
-            Class<T> scramblerTypeClass,
+    private <
+            C extends T,
+            S extends Scrambler<S, T>,
+            T extends ScramblerType<S, T>> List<C> getCustomScramblerTypes(
+            Class<C> customScramblerTypeClass,
             String subFolder) throws JAXBException, IOException, URISyntaxException {
 
-        List<T> result;
+        List<C> result;
         URI uri = new URI(STATIC_PATH + subFolder);
 
         if (uri.getScheme().equals("jar")) {
-            result = getJarScramblerTypes(scramblerTypeClass, uri);
+            result = getJarScramblerTypes(customScramblerTypeClass, uri);
         } else {
-            result = getFSScramblerTypes(scramblerTypeClass, uri);
+            result = getFSScramblerTypes(customScramblerTypeClass, uri);
 
         }
         return result;
     }
 
-    private <S extends Scrambler<S, T>, T extends ScramblerType<S, T>> List<T> getFSScramblerTypes(
-            Class<T> scramblerTypeClass,
+    private <
+            C extends T,
+            S extends Scrambler<S, T>,
+            T extends ScramblerType<S, T>> List<C> getFSScramblerTypes(
+            Class<C> customScramblerTypeClass,
             URI uri) throws JAXBException, IOException {
 
-        List<T> result = new ArrayList<>();
-        T scramblerType;
+        List<C> result = new ArrayList<>();
+        C scramblerType;
         List<Path> sourceFiles = Collections.emptyList();
-        try (Stream<Path> paths = Files.walk(Paths.get(uri), 1)) {
+        Path subFolder = Paths.get(uri);
+        if (!subFolder.toFile().exists()) {
+            subFolder.toFile().mkdir();
+        }
+        try (Stream<Path> paths = Files.walk(subFolder, 1)) {
             if (paths != null) {
                 sourceFiles = paths
                         .filter(path -> path.getFileName().toString().endsWith(".json"))
@@ -90,8 +103,8 @@ public class TypeLoader {
             InputStreamReader reader =
                     new InputStreamReader(new FileInputStream(sourcePath.toFile()), StandardCharsets.UTF_8);
             StreamSource source = new StreamSource(reader);
-            JAXBElement<T> customRotorTypeElem =
-                    unmarshaller.unmarshal(source, scramblerTypeClass);
+            JAXBElement<C> customRotorTypeElem =
+                    unmarshaller.unmarshal(source, customScramblerTypeClass);
             if (customRotorTypeElem != null) {
                 scramblerType = customRotorTypeElem.getValue();
                 if (scramblerType != null) {
@@ -103,12 +116,15 @@ public class TypeLoader {
     }
 
 
-    private <S extends Scrambler<S, T>, T extends ScramblerType<S, T>> List<T> getJarScramblerTypes(
-            Class<T> scramblerTypeClass,
+    private <
+            C extends T,
+            S extends Scrambler<S, T>,
+            T extends ScramblerType<S, T>> List<C> getJarScramblerTypes(
+            Class<C> customScramblerTypeClass,
             URI uri) throws IOException, JAXBException {
 
-        List<T> result = new ArrayList<>();
-        T scramblerType;
+        List<C> result = new ArrayList<>();
+        C scramblerType;
         List<Path> sourceFiles;
         Path myPath;
         try (FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.emptyMap())) {
@@ -125,13 +141,9 @@ public class TypeLoader {
                     Unmarshaller unmarshaller = getUnmarshaller();
                     StreamSource source;
                     try (InputStream ins = TypeLoader.class.getResourceAsStream(sourcePath.toString())) {
-                        InputStreamReader reader = null;
-                        if (ins != null) {
-                            reader = new InputStreamReader(ins);
-                        }
-                        source = new StreamSource(reader);
-                        JAXBElement<T> customRotorTypeElem =
-                                unmarshaller.unmarshal(source, scramblerTypeClass);
+                        source = new StreamSource(ins);
+                        JAXBElement<C> customRotorTypeElem =
+                                unmarshaller.unmarshal(source, customScramblerTypeClass);
                         if (customRotorTypeElem != null) {
                             scramblerType = customRotorTypeElem.getValue();
                             if (scramblerType != null) {

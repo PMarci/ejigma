@@ -6,19 +6,22 @@ import ejigma.util.ScrambleResult;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 public class PlugBoardTest {
 
-    @Test(expected = ScramblerSettingException.class)
-    public void testo() throws ScramblerSettingException {
-        PlugBoard plugBoard = new PlugBoard(Scrambler.DEFAULT_ALPHABET_STRING, "BDK", "QBZ");
-        assertEquals("AQCBEFGHIJZLMNOPQRSTUVWXYZ", singleScramble(plugBoard));
+    @Test
+    public void testo() {
+        assertThrows(
+                ScramblerSettingException.class,
+                () -> new PlugBoard(Scrambler.DEFAULT_ALPHABET_STRING, "BDK", "QBZ"));
     }
 
-    @Test(expected = ScramblerSettingException.class)
-    public void testo2() throws ScramblerSettingException {
-        PlugBoard plugBoard = new PlugBoard(Scrambler.DEFAULT_ALPHABET_STRING, "BZK", "QBC");
-        assertEquals("AQCDEFGHIJCLMNOPQRSTUVWXYB", singleScramble(plugBoard));
+    @Test
+    public void testo2() {
+        assertThrows(
+                ScramblerSettingException.class,
+                () -> new PlugBoard(Scrambler.DEFAULT_ALPHABET_STRING, "BZK", "QBC"));
     }
 
     @Test
@@ -45,14 +48,25 @@ public class PlugBoardTest {
         assertEquals("ABCDEFGHIJKLMNOPQRSTUVWXYZ", singleScramble(plugBoard));
     }
 
+    @Test
+    public void testo7() throws ScramblerSettingException {
+        PlugBoard plugBoard = new PlugBoard(Scrambler.DEFAULT_ALPHABET_STRING, "BKA", "KBA");
+        assertEquals("AKCDEFGHIJBLMNOPQRSTUVWXYZ", singleScramble(plugBoard));
+    }
+
+    @Test
+    public void testAutoPlugBoard() throws ScramblerSettingException {
+        PlugBoard plugBoard = PlugBoard.auto(Scrambler.DEFAULT_ALPHABET_STRING).freshScrambler();
+    }
+
     private static <S extends Scrambler<S, T>, T extends ScramblerType<S, T>> String singleScramble(Scrambler<S, T> scrambler) {
         return Scrambler.DEFAULT_ALPHABET_STRING.codePoints().sequential()
-            .mapToObj(i -> new ScrambleResult(Scrambler.DEFAULT_ALPHABET_STRING, ((char) i)))
-            .mapToInt(scrambleResult -> scrambler.scramble(scrambleResult).getResultAsChar())
-            .collect(
-                StringBuilder::new,
-                StringBuilder::appendCodePoint,
-                StringBuilder::append)
-            .toString();
+                .mapToObj(i -> new ScrambleResult(Scrambler.DEFAULT_ALPHABET_STRING, ((char) i)))
+                .mapToInt(scrambleResult -> scrambler.scramble(scrambleResult).getResultAsChar())
+                .collect(
+                        StringBuilder::new,
+                        StringBuilder::appendCodePoint,
+                        StringBuilder::append)
+                .toString();
     }
 }

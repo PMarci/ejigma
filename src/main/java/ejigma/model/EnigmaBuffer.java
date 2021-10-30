@@ -22,7 +22,7 @@ public class EnigmaBuffer {
     private final boolean searchToReplace = false;
     public final boolean windowsTerminal;
 
-    protected int matchedLength = -1;
+    protected final int matchedLength = -1;
     private final boolean atBlanks = false;
     private final Size size;
 
@@ -54,12 +54,12 @@ public class EnigmaBuffer {
     int offsetInLineToDisplay;
 
     int line;
-    List<LinkedList<Integer>> offsets = new ArrayList<>();
+    final List<LinkedList<Integer>> offsets = new ArrayList<>();
     int offsetInLine;
     int column;
     int wantedColumn;
     boolean uncut = false;
-    int[] markPos = {-1, -1}; // line, offsetInLine + column
+    final int[] markPos = {-1, -1}; // line, offsetInLine + column
 
     boolean dirty;
 

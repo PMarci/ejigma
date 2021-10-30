@@ -1,7 +1,6 @@
 package ejigma.util;
 
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -33,6 +32,24 @@ public class Util {
             }
         }
         return result;
+    }
+
+    public static boolean notAllNulls(Object[] arr) {
+        return Arrays.stream(arr).anyMatch(Objects::nonNull);
+    }
+
+    public static boolean allNonNulls(Object[] arr) {
+        return Arrays.stream(arr).allMatch(Objects::nonNull);
+    }
+
+    public static <T> AbstractMap.SimpleEntry<Integer, T> firstNonNull(T[] array) {
+        return Optional.ofNullable(array)
+                .flatMap(
+                        arr -> IntStream.range(0, arr.length)
+                                .mapToObj(i -> new AbstractMap.SimpleEntry<>(i, arr[i]))
+                                .filter(entry -> entry.getValue() != null)
+                                .findFirst())
+                .orElse(new AbstractMap.SimpleEntry<>(-1, null));
     }
 
     public static String fisherYatesShuffle(String alphabet) {
@@ -72,7 +89,7 @@ public class Util {
         return new String(outputArray, 0, outputArray.length);
     }
 
-    public static int indexOf(int[] arr, int val) {
-        return IntStream.range(0, arr.length).filter(i -> arr[i] == val).findFirst().orElse(-1);
+    public static <T> int indexOf(T[] arr, T val) {
+        return IntStream.range(0, arr.length).filter(val::equals).findFirst().orElse(-1);
     }
 }

@@ -27,30 +27,33 @@ public class ConfigContainer {
 
     public ConfigContainer() {
         this.entryWheelTypes = initScramblerTypes(
-                EntryWheelType.class,
+                CustomEntryWheelType.class,
                 ConfigContainer::getHEntryWheelTypes,
                 TypeLoader.ENTRYWHEEL_TYPES_FOLDER);
         this.rotorTypes = initScramblerTypes(
-                RotorType.class,
+                CustomRotorType.class,
                 ConfigContainer::getHRotorTypes,
                 TypeLoader.ROTOR_TYPES_FOLDER);
         this.reflectorTypes = initScramblerTypes(
-                ReflectorType.class,
+                CustomReflectorType.class,
                 ConfigContainer::getHReflectorTypes,
                 TypeLoader.REFLECTOR_TYPES_FOLDER);
         this.customPlugBoardConfigs = initScramblerTypes(
-                PlugBoardConfig.class,
+                CustomPlugBoardConfig.class,
                 ConfigContainer::getHPlugBoardConfigs,
                 TypeLoader.PLUGBOARD_CONFIGS_FOLDER);
     }
 
-    private <T extends ScramblerType<S, T>, S extends Scrambler<S, T>> List<T> initScramblerTypes(
-            Class<T> customScramblerTypeClass,
+    private <
+            C extends T,
+            T extends ScramblerType<S, T>,
+            S extends Scrambler<S, T>> List<T> initScramblerTypes(
+            Class<C> customScramblerTypeClass,
             Supplier<List<T>> historicSupplier,
             String subFolder) {
 
         List<T> scramblerTypes = new ArrayList<>(historicSupplier.get());
-        List<T> cScramblerTypes =
+        List<C> cScramblerTypes =
                 typeLoader.loadCustomScramblerTypes(customScramblerTypeClass, subFolder);
         if (!cScramblerTypes.isEmpty()) {
             scramblerTypes.addAll(cScramblerTypes);

@@ -26,7 +26,8 @@
     - [ ] reloading configs from canonical sources
     - [ ] printing of current settings
     - [ ] yanking the entire buffer
-- [ ] explore and fix selection loop issues
+- [ ] explore and fix selection loop issues STILL BROKEN
+    - [ ] now breaks while completing first round
     - [ ] finish KeyBoard TODOs
     - [ ] add alphabet string as parameter for reselect to get rid of unnecessary reselect loop
     - [ ] or another exception and message printing
@@ -92,7 +93,10 @@
 ### general
 
 - [x] open issue about SelectionReader and BindingReader
-- [x] open issue about OOBE in LineReader:5733 where secondaryPrompts has size 0
+- [ ] open issue about OOBE in LineReader:5733 where secondaryPrompts has size 0
+- [ ] ring setting not part of customrotortype, should be, even if mutable
+- [ ] character encoding shenanigans
+- [ ] rename ...Types ...Factories?
 - [x] fully implement PlugBoard
     - [x] implement interactive setting of PlugBoard
     - [x] implement non-interactive setting of PlugBoard

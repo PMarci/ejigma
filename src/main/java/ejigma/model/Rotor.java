@@ -59,11 +59,6 @@ public class Rotor extends ScramblerWheel<Rotor, RotorType> {
         this.ringSettingAsChar = ringSettingAsChar;
     }
 
-    @Override
-    public String toString() {
-        return super.toString();
-    }
-
     public boolean isNotchEngaged() {
         boolean result = false;
         if (notch != null) {
