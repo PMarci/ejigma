@@ -1,7 +1,6 @@
 package ejigma.model.type;
 
 import com.google.gson.*;
-import ejigma.model.component.Scrambler;
 import ejigma.util.GsonExclude;
 
 public interface Printable {
@@ -9,6 +8,7 @@ public interface Printable {
     Gson gson = getGsonBuilder().create();
 
     static GsonBuilder getGsonBuilder() {
+        JsonSerializer<? extends ScramblerType<?, ?>> serializer = getSerializer();
         return new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.IDENTITY)
                 .setExclusionStrategies(new ExclusionStrategy() {
@@ -24,29 +24,21 @@ public interface Printable {
                 })
                 // TODO try and unify
                 .registerTypeAdapter(
-//                        ScramblerType.class,
-//                        AutoEntryWheelType.class,
                         EntryWheelType.class,
-                        getSerializer())
+                        serializer)
                 .registerTypeAdapter(
-//                        ScramblerType.class,
-//                        AutoEntryWheelType.class,
                         RotorType.class,
-                        getSerializer())
+                        serializer)
                 .registerTypeAdapter(
-//                        ScramblerType.class,
-//                        AutoEntryWheelType.class,
                         ReflectorType.class,
-                        getSerializer())
+                        serializer)
                 .registerTypeAdapter(
-//                        ScramblerType.class,
-//                        AutoEntryWheelType.class,
                         PlugBoardConfig.class,
-                        getSerializer())
+                        serializer)
                 .setPrettyPrinting();
     }
 
-    private static <S extends Scrambler<S, T>, T extends ScramblerType<S, T>> JsonSerializer<T> getSerializer() {
+    private static JsonSerializer<? extends ScramblerType<?, ?>> getSerializer() {
         return (src, typeOfSrc, context) -> new JsonPrimitive(src.toString());
     }
 

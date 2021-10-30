@@ -200,7 +200,7 @@ public class Enigma {
         List<ScramblerMounting<?, ?>> wiring = new ArrayList<>(armature.getScramblerWiring());
         if (plugBoard != null) {
             wiring.add(0, new ScramblerMounting<>(plugBoard));
-            wiring.add(wiring.size() - 1, new ScramblerMounting<>(plugBoard));
+            wiring.add(wiring.size(), new ScramblerMounting<>(plugBoard));
         }
         this.scramblerWiring = wiring;
     }
