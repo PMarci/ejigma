@@ -5,10 +5,9 @@ import ejigma.util.GsonExclude;
 
 public interface Printable {
 
-    Gson gson = getGsonBuilder().create();
+    Gson GSON = getGsonBuilder().create();
 
     static GsonBuilder getGsonBuilder() {
-        JsonSerializer<? extends ScramblerType<?, ?>> serializer = getSerializer();
         return new GsonBuilder()
                 .setFieldNamingPolicy(FieldNamingPolicy.IDENTITY)
                 .setExclusionStrategies(new ExclusionStrategy() {
@@ -16,25 +15,12 @@ public interface Printable {
                     public boolean shouldSkipClass(Class<?> clazz) {
                         return false;
                     }
-
                     @Override
                     public boolean shouldSkipField(FieldAttributes field) {
                         return field.getAnnotation(GsonExclude.class) != null;
                     }
                 })
-                // TODO try and unify
-                .registerTypeAdapter(
-                        EntryWheelType.class,
-                        serializer)
-                .registerTypeAdapter(
-                        RotorType.class,
-                        serializer)
-                .registerTypeAdapter(
-                        ReflectorType.class,
-                        serializer)
-                .registerTypeAdapter(
-                        PlugBoardConfig.class,
-                        serializer)
+                .registerTypeHierarchyAdapter(ScramblerType.class, getSerializer())
                 .setPrettyPrinting();
     }
 
@@ -43,6 +29,6 @@ public interface Printable {
     }
 
     default String print() {
-        return gson.toJson(this);
+        return GSON.toJson(this);
     }
 }
