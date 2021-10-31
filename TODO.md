@@ -25,19 +25,25 @@
     - [ ] writing of buffer to file
     - [ ] reloading configs from canonical sources
     - [ ] printing of current settings
+      - [ ] not ruined by clear control chars and winch signals
+    - [ ] yanking of current settings
+      - [x] on X11
+      - [ ] on windows, detecting it before java.awt.datatransfer cries
     - [ ] yanking the entire buffer
-- [ ] explore and fix selection loop issues STILL BROKEN
-    - [ ] now breaks while completing first round
+    - [ ] immediately execute non-interactive parameters as commands, like `less +X`, `bash -c`
+- [ ] explore and fix selection loop issues
     - [ ] finish KeyBoard TODOs
-    - [ ] add alphabet string as parameter for reselect to get rid of unnecessary reselect loop
-    - [ ] or another exception and message printing
-    - or limit completion and entry to the alphabetString entered in the first round and add a message when a different
-      one is attempted to be used
-    - when one does incompatible eWheel, reselect, incompatible rotors, reselect, the process seems to be incorrect
-    - also when backing out one has to press Ctrl+C once for every call site layered on top
-    - also exiting out of plugboard selection prints UserInterruptedException
-    - could also use a good refactoring
-- [ ] try and unify three processSelectX methods
+    - [x] now breaks while completing first round
+    - [x] revamp and fix loop
+    - [ ] ~~add alphabet string as parameter for reselect to get rid of unnecessary reselect loop~~
+    - [ ] ~~or another exception and message printing~~
+    - ~~or limit completion and entry to the alphabetString entered in the first round and add a message when a different~~
+      ~~one is attempted to be used~~
+    - ~~when one does incompatible eWheel, reselect, incompatible rotors, reselect, the process seems to be incorrect~~
+    - ~~also when backing out one has to press Ctrl+C once for every call site layered on top~~
+    - ~~also exiting out of plugboard selection prints UserInterruptedException~~
+    - ~~could also use a good refactoring~~
+- [x] try and unify three processSelectX methods
     - could do reselection round by adding all scramblers to a list and filtering the current type
     - would require case separation for rotors
 - [x] option to pass params to interactive mode
@@ -49,10 +55,10 @@
     - will need to deal with collisions
 - [ ] print help at beginning
     - [x] fix unreliable anyKey
-- [ ] option to print auto entry/reflector for portability
-    - [ ] maybe do something sneaky for "security"
-        - like gpg/rsa/ssh/whatever barcode thing
-    - [ ] option to print entire machine state
+- [x] option to print auto entry/reflector for portability
+    - [x] option to print entire machine state
+- [ ] maybe do something sneaky for "security" of serialized scramblers
+    - like gpg/rsa/ssh/whatever barcode thing
 - [ ] widget system
     - [ ] facsimile widgets for
         - [ ] keyboard?
@@ -94,9 +100,10 @@
 
 - [x] open issue about SelectionReader and BindingReader
 - [ ] open issue about OOBE in LineReader:5733 where secondaryPrompts has size 0
-- [ ] ring setting not part of customrotortype, should be, even if mutable
+- [ ] implement ring settings
+    - [ ] ring setting not part of customrotortype, should be, even if mutable
 - [ ] character encoding shenanigans
-- [ ] rename ...Types ...Factories?
+- [ ] rename ...Types to ...Factories?
 - [x] fully implement PlugBoard
     - [x] implement interactive setting of PlugBoard
     - [x] implement non-interactive setting of PlugBoard
@@ -104,8 +111,7 @@
           any character being out-of-band for the alphabet
         - the first character not in the current alphabet could be attempted as a separator
     - [x] add auto method and reselect prompt to other prompts
-- [ ] implement ring settings
-- [x] re-check missed details under [Turnover]********(https://en.wikipedia.org/wiki/Enigma_machine#Turnover)
+- [x] re-check missed details under [Turnover](https://en.wikipedia.org/wiki/Enigma_machine#Turnover)
 - [ ] settings files
     - [ ] consider using Properties API for settings
     - [ ] alternatively, just JAXB
@@ -118,7 +124,8 @@
 - [ ] set up scrambler type loading and reloading in canonical locations
     - [ ] loading
         - [x] on start
-        - [ ] from FS
+            - [x] from FS
+            - [x] from JAR
         - [ ] precedence, overwriting
         - [ ] using shortcut
         - [ ] from cli param
@@ -145,9 +152,9 @@
 - [ ] get better name
 - [x] remove Spring and handle lifecycles like a big boy
     - [ ] ~~develop some alternative to the bean registry~~
-- [ ] some container binding Armature and PlugBoard
-    - [ ] could eventually become the common basis with other machines
-    - [ ] unify/move scramblerWiring in Armature into Enigma such that Plugboard is also connected
+- [x] some container binding Armature and PlugBoard
+    - [x] could eventually become the common basis with other machines
+    - [x] unify/move scramblerWiring in Armature into Enigma such that Plugboard is also connected
     - [x] start refactoring work
 - [ ] cryptanalysis features
     - [ ] histogram and other widgets to demonstrate attack vectors
